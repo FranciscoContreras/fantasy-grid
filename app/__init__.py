@@ -1,9 +1,9 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 import os
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='')
     CORS(app)
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
@@ -19,5 +19,14 @@ def create_app():
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
+
+    # Serve frontend static files
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
 
     return app
