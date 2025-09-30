@@ -3,7 +3,11 @@ from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
 from app.database import execute_query
+from app.utils.cache import cached_route, get_cached_or_fetch
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('players', __name__, url_prefix='/api/players')
 
@@ -13,6 +17,7 @@ grader = AIGrader()
 
 
 @bp.route('/search', methods=['GET'])
+@cached_route(expiry=1800, key_prefix='players_search')  # Cache for 30 minutes
 def search_players():
     """
     Search for players by name/position
@@ -28,6 +33,7 @@ def search_players():
 
     try:
         players = api_client.search_players(query, position)
+        logger.info(f"Player search: query='{query}', position={position}, results={len(players)}")
         return jsonify({
             'data': players,
             'meta': {
@@ -37,10 +43,12 @@ def search_players():
             }
         })
     except Exception as e:
+        logger.error(f"Player search failed: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
 @bp.route('/<player_id>', methods=['GET'])
+@cached_route(expiry=3600, key_prefix='player_details')  # Cache for 1 hour
 def get_player(player_id):
     """Get detailed player information"""
     try:
@@ -122,9 +130,10 @@ def analyze_player(player_id):
                 ai_grade['predicted_points'],
                 recommendation['status']
             )
+            logger.info(f"Analysis saved for player {player_id} vs {opponent}")
         except Exception as db_error:
             # Log but don't fail the request if database save fails
-            print(f"Failed to save analysis history: {db_error}")
+            logger.error(f"Failed to save analysis history: {db_error}", exc_info=True)
 
         return jsonify({
             'data': {
@@ -142,6 +151,7 @@ def analyze_player(player_id):
 
 
 @bp.route('/<player_id>/career', methods=['GET'])
+@cached_route(expiry=7200, key_prefix='player_career')  # Cache for 2 hours
 def get_player_career(player_id):
     """Get player career statistics"""
     try:
