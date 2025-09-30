@@ -1,15 +1,24 @@
 export interface Player {
-  player_id: string;
+  id?: string;
+  player_id?: string;
   name: string;
   position: string;
   team: string;
-  avg_points: number;
+  jersey_number?: string;
+  avg_points?: number;
+  height?: string;
+  weight?: number;
+  age?: number;
+  experience?: number;
+  college?: string;
+  status?: string;
 }
 
 export interface Analysis {
   player: Player;
   matchup_score: number;
   weather_impact: number;
+  weather_data?: WeatherData;
   ai_grade: {
     grade: string;
     predicted_points: number;
@@ -18,12 +27,13 @@ export interface Analysis {
   recommendation: {
     status: 'START' | 'CONSIDER' | 'BENCH';
     confidence: string;
+    reason?: string;
   };
 }
 
 export interface WeatherData {
-  temperature: number;
-  wind_speed: number;
-  precipitation: number;
-  conditions: string;
+  temperature?: number;
+  wind_speed?: number;
+  precipitation?: number;
+  conditions?: string;
 }
