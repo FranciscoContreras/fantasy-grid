@@ -14,10 +14,10 @@ def create_app():
     def health():
         return {'status': 'healthy', 'service': 'Fantasy Grid API', 'version': '1.0.0'}
 
-    # Register blueprints when routes are created
-    # from app.routes import players, analysis, predictions
-    # app.register_blueprint(players.bp)
-    # app.register_blueprint(analysis.bp)
-    # app.register_blueprint(predictions.bp)
+    # Register blueprints
+    from app.routes import players, analysis, predictions
+    app.register_blueprint(players.bp)
+    app.register_blueprint(analysis.bp)
+    app.register_blueprint(predictions.bp)
 
     return app
