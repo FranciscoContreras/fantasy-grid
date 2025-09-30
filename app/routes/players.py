@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
+from app.database import execute_query
+from datetime import datetime
 
 bp = Blueprint('players', __name__, url_prefix='/api/players')
 
@@ -109,6 +111,21 @@ def analyze_player(player_id):
         # Generate recommendation
         recommendation = _generate_recommendation(matchup_score, weather_impact, ai_grade)
 
+        # Save analysis to database
+        try:
+            _save_analysis_history(
+                player_id,
+                opponent,
+                matchup_score,
+                weather_impact,
+                ai_grade['grade'],
+                ai_grade['predicted_points'],
+                recommendation['status']
+            )
+        except Exception as db_error:
+            # Log but don't fail the request if database save fails
+            print(f"Failed to save analysis history: {db_error}")
+
         return jsonify({
             'data': {
                 'player': player.get('data', player) if isinstance(player, dict) and 'data' in player else player,
@@ -132,6 +149,54 @@ def get_player_career(player_id):
         return jsonify(career_stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/<player_id>/history', methods=['GET'])
+def get_analysis_history(player_id):
+    """Get historical analysis for a player"""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+
+        query = """
+            SELECT player_id, opponent, matchup_score, weather_impact,
+                   ai_grade, predicted_points, recommendation, analyzed_at
+            FROM analysis_history
+            WHERE player_id = %s
+            ORDER BY analyzed_at DESC
+            LIMIT %s
+        """
+
+        history = execute_query(query, (player_id, limit), fetch_all=True)
+
+        # Convert datetime to string for JSON serialization
+        if history:
+            history = [
+                {
+                    **row,
+                    'analyzed_at': row['analyzed_at'].isoformat() if row.get('analyzed_at') else None
+                }
+                for row in history
+            ]
+
+        return jsonify({
+            'data': history or [],
+            'meta': {
+                'player_id': player_id,
+                'count': len(history) if history else 0
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def _save_analysis_history(player_id, opponent, matchup_score, weather_impact, ai_grade, predicted_points, recommendation):
+    """Save analysis to database for historical tracking"""
+    query = """
+        INSERT INTO analysis_history
+        (player_id, opponent, matchup_score, weather_impact, ai_grade, predicted_points, recommendation)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    execute_query(query, (player_id, opponent, matchup_score, weather_impact, ai_grade, predicted_points, recommendation))
 
 
 def _generate_recommendation(matchup, weather, ai_grade):
