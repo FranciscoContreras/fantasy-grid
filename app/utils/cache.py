@@ -10,7 +10,12 @@ logger = logging.getLogger(__name__)
 try:
     REDIS_URL = os.getenv('REDIS_URL')
     if REDIS_URL:
-        cache = redis.from_url(REDIS_URL, decode_responses=True)
+        # Heroku Redis requires SSL but uses self-signed certs
+        cache = redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            ssl_cert_reqs=None  # Disable SSL cert verification for Heroku Redis
+        )
         CACHE_ENABLED = True
         logger.info("Redis cache initialized successfully")
     else:
