@@ -218,14 +218,14 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
         # Get relevant defensive players based on offensive position
         if player_position == 'QB':
             # QBs care about pass rush and coverage
-            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DL')
+            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DL') or []
         elif player_position in ['WR', 'TE']:
             # Pass catchers care about coverage
-            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DB')
+            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DB') or []
         elif player_position == 'RB':
             # RBs care about front 7
-            dl = api_client.get_key_defensive_players(opponent_team, 'DL')
-            lb = api_client.get_key_defensive_players(opponent_team, 'LB')
+            dl = api_client.get_key_defensive_players(opponent_team, 'DL') or []
+            lb = api_client.get_key_defensive_players(opponent_team, 'LB') or []
             key_defenders = dl + lb
 
     # Get historical performance vs this opponent
