@@ -131,6 +131,21 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
   const sitPlayers = userAnalysis.filter((a) => a.recommendation === 'SIT');
   const considerPlayers = userAnalysis.filter((a) => a.recommendation === 'CONSIDER');
 
+  // Check if any analysis is still being generated
+  const hasAnalysisInProgress = matchup.analysis?.some((a) =>
+    (a as any).analysis_status === 'analyzing' ||
+    a.reasoning === 'Generating AI analysis...'
+  ) || false;
+
+  // Debug logging
+  console.log('Debug - analyzing:', analyzing);
+  console.log('Debug - hasAnalysisInProgress:', hasAnalysisInProgress);
+  console.log('Debug - matchup.analysis:', matchup.analysis?.map(a => ({
+    name: a.player_name,
+    status: (a as any).analysis_status,
+    reasoning: a.reasoning
+  })));
+
   const avgProjectedPoints =
     userAnalysis.length > 0
       ? (
@@ -171,13 +186,7 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
       )}
 
       {/* Loading Animation - Show when analyzing or any player is generating */}
-      {matchup.analysis && matchup.analysis.length > 0 && (
-        analyzing ||
-        matchup.analysis.some((a) =>
-          (a as any).analysis_status === 'analyzing' ||
-          a.reasoning === 'Generating AI analysis...'
-        )
-      ) && (
+      {(analyzing || hasAnalysisInProgress) && matchup.analysis && matchup.analysis.length > 0 && (
         <AnalysisLoadingAnimation
           totalPlayers={matchup.analysis.length}
           completedPlayers={matchup.analysis.filter((a) =>
