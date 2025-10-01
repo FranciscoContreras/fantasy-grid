@@ -1,6 +1,8 @@
 import os
+import hashlib
 from groq import Groq
 from anthropic import Anthropic
+from app.services.cache_service import cache_ai_response, get_cached_ai_response
 
 class AIService:
     def __init__(self):
@@ -34,13 +36,26 @@ class AIService:
         Returns:
             Generated text analysis
         """
+        # Check cache first
+        prompt_hash = hashlib.md5(prompt.encode()).hexdigest()
+        cached = get_cached_ai_response(prompt_hash)
+        if cached:
+            return cached
+
+        # Generate response
         if use_premium and self.anthropic_client:
-            return self._generate_with_claude(prompt)
+            response = self._generate_with_claude(prompt)
         elif self.groq_client:
-            return self._generate_with_groq(prompt)
+            response = self._generate_with_groq(prompt)
         else:
             # Fallback to rule-based if no AI available
-            return self._generate_fallback(prompt)
+            response = self._generate_fallback(prompt)
+
+        # Cache the response
+        if response:
+            cache_ai_response(prompt_hash, response)
+
+        return response
 
     def _generate_with_groq(self, prompt):
         """Use Groq's free API (Llama 3.1 70B)"""
@@ -94,7 +109,7 @@ class AIService:
         else:
             return "Moderate matchup profile warrants careful consideration of recent form and injury status."
 
-    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None):
+    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None):
         """
         Generate reasoning for a player's matchup analysis
 
@@ -104,6 +119,7 @@ class AIService:
             matchup_score: Numerical matchup score (0-100)
             injury_status: Current injury status
             opponent_defense: Optional opponent defense info
+            weather: Optional weather context string
 
         Returns:
             AI-generated reasoning text
@@ -112,10 +128,11 @@ class AIService:
         matchup_quality = "favorable" if matchup_score > 70 else "difficult" if matchup_score < 50 else "average"
         injury_context = f" They are dealing with {injury_status} status." if injury_status != "HEALTHY" else ""
         defense_context = f" facing the {opponent_defense} defense" if opponent_defense else ""
+        weather_context = f"\n- Weather conditions: {weather}" if weather else ""
 
         prompt = f"""Analyze {player_name} ({position}){defense_context}:
 - Matchup score: {matchup_score}/100 ({matchup_quality})
-- Injury status: {injury_status}{injury_context}
+- Injury status: {injury_status}{injury_context}{weather_context}
 
 Provide a brief 2-3 sentence recommendation focusing on start/sit decision."""
 

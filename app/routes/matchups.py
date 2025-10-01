@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.database import execute_query
 from app.services.ai_service import AIService
+from app.services.weather_service import WeatherService
 import logging
 from datetime import datetime
 import random
@@ -8,8 +9,9 @@ import random
 bp = Blueprint('matchups', __name__, url_prefix='/api/matchups')
 logger = logging.getLogger(__name__)
 
-# Initialize AI service
+# Initialize AI service and weather service
 ai_service = AIService()
+weather_service = WeatherService()
 
 
 @bp.route('', methods=['POST'])
@@ -178,14 +180,18 @@ def _analyze_player_for_matchup(player, is_user_player, week):
     # Calculate matchup score based on position and opponent
     matchup_score = _calculate_matchup_score(player['position'], player.get('team'))
 
+    # Get weather data for player's team location
+    weather_data = weather_service.get_game_weather(player.get('team'))
+
     # Evaluate injury impact
     injury_impact = _evaluate_injury_impact(player.get('injury_status', 'HEALTHY'))
 
-    # Calculate projected points
+    # Calculate projected points with weather adjustment
     projected_points = _calculate_projected_points(
         player['position'],
         matchup_score,
-        injury_impact
+        injury_impact,
+        weather_data
     )
 
     # Assign AI grade
@@ -206,8 +212,19 @@ def _analyze_player_for_matchup(player, is_user_player, week):
         player,
         matchup_score,
         injury_impact,
-        recommendation
+        recommendation,
+        weather_data
     )
+
+    # Prepare weather info for response
+    weather_info = None
+    if weather_data:
+        weather_info = {
+            'condition': weather_data.get('condition'),
+            'temperature': weather_data.get('temperature'),
+            'wind_speed': weather_data.get('wind_speed'),
+            'impact': weather_data.get('impact')
+        }
 
     return {
         'player_id': player.get('player_id'),
@@ -223,7 +240,8 @@ def _analyze_player_for_matchup(player, is_user_player, week):
         'injury_status': player.get('injury_status', 'HEALTHY'),
         'injury_impact': injury_impact,
         'confidence_score': round(confidence_score, 2),
-        'reasoning': reasoning
+        'reasoning': reasoning,
+        'weather': weather_info
     }
 
 
@@ -258,7 +276,7 @@ def _evaluate_injury_impact(injury_status):
     return impact_map.get(injury_status, 'Unknown status')
 
 
-def _calculate_projected_points(position, matchup_score, injury_impact):
+def _calculate_projected_points(position, matchup_score, injury_impact, weather_data=None):
     """Calculate projected fantasy points"""
     # Base projection by position
     base_projections = {
@@ -285,7 +303,12 @@ def _calculate_projected_points(position, matchup_score, injury_impact):
     }
     injury_mult = injury_multipliers.get(injury_impact, 0.8)
 
-    return base * matchup_multiplier * injury_mult
+    # Adjust for weather
+    weather_mult = 1.0
+    if weather_data:
+        weather_mult = weather_service.get_weather_adjustment_factor(position, weather_data)
+
+    return base * matchup_multiplier * injury_mult * weather_mult
 
 
 def _assign_grade(matchup_score, injury_impact):
@@ -350,16 +373,22 @@ def _calculate_confidence(matchup_score, injury_impact):
     return max(0, min(100, base_confidence))
 
 
-def _generate_reasoning(player, matchup_score, injury_impact, recommendation):
+def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None):
     """Generate AI-powered reasoning using Groq (free tier)"""
     try:
+        # Build weather context for AI
+        weather_context = None
+        if weather_data and not weather_data.get('dome'):
+            weather_context = f"{weather_data.get('condition')} ({weather_data.get('temperature')}°F, {weather_data.get('wind_speed')} mph winds)"
+
         # Use AI service for intelligent reasoning
         reasoning = ai_service.generate_matchup_reasoning(
             player_name=player['player_name'],
             position=player['position'],
             matchup_score=matchup_score,
             injury_status=player.get('injury_status', 'HEALTHY'),
-            opponent_defense=None  # TODO: Add real opponent defense data
+            opponent_defense=None,  # TODO: Add real opponent defense data
+            weather=weather_context
         )
         return reasoning
     except Exception as e:
@@ -375,19 +404,24 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation):
         else:
             reasoning_parts.append(f"{player['player_name']} faces a tough matchup (score: {matchup_score:.1f})")
 
-    # Injury consideration
-    if 'No impact' not in injury_impact:
-        reasoning_parts.append(f"Injury concern: {injury_impact}")
+        # Weather consideration
+        if weather_data and not weather_data.get('dome'):
+            if weather_data.get('impact') != 'No significant impact':
+                reasoning_parts.append(f"Weather: {weather_data.get('impact')}")
 
-    # Final recommendation
-    rec_text = {
-        'START': 'Strong start candidate',
-        'CONSIDER': 'Monitor closely before game time',
-        'SIT': 'Consider benching or finding alternative'
-    }
-    reasoning_parts.append(rec_text.get(recommendation, ''))
+        # Injury consideration
+        if 'No impact' not in injury_impact:
+            reasoning_parts.append(f"Injury concern: {injury_impact}")
 
-    return '. '.join(reasoning_parts) + '.'
+        # Final recommendation
+        rec_text = {
+            'START': 'Strong start candidate',
+            'CONSIDER': 'Monitor closely before game time',
+            'SIT': 'Consider benching or finding alternative'
+        }
+        reasoning_parts.append(rec_text.get(recommendation, ''))
+
+        return '. '.join(reasoning_parts) + '.'
 
 
 def _save_matchup_analysis(matchup_id, analysis, is_user_player):
