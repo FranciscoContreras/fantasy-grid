@@ -50,16 +50,13 @@ class SeasonService:
                 week = upcoming_games[0].get('week')
                 logger.info(f"Current NFL season/week: {season} Week {week} (upcoming games found)")
             elif completed_games:
-                # If no upcoming games, we're at the last completed week + 1
+                # If no upcoming games, use the last completed week
+                # (Don't increment to next week if schedule data doesn't exist yet)
                 latest_game = completed_games[0]
                 season = latest_game.get('season_year')
-                week = latest_game.get('week', 1) + 1
+                week = latest_game.get('week', 1)
 
-                # Cap at week 18 (regular season)
-                if week > 18:
-                    week = 18
-
-                logger.info(f"Current NFL season/week: {season} Week {week} (derived from completed games)")
+                logger.info(f"Current NFL season/week: {season} Week {week} (latest completed week)")
             else:
                 # Fallback
                 current_year = datetime.now().year
