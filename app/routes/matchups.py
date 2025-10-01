@@ -596,6 +596,10 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
     # Calculate confidence score
     confidence_score = _calculate_confidence(matchup_score, injury_impact)
 
+    # Extract new data
+    injury_history = player_data.get('injury_history')
+    weather_forecast = player_data.get('weather_forecast')
+
     # Generate reasoning with all context
     reasoning = _generate_reasoning(
         player,
@@ -608,7 +612,9 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         def_coordinator,
         key_defenders,
         opponent_roster,
-        defensive_stats
+        defensive_stats,
+        injury_history,
+        weather_forecast
     )
 
     # Cache the analysis for future use (only if opponent is known)
@@ -878,7 +884,7 @@ def _calculate_start_ranking(matchup_score, projected_points, injury_impact, his
     return max(1, min(10, round(ranking)))
 
 
-def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None, def_coordinator=None, key_defenders=None, opponent_roster=None, defensive_stats=None):
+def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None, def_coordinator=None, key_defenders=None, opponent_roster=None, defensive_stats=None, injury_history=None, weather_forecast=None):
     """Generate AI-powered reasoning using Groq (free tier)"""
     try:
         # Build weather context for AI
@@ -915,7 +921,9 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
             defensive_stats=defensive_stats,
             weather=weather_context,
             historical_performance=historical_context,
-            defensive_scheme=defensive_context
+            defensive_scheme=defensive_context,
+            injury_history=injury_history,
+            weather_forecast=weather_forecast
         )
         return reasoning
     except Exception as e:

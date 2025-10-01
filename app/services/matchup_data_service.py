@@ -148,6 +148,8 @@ class MatchupDataService:
                 'opponent_roster': {...},
                 'defensive_stats': {...},
                 'historical_performance': {...},
+                'injury_history': [...],
+                'weather_forecast': {...},
                 'defensive_coordinator': 'Name',
                 'key_defenders': ['Player1', 'Player2'],
                 'injury_status': 'HEALTHY',
@@ -167,6 +169,7 @@ class MatchupDataService:
         try:
             player_id = player.get('player_id')
             player_position = player.get('position')
+            player_team = player.get('team')
 
             # Get opponent roster (offensive players)
             opponent_roster = self.api_client.get_team_roster(opponent_team, season)
@@ -200,9 +203,26 @@ class MatchupDataService:
                 vs_stats = self.api_client.get_player_stats_vs_team(player_id, opponent_team)
                 data['historical_performance'] = vs_stats
 
+                # NEW: Get player injury history
+                injury_history = self.api_client.get_player_injury_history(player_id)
+                data['injury_history'] = injury_history
+                if injury_history:
+                    logger.debug(f"Fetched {len(injury_history)} injury records for {player.get('player_name')}")
+
             # Get injury status from player data
             injury_status = player.get('injury_status', 'HEALTHY')
             data['injury_status'] = injury_status
+
+            # NEW: Get weather forecast for the game
+            if player_team:
+                try:
+                    weather_forecast = self.api_client.get_weather_forecast(player_team)
+                    data['weather_forecast'] = weather_forecast
+                    if weather_forecast:
+                        logger.debug(f"Fetched weather forecast for {player_team}")
+                except Exception as e:
+                    logger.warning(f"Could not fetch weather forecast: {e}")
+                    data['weather_forecast'] = None
 
             logger.debug(f"Fetched comprehensive data for {player.get('player_name')} vs {opponent_team}")
 

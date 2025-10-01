@@ -172,7 +172,7 @@ class AIService:
         else:
             return "Moderate matchup profile warrants careful consideration of recent form and injury status."
 
-    def generate_matchup_reasoning(self, player_name, position, team, matchup_score, injury_status, opponent_defense=None, opponent_roster=None, defensive_stats=None, weather=None, historical_performance=None, defensive_scheme=None):
+    def generate_matchup_reasoning(self, player_name, position, team, matchup_score, injury_status, opponent_defense=None, opponent_roster=None, defensive_stats=None, weather=None, historical_performance=None, defensive_scheme=None, injury_history=None, weather_forecast=None):
         """
         Generate reasoning for a player's matchup analysis
 
@@ -188,6 +188,8 @@ class AIService:
             weather: Optional weather context string
             historical_performance: Optional historical stats vs this opponent
             defensive_scheme: Optional defensive coordinator and key players
+            injury_history: Optional list of past injuries
+            weather_forecast: Optional upcoming game weather forecast
 
         Returns:
             AI-generated reasoning text (concise snippet)
@@ -228,15 +230,41 @@ class AIService:
             else:
                 defense_stats_context = f"\n- {opponent_defense} defense: Rank #{def_rank}, {ppg:.1f} PPG allowed"
 
-        weather_context = f"\n- Weather conditions: {weather}" if weather else ""
+        # NEW: Injury history context
+        injury_history_context = ""
+        if injury_history and len(injury_history) > 0:
+            # Summarize recent injuries (last 3)
+            recent_injuries = injury_history[:3]
+            injury_types = [inj.get('injury_type', 'unknown') for inj in recent_injuries]
+            if injury_types:
+                injury_history_context = f"\n- Injury history: {', '.join(injury_types[:2])}"
+
+        # NEW: Weather forecast context (prefer forecast over current)
+        weather_context = ""
+        if weather_forecast:
+            conditions = weather_forecast.get('conditions', '')
+            temp = weather_forecast.get('temperature')
+            wind = weather_forecast.get('wind_speed')
+            if conditions or temp or wind:
+                weather_parts = []
+                if conditions:
+                    weather_parts.append(conditions)
+                if temp:
+                    weather_parts.append(f"{temp}°F")
+                if wind:
+                    weather_parts.append(f"{wind}mph wind")
+                weather_context = f"\n- Forecast: {', '.join(weather_parts)}"
+        elif weather:
+            weather_context = f"\n- Weather: {weather}"
+
         historical_context = f"\n- Historical performance: {historical_performance}" if historical_performance else ""
         scheme_context = f"\n- Defensive scheme: {defensive_scheme}" if defensive_scheme else ""
 
         prompt = f"""Analyze {player_name} ({team} {position}){defense_context}:
 - Matchup score: {matchup_score}/100 ({matchup_quality})
-- Injury status: {injury_status}{injury_context}{defense_stats_context}{scheme_context}{roster_context}{historical_context}{weather_context}
+- Injury status: {injury_status}{injury_context}{injury_history_context}{defense_stats_context}{scheme_context}{roster_context}{historical_context}{weather_context}
 
-Provide a concise 1-2 sentence analysis with clear START/SIT/CONSIDER recommendation. Focus on the most impactful factors: matchup strength, defensive rankings, and key defensive players."""
+Provide a concise 1-2 sentence analysis with clear START/SIT/CONSIDER recommendation. Focus on the most impactful factors: matchup strength, defensive rankings, injury concerns, and weather impact."""
 
         # Use free tier for individual player analysis
         return self.generate_analysis(prompt, use_premium=False)

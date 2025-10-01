@@ -618,3 +618,175 @@ class FantasyAPIClient:
                 'pass_defense_rank': 16,
                 'rush_defense_rank': 16
             }
+
+    def get_player_injury_history(self, player_id):
+        """
+        Get injury history for a player.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            List of injury records with dates and descriptions
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/injuries',
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            injuries = response.json().get('data', [])
+            logger.info(f"Fetched {len(injuries)} injury records for player {player_id}")
+            return injuries
+        except Exception as e:
+            logger.error(f"Failed to fetch injury history for player {player_id}: {e}")
+            return []
+
+    def get_weather_forecast(self, location, date=None):
+        """
+        Get weather forecast for upcoming games.
+
+        Args:
+            location: Stadium location or team abbreviation
+            date: Optional date for forecast (YYYY-MM-DD)
+
+        Returns:
+            Weather forecast data
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            params = {'location': location}
+            if date:
+                params['date'] = date
+
+            response = requests.get(
+                f'{self.base_url}/weather/forecast',
+                params=params,
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            forecast = response.json().get('data', {})
+            logger.info(f"Fetched weather forecast for {location}")
+            return forecast
+        except Exception as e:
+            logger.error(f"Failed to fetch weather forecast for {location}: {e}")
+            return None
+
+    def get_game_stats(self, game_id):
+        """
+        Get detailed statistics for a specific game.
+
+        Args:
+            game_id: Game ID
+
+        Returns:
+            Comprehensive game statistics
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.get(
+                f'{self.base_url}/stats/game/{game_id}',
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            stats = response.json().get('data', {})
+            logger.info(f"Fetched stats for game {game_id}")
+            return stats
+        except Exception as e:
+            logger.error(f"Failed to fetch stats for game {game_id}: {e}")
+            return None
+
+    def get_stat_leaders(self, category='passing_yards', season=2024, limit=10):
+        """
+        Get statistical leaders across categories.
+
+        Args:
+            category: Stat category (passing_yards, rushing_yards, receiving_yards, etc.)
+            season: Season year
+            limit: Number of leaders to return
+
+        Returns:
+            List of top players in the category
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.get(
+                f'{self.base_url}/stats/leaders',
+                params={'category': category, 'season': season, 'limit': limit},
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            leaders = response.json().get('data', [])
+            logger.info(f"Fetched {len(leaders)} leaders for {category}")
+            return leaders
+        except Exception as e:
+            logger.error(f"Failed to fetch stat leaders for {category}: {e}")
+            return []
+
+    def ai_garden_query(self, query):
+        """
+        Natural language query to AI Garden for data insights.
+
+        Args:
+            query: Natural language question
+
+        Returns:
+            AI-generated response with data insights
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.post(
+                f'{self.base_url}/garden/query',
+                json={'query': query},
+                headers=self._get_headers(include_api_key=True),
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json().get('data', {})
+            logger.info(f"AI Garden query successful: {query[:50]}...")
+            return result
+        except Exception as e:
+            logger.error(f"AI Garden query failed: {e}")
+            return None
+
+    def ai_garden_enrich_player(self, player_id):
+        """
+        Use AI to enrich player data with advanced insights.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            AI-enriched player data
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.post(
+                f'{self.base_url}/garden/enrich/player/{player_id}',
+                headers=self._get_headers(include_api_key=True),
+                timeout=30
+            )
+            response.raise_for_status()
+            enriched = response.json().get('data', {})
+            logger.info(f"AI enrichment successful for player {player_id}")
+            return enriched
+        except Exception as e:
+            logger.error(f"AI enrichment failed for player {player_id}: {e}")
+            return None
