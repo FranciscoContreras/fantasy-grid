@@ -90,6 +90,14 @@ export const removePlayerFromRoster = async (rosterId: number, playerRosterId: n
   return response.data;
 };
 
+export const analyzeRoster = async (rosterId: number, week?: number, season?: number) => {
+  const response = await api.post(`/rosters/${rosterId}/analyze`, {
+    week,
+    season
+  });
+  return response.data;
+};
+
 // Matchup API
 export const createMatchup = async (data: {
   week: number;

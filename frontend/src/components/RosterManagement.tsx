@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { RosterBuilder } from './RosterBuilder';
+import { RosterDashboard } from './RosterDashboard';
 import { MatchupAnalysis } from './MatchupAnalysis';
 import { SeasonMatchups } from './SeasonMatchups';
 import { Badge } from './ui/badge';
@@ -274,19 +275,18 @@ export function RosterManagement() {
             </Card>
           </div>
 
-          {/* Right Content - Roster Builder */}
+          {/* Right Content - Roster Dashboard */}
           <div className="lg:col-span-2">
             {selectedRosterId ? (
-              <RosterBuilder
+              <RosterDashboard
                 key={selectedRosterId}
                 rosterId={selectedRosterId}
-                onRosterUpdate={loadRosters}
               />
             ) : (
               <Card>
                 <CardContent className="py-12">
                   <p className="text-center text-muted-foreground">
-                    Select a roster to edit
+                    Select a roster to view
                   </p>
                 </CardContent>
               </Card>

@@ -266,3 +266,73 @@ def remove_player_from_roster(roster_id, player_roster_id):
     except Exception as e:
         logger.error(f"Error removing player {player_roster_id}: {str(e)}")
         return jsonify({'error': 'Failed to remove player'}), 500
+
+
+@bp.route('/<int:roster_id>/analyze', methods=['POST'])
+def analyze_roster(roster_id):
+    """
+    Analyze entire roster for the current/specified week.
+    Creates a matchup and triggers analysis for all players.
+    """
+    data = request.json or {}
+    week = data.get('week')
+    season = data.get('season')
+
+    try:
+        # Get roster to verify it exists
+        roster_query = "SELECT id, name FROM rosters WHERE id = %s"
+        roster = execute_query(roster_query, (roster_id,))
+
+        if not roster:
+            return jsonify({'error': 'Roster not found'}), 404
+
+        # Import here to avoid circular imports
+        from app.routes.matchups import create_matchup_for_roster, get_current_week_and_season
+
+        # Get current week/season if not provided
+        if not week or not season:
+            current_week, current_season = get_current_week_and_season()
+            week = week or current_week
+            season = season or current_season
+
+        # Check if matchup already exists for this week
+        matchup_query = """
+            SELECT id FROM matchups
+            WHERE user_roster_id = %s AND week = %s AND season = %s
+            LIMIT 1
+        """
+        existing_matchup = execute_query(matchup_query, (roster_id, week, season))
+
+        if existing_matchup:
+            matchup_id = existing_matchup[0]['id']
+            logger.info(f"Using existing matchup {matchup_id} for roster {roster_id}, week {week}")
+        else:
+            # Create new matchup
+            matchup_query = """
+                INSERT INTO matchups (user_roster_id, week, season, user_roster_name)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+            """
+            result = execute_query(matchup_query, (roster_id, week, season, roster[0]['name']))
+            matchup_id = result[0]['id']
+            logger.info(f"Created new matchup {matchup_id} for roster {roster_id}, week {week}")
+
+        # Trigger analysis for this matchup
+        from app.routes.matchups import analyze_matchup_endpoint
+        from flask import Flask
+        from werkzeug.test import EnvironBuilder
+
+        # Create a mock request context to call the analyze endpoint
+        with Flask(__name__).test_request_context():
+            analyze_matchup_endpoint(matchup_id)
+
+        return jsonify({
+            'message': 'Roster analysis started',
+            'matchup_id': matchup_id,
+            'week': week,
+            'season': season
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error analyzing roster {roster_id}: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to analyze roster: {str(e)}'}), 500
