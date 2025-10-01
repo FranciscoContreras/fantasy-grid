@@ -97,12 +97,20 @@ class AIService:
                     'stream': False,
                     'temperature': 0.7
                 },
-                timeout=10
+                timeout=30  # Increased from 10 to 30 seconds
             )
             response.raise_for_status()
             result = response.json()['choices'][0]['message']['content'].strip()
             logger.info(f"Grok API success: {result[:100]}...")
             return result
+        except requests.exceptions.Timeout:
+            logger.error("Grok API timeout after 30s")
+            # Fallback to Groq if Grok times out
+            if self.groq_client:
+                logger.info("Falling back to Groq due to timeout")
+                return self._generate_with_groq(prompt)
+            logger.warning("No Groq available, using rule-based fallback")
+            return self._generate_fallback(prompt)
         except Exception as e:
             logger.error(f"Grok API error: {e}")
             # Fallback to Groq if Grok fails
