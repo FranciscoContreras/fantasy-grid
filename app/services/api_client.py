@@ -59,12 +59,15 @@ class FantasyAPIClient:
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
-        # Fetch more players for better search results
-        # The API doesn't support server-side search, so we need to fetch and filter client-side
-        limit = 500 if position else 2500  # Fetch all if no position filter
+        # The API limits responses to 100 per request, so we need to paginate
+        # Fetch ALL players for the position to ensure we don't miss anyone
 
-        params = {'limit': limit}
+        all_players = []
+        limit = 100
+        offset = 0
 
+        # First request to get total count
+        params = {'limit': limit, 'offset': offset}
         if position:
             params['position'] = position
 
@@ -74,7 +77,22 @@ class FantasyAPIClient:
             headers=self._get_headers()
         )
         response.raise_for_status()
-        all_players = response.json().get('data', [])
+        data = response.json()
+        all_players.extend(data.get('data', []))
+        total = data.get('meta', {}).get('total', 0)
+
+        # Fetch remaining pages (limit to 1000 total for performance)
+        max_fetch = min(total, 1000 if not position else total)
+        while offset + limit < max_fetch:
+            offset += limit
+            params['offset'] = offset
+            response = requests.get(
+                f'{self.base_url}/players',
+                params=params,
+                headers=self._get_headers()
+            )
+            response.raise_for_status()
+            all_players.extend(response.json().get('data', []))
 
         # Enrich all players with team abbreviation
         all_players = [self._enrich_player_with_team(player) for player in all_players]
