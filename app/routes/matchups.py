@@ -51,8 +51,11 @@ def create_matchup():
     # Validate schedule availability before creating matchup
     if not season_service.validate_week(season, week):
         logger.warning(f"Attempted to create matchup for unavailable week: {season} Week {week}")
+        # Get available weeks to show in error message
+        available_weeks = season_service.get_available_weeks(season, 1)
+        available_weeks_str = ', '.join(map(str, available_weeks)) if available_weeks else 'none'
         return jsonify({
-            'error': f'Schedule not available for {season} Week {week} yet. Please select a different week.'
+            'error': f'Schedule not available for Week {week} yet. Available weeks: {available_weeks_str}'
         }), 400
 
     try:
