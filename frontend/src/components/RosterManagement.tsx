@@ -7,6 +7,7 @@ import {
   createMatchup,
   getMatchups,
   getCurrentWeek,
+  getAvailableWeeks,
 } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -36,6 +37,7 @@ export function RosterManagement() {
   const [matchupWeek, setMatchupWeek] = useState(1);
   const [matchupSeason, setMatchupSeason] = useState(2025);
   const [matchupUserRoster, setMatchupUserRoster] = useState<number | null>(null);
+  const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
 
   useEffect(() => {
     loadRosters();
@@ -49,9 +51,22 @@ export function RosterManagement() {
       if (response.data) {
         setMatchupWeek(response.data.week);
         setMatchupSeason(response.data.season);
+        // Load available weeks for this season
+        loadAvailableWeeks(response.data.season);
       }
     } catch (err) {
       console.error('Failed to load current week:', err);
+    }
+  };
+
+  const loadAvailableWeeks = async (season: number) => {
+    try {
+      const response = await getAvailableWeeks(season);
+      if (response.data) {
+        setAvailableWeeks(response.data.available_weeks);
+      }
+    } catch (err) {
+      console.error('Failed to load available weeks:', err);
     }
   };
 
@@ -122,6 +137,12 @@ export function RosterManagement() {
       return;
     }
 
+    // Validate week availability
+    if (availableWeeks.length > 0 && !availableWeeks.includes(matchupWeek)) {
+      setError(`Schedule not available for Week ${matchupWeek} yet. Please select a different week.`);
+      return;
+    }
+
     try {
       const response = await createMatchup({
         week: matchupWeek,
@@ -132,8 +153,9 @@ export function RosterManagement() {
       setSelectedMatchupId(response.data.id);
       setView('matchup');
       await loadMatchups();
-    } catch (err) {
-      setError('Failed to create matchup');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'Failed to create matchup';
+      setError(errorMessage);
       console.error(err);
     }
   };
@@ -418,6 +440,11 @@ export function RosterManagement() {
                       onChange={(e) => setMatchupWeek(parseInt(e.target.value))}
                       className="mt-1"
                     />
+                    {availableWeeks.length > 0 && !availableWeeks.includes(matchupWeek) && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Schedule not available for this week yet
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-medium">Season</label>
@@ -426,11 +453,22 @@ export function RosterManagement() {
                       min="2020"
                       max="2030"
                       value={matchupSeason}
-                      onChange={(e) => setMatchupSeason(parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const newSeason = parseInt(e.target.value);
+                        setMatchupSeason(newSeason);
+                        loadAvailableWeeks(newSeason);
+                      }}
                       className="mt-1"
                     />
                   </div>
                 </div>
+                {availableWeeks.length > 0 && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      Available weeks: {availableWeeks.join(', ')}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium">
                     Select Roster <span className="text-red-500">*</span>

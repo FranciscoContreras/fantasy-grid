@@ -126,4 +126,11 @@ export const getCurrentWeek = async () => {
   return response.data;
 };
 
+export const getAvailableWeeks = async (season?: number, startWeek?: number) => {
+  const response = await api.get('/matchups/available-weeks', {
+    params: { season, start_week: startWeek }
+  });
+  return response.data;
+};
+
 export default api;

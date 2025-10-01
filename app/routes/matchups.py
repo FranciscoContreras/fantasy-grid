@@ -48,6 +48,13 @@ def create_matchup():
     if not opponent_roster_id:
         opponent_roster_id = user_roster_id
 
+    # Validate schedule availability before creating matchup
+    if not season_service.validate_week(season, week):
+        logger.warning(f"Attempted to create matchup for unavailable week: {season} Week {week}")
+        return jsonify({
+            'error': f'Schedule not available for {season} Week {week} yet. Please select a different week.'
+        }), 400
+
     try:
         query = """
             INSERT INTO matchups (week, season, user_roster_id, opponent_roster_id)
@@ -79,6 +86,31 @@ def get_current_week():
     except Exception as e:
         logger.error(f"Error getting current week: {str(e)}")
         return jsonify({'error': 'Failed to get current week'}), 500
+
+
+@bp.route('/available-weeks', methods=['GET'])
+def get_available_weeks():
+    """Get list of weeks with available schedule data"""
+    try:
+        season = request.args.get('season', type=int)
+        start_week = request.args.get('start_week', type=int, default=1)
+
+        # Default to current season if not provided
+        if not season:
+            season, _ = season_service.get_current_season_and_week()
+
+        available_weeks = season_service.get_available_weeks(season, start_week)
+
+        return jsonify({
+            'data': {
+                'season': season,
+                'available_weeks': available_weeks,
+                'count': len(available_weeks)
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting available weeks: {str(e)}")
+        return jsonify({'error': 'Failed to get available weeks'}), 500
 
 
 @bp.route('/season/<int:roster_id>', methods=['GET'])

@@ -123,7 +123,7 @@ class SeasonService:
     def validate_week(self, season, week):
         """
         Check if a given week has valid game data.
-        Returns: bool
+        Returns: bool - True if games exist and are not null, False otherwise
         """
         try:
             response = requests.get(
@@ -132,8 +132,47 @@ class SeasonService:
                 timeout=5
             )
             response.raise_for_status()
-            games = response.json().get('data', [])
-            return len(games) > 0
+            data = response.json().get('data')
+
+            # Check for null or empty data
+            if data is None:
+                logger.info(f"Schedule not available: {season} Week {week} (API returned null)")
+                return False
+
+            games = data if isinstance(data, list) else []
+            has_games = len(games) > 0
+
+            if not has_games:
+                logger.info(f"Schedule not available: {season} Week {week} (no games found)")
+
+            return has_games
         except Exception as e:
             logger.error(f"Error validating week {season} Week {week}: {e}")
             return False
+
+    def get_available_weeks(self, season, start_week=1):
+        """
+        Get list of weeks that have schedule data available.
+
+        Args:
+            season: Season year
+            start_week: Week to start checking from (default: 1)
+
+        Returns:
+            List of week numbers with available schedule data
+        """
+        available_weeks = []
+        max_week = 18
+
+        logger.info(f"Checking schedule availability for {season} starting at Week {start_week}")
+
+        for week in range(start_week, max_week + 1):
+            if self.validate_week(season, week):
+                available_weeks.append(week)
+            else:
+                # Stop checking after first unavailable week (future weeks likely unavailable too)
+                logger.info(f"Stopping at Week {week} - schedule not available yet")
+                break
+
+        logger.info(f"Found {len(available_weeks)} weeks with available schedule data")
+        return available_weeks
