@@ -573,7 +573,7 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
             parts = []
             if def_coordinator and def_coordinator != 'Unknown':
                 parts.append(f"DC: {def_coordinator}")
-            if key_defenders:
+            if key_defenders and len(key_defenders) > 0:
                 defenders_str = ', '.join(key_defenders[:2])  # Top 2
                 parts.append(f"Key defenders: {defenders_str}")
             if parts:
