@@ -45,6 +45,7 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False):
 
         # Auto-detect RETURNING clause
         is_returning = 'RETURNING' in query.upper()
+        is_modification = any(keyword in query.upper() for keyword in ['INSERT', 'UPDATE', 'DELETE'])
 
         if fetch_one or (is_returning and 'INSERT' in query.upper()):
             result = cursor.fetchone()
@@ -53,10 +54,10 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False):
         elif fetch_all or 'SELECT' in query.upper() or is_returning:
             result = cursor.fetchall()
         else:
-            conn.commit()
             result = None
 
-        if result is None or (isinstance(result, list) and len(result) == 0):
+        # Commit if this was a modification query (INSERT, UPDATE, DELETE)
+        if is_modification:
             conn.commit()
 
         return result
