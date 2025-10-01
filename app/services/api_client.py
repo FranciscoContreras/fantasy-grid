@@ -614,21 +614,32 @@ class FantasyAPIClient:
             response.raise_for_status()
             stats_data = response.json()
 
-            # Extract stats from response (handle both 'data' wrapper and direct response)
-            stats = stats_data.get('data', stats_data)
+            # Extract stats from response (should have 'data' wrapper)
+            stats = stats_data.get('data', {})
 
-            # Extract defensive metrics with flexible key matching
+            if not stats:
+                logger.warning(f"No data in defensive stats response for {team_abbr}")
+                return None
+
+            # Extract defensive metrics using exact field names from API spec
             defensive_stats = {
-                'points_allowed_per_game': stats.get('points_allowed_per_game') or stats.get('pointsAllowedPerGame', 0),
-                'yards_allowed_per_game': stats.get('yards_allowed_per_game') or stats.get('yardsAllowedPerGame', 0),
-                'pass_yards_allowed_per_game': stats.get('pass_yards_allowed_per_game') or stats.get('passYardsAllowedPerGame', 0),
-                'rush_yards_allowed_per_game': stats.get('rush_yards_allowed_per_game') or stats.get('rushYardsAllowedPerGame', 0),
+                'points_allowed_per_game': stats.get('points_allowed_per_game', 0),
+                'yards_allowed_per_game': stats.get('yards_allowed_per_game', 0),
+                'pass_yards_allowed_per_game': stats.get('pass_yards_allowed_per_game', 0),
+                'rush_yards_allowed_per_game': stats.get('rush_yards_allowed_per_game', 0),
                 'sacks': stats.get('sacks', 0),
                 'interceptions': stats.get('interceptions', 0),
-                'forced_fumbles': stats.get('forced_fumbles') or stats.get('forcedFumbles', 0),
-                'defensive_rank': stats.get('defensive_rank') or stats.get('defensiveRank', 16),
-                'pass_defense_rank': stats.get('pass_defense_rank') or stats.get('passDefenseRank', 16),
-                'rush_defense_rank': stats.get('rush_defense_rank') or stats.get('rushDefenseRank', 16)
+                'forced_fumbles': stats.get('forced_fumbles', 0),
+                'defensive_rank': stats.get('defensive_rank', 16),
+                'pass_defense_rank': stats.get('pass_defense_rank', 16),
+                'rush_defense_rank': stats.get('rush_defense_rank', 16),
+                # Additional fields from API
+                'points_allowed': stats.get('points_allowed', 0),
+                'yards_allowed': stats.get('yards_allowed', 0),
+                'interception_touchdowns': stats.get('interception_touchdowns', 0),
+                'fumble_recoveries': stats.get('fumble_recoveries', 0),
+                'third_down_percentage': stats.get('third_down_percentage', 0),
+                'red_zone_percentage': stats.get('red_zone_percentage', 0)
             }
 
             logger.info(f"Fetched defensive stats for {team_abbr} from API: {defensive_stats}")
