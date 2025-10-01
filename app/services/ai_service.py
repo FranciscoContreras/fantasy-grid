@@ -109,7 +109,7 @@ class AIService:
         else:
             return "Moderate matchup profile warrants careful consideration of recent form and injury status."
 
-    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None):
+    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None, historical_performance=None):
         """
         Generate reasoning for a player's matchup analysis
 
@@ -118,23 +118,25 @@ class AIService:
             position: Player's position
             matchup_score: Numerical matchup score (0-100)
             injury_status: Current injury status
-            opponent_defense: Optional opponent defense info
+            opponent_defense: Optional opponent defense team abbreviation
             weather: Optional weather context string
+            historical_performance: Optional historical stats vs this opponent
 
         Returns:
-            AI-generated reasoning text
+            AI-generated reasoning text (concise snippet)
         """
         # Build context prompt
         matchup_quality = "favorable" if matchup_score > 70 else "difficult" if matchup_score < 50 else "average"
         injury_context = f" They are dealing with {injury_status} status." if injury_status != "HEALTHY" else ""
         defense_context = f" facing the {opponent_defense} defense" if opponent_defense else ""
         weather_context = f"\n- Weather conditions: {weather}" if weather else ""
+        historical_context = f"\n- Historical performance: {historical_performance}" if historical_performance else ""
 
         prompt = f"""Analyze {player_name} ({position}){defense_context}:
 - Matchup score: {matchup_score}/100 ({matchup_quality})
-- Injury status: {injury_status}{injury_context}{weather_context}
+- Injury status: {injury_status}{injury_context}{weather_context}{historical_context}
 
-Provide a brief 2-3 sentence recommendation focusing on start/sit decision."""
+Provide a brief 1-2 sentence snippet explaining WHY to start or sit this player. Focus on the most important factor (historical performance, matchup, weather, or injury)."""
 
         # Use free tier for individual player analysis
         return self.generate_analysis(prompt, use_premium=False)

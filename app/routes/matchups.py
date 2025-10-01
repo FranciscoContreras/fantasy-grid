@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.database import execute_query
 from app.services.ai_service import AIService
 from app.services.weather_service import WeatherService
+from app.services.api_client import FantasyAPIClient
 import logging
 from datetime import datetime
 import random
@@ -9,9 +10,10 @@ import random
 bp = Blueprint('matchups', __name__, url_prefix='/api/matchups')
 logger = logging.getLogger(__name__)
 
-# Initialize AI service and weather service
+# Initialize services
 ai_service = AIService()
 weather_service = WeatherService()
+api_client = FantasyAPIClient()
 
 
 @bp.route('', methods=['POST'])
@@ -175,13 +177,26 @@ def analyze_matchup(matchup_id):
         return jsonify({'error': f'Failed to analyze matchup: {str(e)}'}), 500
 
 
-def _analyze_player_for_matchup(player, is_user_player, week):
+def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
     """Analyze a single player for the matchup"""
+    player_team = player.get('team')
+
+    # Get real opponent defense from NFL schedule
+    opponent_team = api_client.get_team_opponent(player_team, season, week)
+
+    # Get historical performance vs this opponent
+    historical_stats = None
+    if opponent_team and player.get('player_id'):
+        historical_stats = api_client.get_player_stats_vs_team(
+            player.get('player_id'),
+            opponent_team
+        )
+
     # Calculate matchup score based on position and opponent
-    matchup_score = _calculate_matchup_score(player['position'], player.get('team'))
+    matchup_score = _calculate_matchup_score(player['position'], player_team, opponent_team)
 
     # Get weather data for player's team location
-    weather_data = weather_service.get_game_weather(player.get('team'))
+    weather_data = weather_service.get_game_weather(player_team)
 
     # Evaluate injury impact
     injury_impact = _evaluate_injury_impact(player.get('injury_status', 'HEALTHY'))
@@ -207,13 +222,15 @@ def _analyze_player_for_matchup(player, is_user_player, week):
     # Calculate confidence score
     confidence_score = _calculate_confidence(matchup_score, injury_impact)
 
-    # Generate reasoning
+    # Generate reasoning with historical context
     reasoning = _generate_reasoning(
         player,
         matchup_score,
         injury_impact,
         recommendation,
-        weather_data
+        weather_data,
+        opponent_team,
+        historical_stats
     )
 
     # Prepare weather info for response
@@ -226,13 +243,21 @@ def _analyze_player_for_matchup(player, is_user_player, week):
             'impact': weather_data.get('impact')
         }
 
+    # Prepare historical stats for response
+    historical_info = None
+    if historical_stats:
+        historical_info = {
+            'games_played': historical_stats.get('games_played'),
+            'avg_fantasy_points': historical_stats.get('avg_fantasy_points')
+        }
+
     return {
         'player_id': player.get('player_id'),
         'player_name': player['player_name'],
         'position': player['position'],
         'team': player['team'],
         'is_user_player': is_user_player,
-        'opponent_team': 'N/A',  # Would get from schedule API
+        'opponent_team': opponent_team or 'N/A',
         'matchup_score': round(matchup_score, 2),
         'projected_points': round(projected_points, 2),
         'ai_grade': ai_grade,
@@ -241,13 +266,14 @@ def _analyze_player_for_matchup(player, is_user_player, week):
         'injury_impact': injury_impact,
         'confidence_score': round(confidence_score, 2),
         'reasoning': reasoning,
-        'weather': weather_info
+        'weather': weather_info,
+        'historical_vs_opponent': historical_info
     }
 
 
-def _calculate_matchup_score(position, team):
+def _calculate_matchup_score(position, team, opponent_team=None):
     """Calculate matchup difficulty score (0-100)"""
-    # Base score by position (simplified - would use real opponent defense data)
+    # Base score by position
     base_scores = {
         'QB': 75,
         'RB': 70,
@@ -258,8 +284,26 @@ def _calculate_matchup_score(position, team):
     }
 
     base = base_scores.get(position, 70)
-    # Add some variance (+/- 15 points)
-    variance = random.uniform(-15, 15)
+
+    # If we have opponent data, adjust based on known tough/easy defenses
+    # This is simplified - in production would fetch real defensive rankings
+    if opponent_team:
+        # Tough defenses against pass (lower score = tougher matchup)
+        tough_vs_pass = ['SF', 'BAL', 'BUF', 'DAL', 'PIT']
+        # Tough defenses against run
+        tough_vs_run = ['SF', 'BAL', 'CLE', 'NYJ']
+        # Weak defenses (favorable matchups)
+        weak_defenses = ['ARI', 'CAR', 'DEN', 'LV', 'WAS']
+
+        if position in ['QB', 'WR', 'TE'] and opponent_team in tough_vs_pass:
+            base -= 12
+        elif position == 'RB' and opponent_team in tough_vs_run:
+            base -= 12
+        elif opponent_team in weak_defenses:
+            base += 12
+
+    # Add some variance (+/- 8 points) for variability
+    variance = random.uniform(-8, 8)
 
     return max(0, min(100, base + variance))
 
@@ -373,7 +417,7 @@ def _calculate_confidence(matchup_score, injury_impact):
     return max(0, min(100, base_confidence))
 
 
-def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None):
+def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None):
     """Generate AI-powered reasoning using Groq (free tier)"""
     try:
         # Build weather context for AI
@@ -381,47 +425,58 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
         if weather_data and not weather_data.get('dome'):
             weather_context = f"{weather_data.get('condition')} ({weather_data.get('temperature')}°F, {weather_data.get('wind_speed')} mph winds)"
 
+        # Build historical context
+        historical_context = None
+        if historical_stats and historical_stats.get('games_played', 0) > 0:
+            historical_context = f"Averages {historical_stats['avg_fantasy_points']} pts vs {opponent_team} in {historical_stats['games_played']} games"
+
         # Use AI service for intelligent reasoning
         reasoning = ai_service.generate_matchup_reasoning(
             player_name=player['player_name'],
             position=player['position'],
             matchup_score=matchup_score,
             injury_status=player.get('injury_status', 'HEALTHY'),
-            opponent_defense=None,  # TODO: Add real opponent defense data
-            weather=weather_context
+            opponent_defense=opponent_team,
+            weather=weather_context,
+            historical_performance=historical_context
         )
         return reasoning
     except Exception as e:
         logger.error(f"AI reasoning failed, using fallback: {e}")
-        # Fallback to rule-based
+        # Fallback to rule-based concise snippet
         reasoning_parts = []
 
-        # Matchup analysis
-        if matchup_score >= 75:
-            reasoning_parts.append(f"{player['player_name']} has a favorable matchup (score: {matchup_score:.1f})")
-        elif matchup_score >= 50:
-            reasoning_parts.append(f"{player['player_name']} has an average matchup (score: {matchup_score:.1f})")
+        # START recommendation - focus on why to start them
+        if recommendation == 'START':
+            if historical_stats and historical_stats.get('avg_fantasy_points', 0) > 12:
+                reasoning_parts.append(f"Strong history vs {opponent_team} ({historical_stats['avg_fantasy_points']} pts/game)")
+            elif matchup_score >= 75:
+                reasoning_parts.append(f"Favorable matchup vs {opponent_team if opponent_team else 'opponent'}")
+            else:
+                reasoning_parts.append(f"Solid play with {player['position']} upside")
+
+            if weather_data and not weather_data.get('dome'):
+                if player['position'] == 'RB' and ('rain' in weather_data.get('condition', '').lower() or 'snow' in weather_data.get('condition', '').lower()):
+                    reasoning_parts.append("Weather favors run game")
+
+        # SIT recommendation - focus on why to bench them
+        elif recommendation == 'SIT':
+            if 'Cannot play' in injury_impact or 'unlikely to play' in injury_impact:
+                return f"Do not start - {injury_impact.lower()}"
+            elif matchup_score < 50:
+                reasoning_parts.append(f"Tough matchup vs {opponent_team if opponent_team else 'opponent'} defense")
+            if historical_stats and historical_stats.get('avg_fantasy_points', 0) < 8:
+                reasoning_parts.append(f"Struggles vs {opponent_team} historically")
+
+        # CONSIDER recommendation - provide key factors
         else:
-            reasoning_parts.append(f"{player['player_name']} faces a tough matchup (score: {matchup_score:.1f})")
+            reasoning_parts.append(f"Monitor status vs {opponent_team if opponent_team else 'opponent'}")
+            if 'game-time decision' in injury_impact.lower():
+                reasoning_parts.append("Check injury report before kickoff")
+            if historical_stats:
+                reasoning_parts.append(f"Averages {historical_stats['avg_fantasy_points']} pts vs this defense")
 
-        # Weather consideration
-        if weather_data and not weather_data.get('dome'):
-            if weather_data.get('impact') != 'No significant impact':
-                reasoning_parts.append(f"Weather: {weather_data.get('impact')}")
-
-        # Injury consideration
-        if 'No impact' not in injury_impact:
-            reasoning_parts.append(f"Injury concern: {injury_impact}")
-
-        # Final recommendation
-        rec_text = {
-            'START': 'Strong start candidate',
-            'CONSIDER': 'Monitor closely before game time',
-            'SIT': 'Consider benching or finding alternative'
-        }
-        reasoning_parts.append(rec_text.get(recommendation, ''))
-
-        return '. '.join(reasoning_parts) + '.'
+        return '. '.join(reasoning_parts) + '.' if reasoning_parts else f"{recommendation} - Standard matchup expected."
 
 
 def _save_matchup_analysis(matchup_id, analysis, is_user_player):

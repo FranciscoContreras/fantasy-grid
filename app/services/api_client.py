@@ -6,6 +6,7 @@ class FantasyAPIClient:
         self.base_url = os.getenv('API_BASE_URL', 'https://nfl.wearemachina.com/api/v1')
         self.api_key = os.getenv('API_KEY')
         self._teams_cache = None
+        self._schedule_cache = {}
 
     def _get_headers(self, include_api_key=False):
         headers = {'Content-Type': 'application/json'}
@@ -311,3 +312,95 @@ class FantasyAPIClient:
         )
         response.raise_for_status()
         return response.json()
+
+    def get_weekly_schedule(self, season, week):
+        """
+        Get NFL schedule for a specific week.
+        Returns matchups showing which teams are playing each other.
+        """
+        cache_key = f"{season}_{week}"
+        if cache_key in self._schedule_cache:
+            return self._schedule_cache[cache_key]
+
+        try:
+            response = requests.get(
+                f'{self.base_url}/games',
+                params={'season': season, 'week': week, 'limit': 100},
+                headers=self._get_headers()
+            )
+            response.raise_for_status()
+            games = response.json().get('data', [])
+            self._schedule_cache[cache_key] = games
+            return games
+        except Exception as e:
+            print(f"Failed to fetch schedule: {e}")
+            return []
+
+    def get_team_opponent(self, team_abbr, season, week):
+        """
+        Get the opponent team for a given team in a specific week.
+        Returns opponent team abbreviation or None.
+        """
+        games = self.get_weekly_schedule(season, week)
+        teams_map = self._get_teams()
+
+        # Reverse map to get team_id from abbreviation
+        abbr_to_id = {abbr: tid for tid, abbr in teams_map.items()}
+        team_id = abbr_to_id.get(team_abbr)
+
+        if not team_id:
+            return None
+
+        for game in games:
+            home_team_id = game.get('home_team_id')
+            away_team_id = game.get('away_team_id')
+
+            if home_team_id == team_id:
+                return teams_map.get(away_team_id)
+            elif away_team_id == team_id:
+                return teams_map.get(home_team_id)
+
+        return None
+
+    def get_player_stats_vs_team(self, player_id, opponent_team_abbr):
+        """
+        Get historical stats for a player against a specific team.
+        Returns summary of performance in past matchups.
+        """
+        try:
+            # Fetch player's game logs
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/games',
+                params={'limit': 100},  # Last 100 games
+                headers=self._get_headers()
+            )
+            response.raise_for_status()
+            games = response.json().get('data', [])
+
+            # Get team_id for opponent
+            teams_map = self._get_teams()
+            abbr_to_id = {abbr: tid for tid, abbr in teams_map.items()}
+            opponent_team_id = abbr_to_id.get(opponent_team_abbr)
+
+            if not opponent_team_id:
+                return None
+
+            # Filter games against this opponent
+            vs_games = [g for g in games if g.get('opponent_team_id') == opponent_team_id]
+
+            if not vs_games:
+                return None
+
+            # Calculate averages
+            total_points = sum(g.get('fantasy_points', 0) for g in vs_games)
+            avg_points = total_points / len(vs_games) if vs_games else 0
+
+            return {
+                'games_played': len(vs_games),
+                'avg_fantasy_points': round(avg_points, 1),
+                'total_fantasy_points': round(total_points, 1),
+                'recent_games': vs_games[:3]  # Last 3 games vs this team
+            }
+        except Exception as e:
+            print(f"Failed to fetch player vs team stats: {e}")
+            return None
