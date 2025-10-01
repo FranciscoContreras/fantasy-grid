@@ -42,14 +42,14 @@ function App() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Fantasy Grid</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             AI-powered fantasy football player analysis and recommendations
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Left Column - Search & Input */}
           <div className="space-y-6">
             {/* Player Search */}

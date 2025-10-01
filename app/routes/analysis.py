@@ -1,6 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
+import csv
+import io
+import logging
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 
@@ -204,3 +209,78 @@ def _score_to_strength(score):
         return 'POOR'
     else:
         return 'VERY DIFFICULT'
+
+
+@bp.route('/export/csv', methods=['POST'])
+def export_comparison_csv():
+    """
+    Export player comparison data to CSV
+    Request body:
+        {
+            "player_ids": ["id1", "id2", "id3"],
+            "opponent_ids": ["opp1", "opp2", "opp3"]  // optional
+        }
+    """
+    data = request.json
+    player_ids = data.get('player_ids', [])
+    opponent_ids = data.get('opponent_ids', [])
+
+    if not player_ids:
+        return jsonify({'error': 'player_ids required'}), 400
+
+    try:
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        headers = ['Player Name', 'Position', 'Team', 'Opponent', 'Matchup Score', 'Recommendation']
+        writer.writerow(headers)
+
+        # Get player data and write rows
+        for i, player_id in enumerate(player_ids):
+            try:
+                player = api_client.get_player_data(player_id)
+                player_data = player.get('data', player) if isinstance(player, dict) and 'data' in player else player
+
+                row = [
+                    player_data.get('name', 'Unknown'),
+                    player_data.get('position', 'N/A'),
+                    player_data.get('team', {}).get('abbreviation', 'N/A') if isinstance(player_data.get('team'), dict) else 'N/A',
+                ]
+
+                # Add opponent and matchup data if available
+                if opponent_ids and i < len(opponent_ids):
+                    opponent_id = opponent_ids[i]
+                    try:
+                        defense_stats = api_client.get_defense_stats(opponent_id)
+                        matchup_score = analyzer.calculate_matchup_score(player_data, defense_stats)
+                        row.extend([
+                            opponent_id,
+                            f"{matchup_score:.1f}",
+                            _score_to_strength(matchup_score)
+                        ])
+                    except:
+                        row.extend(['N/A', 'N/A', 'N/A'])
+                else:
+                    row.extend(['N/A', 'N/A', 'N/A'])
+
+                writer.writerow(row)
+
+            except Exception as e:
+                logger.error(f"Error processing player {player_id}: {e}")
+                continue
+
+        # Prepare response
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': 'attachment; filename=player_comparison.csv'
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"CSV export failed: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
