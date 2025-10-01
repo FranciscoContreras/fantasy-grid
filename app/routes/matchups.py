@@ -418,13 +418,16 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
     """
     Analyze player using comprehensive data from matchup_data_service.
     This replaces the old _analyze_player_for_matchup by using pre-fetched data.
+    Falls back to simulated analysis if no opponent data is available.
     """
     player = player_data.get('player')
     opponent_team = player_data.get('opponent')
 
-    # Check if player has a game this week
-    if not player_data.get('has_game', True):
-        # Player on bye week
+    # If no opponent found but not explicitly marked as bye week,
+    # treat as a regular game with unknown opponent (generate analysis anyway)
+    has_game = player_data.get('has_game', True)
+    if not has_game and opponent_team is None:
+        # True bye week - no game scheduled
         return {
             'player_id': player.get('player_id'),
             'player_name': player.get('player_name'),
@@ -444,13 +447,13 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
 
     player_position = player.get('position')
 
-    # Extract data from comprehensive fetch
+    # Extract data from comprehensive fetch (may be None/empty)
     def_coordinator = player_data.get('defensive_coordinator')
     key_defenders = player_data.get('key_defenders', [])
     historical_stats = player_data.get('historical_performance')
     injury_status = player_data.get('injury_status', 'HEALTHY')
 
-    # Calculate matchup score
+    # Calculate matchup score (works even without opponent)
     matchup_score = _calculate_matchup_score(player_position, player.get('team'), opponent_team)
 
     # Get weather data
@@ -487,7 +490,7 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         injury_impact,
         recommendation,
         weather_data,
-        opponent_team,
+        opponent_team if opponent_team else 'Unknown',
         historical_stats,
         def_coordinator,
         key_defenders
@@ -499,7 +502,7 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         'position': player.get('position'),
         'team': player.get('team'),
         'is_user_player': is_user_player,
-        'opponent_team': opponent_team or 'N/A',
+        'opponent_team': opponent_team or 'TBD',
         'matchup_score': round(matchup_score, 2),
         'projected_points': round(projected_points, 2),
         'ai_grade': ai_grade,

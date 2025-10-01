@@ -44,7 +44,7 @@ class MatchupDataService:
                 mappings.append({
                     'player': player,
                     'opponent_team': None,
-                    'has_game': False,
+                    'has_game': True,  # Still allow analysis
                     'error': 'No team assigned'
                 })
                 continue
@@ -60,14 +60,15 @@ class MatchupDataService:
                 })
                 logger.debug(f"{player.get('player_name')} ({player_team}) vs {opponent}")
             else:
-                # No game this week (bye week or invalid week)
+                # No opponent data - could be missing schedule data or actual bye
+                # Default to has_game=True to allow analysis, just without opponent info
                 mappings.append({
                     'player': player,
                     'opponent_team': None,
-                    'has_game': False,
-                    'error': 'Bye week or no game data'
+                    'has_game': True,  # Changed from False - assume game exists
+                    'error': 'Opponent unknown - schedule data unavailable'
                 })
-                logger.info(f"{player.get('player_name')} ({player_team}) has no game in Week {week}")
+                logger.info(f"{player.get('player_name')} ({player_team}) opponent unknown for Week {week}")
 
         return mappings
 
