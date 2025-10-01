@@ -579,7 +579,7 @@ class FantasyAPIClient:
 
     def get_team_defensive_rankings(self, team_abbr, season=2024):
         """
-        Get comprehensive defensive stats and rankings for a team using AI Garden.
+        Get comprehensive defensive stats and rankings for a team.
 
         Args:
             team_abbr: Team abbreviation
@@ -592,34 +592,30 @@ class FantasyAPIClient:
         logger = logging.getLogger(__name__)
 
         try:
-            # Use AI Garden to query defensive stats
-            query = f"Get defensive statistics for {team_abbr} in {season} season including points allowed, yards allowed, pass defense ranking, and rush defense ranking"
+            # First, get team ID from abbreviation
+            teams = self._get_teams()
+            team_id = None
+            for tid, abbr in teams.items():
+                if abbr == team_abbr:
+                    team_id = tid
+                    break
 
-            response = requests.post(
-                f'{self.base_url}/garden/query',
-                json={'query': query},
+            if not team_id:
+                logger.warning(f"Team ID not found for {team_abbr}")
+                return None
+
+            # Try new defensive stats endpoint
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/defense/stats',
+                params={'season': season},
                 headers=self._get_headers(),
                 timeout=15
             )
             response.raise_for_status()
-            garden_response = response.json()
+            stats_data = response.json()
 
-            # Extract stats from AI Garden response
-            # AI Garden may return data in various formats, try to parse intelligently
-            logger.debug(f"AI Garden response for {team_abbr}: {garden_response}")
-
-            stats = garden_response.get('data', {})
-            answer = garden_response.get('answer', '')
-
-            # If data is empty but answer has content, parse the text response
-            if not stats and answer:
-                logger.info(f"AI Garden returned text answer for {team_abbr}: {answer[:200]}...")
-                # Return None to trigger fallback - AI Garden text responses need parsing
-                return None
-
-            if not stats:
-                logger.warning(f"No stats data from AI Garden for {team_abbr}")
-                return None
+            # Extract stats from response (handle both 'data' wrapper and direct response)
+            stats = stats_data.get('data', stats_data)
 
             # Extract defensive metrics with flexible key matching
             defensive_stats = {
@@ -635,24 +631,18 @@ class FantasyAPIClient:
                 'rush_defense_rank': stats.get('rush_defense_rank') or stats.get('rushDefenseRank', 16)
             }
 
-            logger.info(f"Fetched defensive stats for {team_abbr} from AI Garden: {defensive_stats}")
+            logger.info(f"Fetched defensive stats for {team_abbr} from API: {defensive_stats}")
             return defensive_stats
 
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"Defensive stats endpoint not found for {team_abbr} (404)")
+            else:
+                logger.error(f"HTTP error fetching defensive rankings for {team_abbr}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to fetch defensive rankings for {team_abbr}: {e}")
-            # Return fallback data with reasonable defaults
-            return {
-                'points_allowed_per_game': 22.0,
-                'yards_allowed_per_game': 340.0,
-                'pass_yards_allowed_per_game': 230.0,
-                'rush_yards_allowed_per_game': 110.0,
-                'sacks': 20,
-                'interceptions': 10,
-                'forced_fumbles': 8,
-                'defensive_rank': 16,
-                'pass_defense_rank': 16,
-                'rush_defense_rank': 16
-            }
+            return None
 
     def get_player_injury_history(self, player_id):
         """
