@@ -236,7 +236,8 @@ function PlayerAnalysisCard({ analysis }: { analysis: MatchupAnalysisType }) {
   const recColor = RECOMMENDATION_COLORS[analysis.recommendation] || 'bg-gray-500';
 
   // Check if analysis is still generating
-  const isAnalyzing = (analysis as any).analysis_status === 'analyzing';
+  const isAnalyzing = (analysis as any).analysis_status === 'analyzing' ||
+                      analysis.reasoning === 'Generating AI analysis...';
   const isFailed = (analysis as any).analysis_status === 'failed';
 
   return (
