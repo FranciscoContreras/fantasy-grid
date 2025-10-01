@@ -171,14 +171,21 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
       )}
 
       {/* Loading Animation */}
-      {analyzing && matchup.analysis && (
-        <AnalysisLoadingAnimation
-          totalPlayers={matchup.analysis.length}
-          completedPlayers={matchup.analysis.filter((a) =>
-            (a as any).analysis_status === 'completed' || (a as any).analysis_status === 'failed'
-          ).length}
-        />
-      )}
+      {matchup.analysis && matchup.analysis.length > 0 && (() => {
+        const hasAnalyzing = matchup.analysis.some((a) =>
+          (a as any).analysis_status === 'analyzing' || a.reasoning === 'Generating AI analysis...'
+        );
+        const completed = matchup.analysis.filter((a) =>
+          (a as any).analysis_status === 'completed' || (a as any).analysis_status === 'failed'
+        ).length;
+
+        return (analyzing || hasAnalyzing) ? (
+          <AnalysisLoadingAnimation
+            totalPlayers={matchup.analysis.length}
+            completedPlayers={completed}
+          />
+        ) : null;
+      })()}
 
       {matchup.analyzed && matchup.analysis && matchup.analysis.length > 0 && (
         <>
