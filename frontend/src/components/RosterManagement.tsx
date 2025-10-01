@@ -6,6 +6,7 @@ import {
   deleteRoster,
   createMatchup,
   getMatchups,
+  getCurrentWeek,
 } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -39,7 +40,20 @@ export function RosterManagement() {
   useEffect(() => {
     loadRosters();
     loadMatchups();
+    loadCurrentWeek();
   }, []);
+
+  const loadCurrentWeek = async () => {
+    try {
+      const response = await getCurrentWeek();
+      if (response.data) {
+        setMatchupWeek(response.data.week);
+        setMatchupSeason(response.data.season);
+      }
+    } catch (err) {
+      console.error('Failed to load current week:', err);
+    }
+  };
 
   const loadRosters = async () => {
     try {

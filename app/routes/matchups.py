@@ -65,6 +65,22 @@ def create_matchup():
         return jsonify({'error': 'Failed to create matchup'}), 500
 
 
+@bp.route('/current-week', methods=['GET'])
+def get_current_week():
+    """Get the current NFL season and week"""
+    try:
+        season, week = season_service.get_current_season_and_week()
+        return jsonify({
+            'data': {
+                'season': season,
+                'week': week
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting current week: {str(e)}")
+        return jsonify({'error': 'Failed to get current week'}), 500
+
+
 @bp.route('/season/<int:roster_id>', methods=['GET'])
 def get_season_matchups(roster_id):
     """Get comprehensive season-long matchup analysis for a roster"""

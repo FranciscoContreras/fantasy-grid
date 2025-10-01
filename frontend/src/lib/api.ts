@@ -121,4 +121,9 @@ export const getSeasonMatchups = async (rosterId: number) => {
   return response.data;
 };
 
+export const getCurrentWeek = async () => {
+  const response = await api.get('/matchups/current-week');
+  return response.data;
+};
+
 export default api;
