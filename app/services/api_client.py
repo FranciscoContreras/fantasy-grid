@@ -318,6 +318,9 @@ class FantasyAPIClient:
         Get NFL schedule for a specific week.
         Returns matchups showing which teams are playing each other.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         cache_key = f"{season}_{week}"
         if cache_key in self._schedule_cache:
             return self._schedule_cache[cache_key]
@@ -330,10 +333,11 @@ class FantasyAPIClient:
             )
             response.raise_for_status()
             games = response.json().get('data', [])
+            logger.info(f"Fetched {len(games)} games for {season} Week {week}")
             self._schedule_cache[cache_key] = games
             return games
         except Exception as e:
-            print(f"Failed to fetch schedule: {e}")
+            logger.error(f"Failed to fetch schedule for {season} Week {week}: {e}")
             return []
 
     def get_team_opponent(self, team_abbr, season, week):
