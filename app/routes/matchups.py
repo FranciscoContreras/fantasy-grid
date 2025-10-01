@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.database import execute_query
-from app.services.player_analysis import analyze_player_matchup
 import logging
 from datetime import datetime
+import random
 
 bp = Blueprint('matchups', __name__, url_prefix='/api/matchups')
 logger = logging.getLogger(__name__)
@@ -225,7 +225,6 @@ def _calculate_matchup_score(position, team):
         'DEF': 70
     }
 
-    import random
     base = base_scores.get(position, 70)
     # Add some variance (+/- 15 points)
     variance = random.uniform(-15, 15)
