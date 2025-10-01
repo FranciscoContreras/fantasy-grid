@@ -184,7 +184,8 @@ def get_matchup(matchup_id):
         analysis_query = """
             SELECT id, player_id, player_name, position, is_user_player,
                    opponent_team, matchup_score, projected_points, ai_grade,
-                   recommendation, injury_impact, confidence_score, reasoning, analyzed_at
+                   recommendation, injury_impact, confidence_score, reasoning, analyzed_at,
+                   analysis_status
             FROM matchup_analysis
             WHERE matchup_id = %s
             ORDER BY is_user_player DESC, matchup_score DESC
@@ -212,7 +213,13 @@ def get_matchup(matchup_id):
 
 @bp.route('/<int:matchup_id>/analyze', methods=['POST'])
 def analyze_matchup(matchup_id):
-    """Analyze a matchup and generate start/sit recommendations using comprehensive data layer"""
+    """
+    Analyze a matchup and generate start/sit recommendations.
+    Phase 1: Returns immediately with basic analysis (no Grok)
+    Phase 2: Triggers background Grok analysis that updates progressively
+    """
+    import threading
+
     try:
         # Get matchup details
         matchup_query = """
@@ -228,7 +235,7 @@ def analyze_matchup(matchup_id):
         matchup_data = matchup[0]
         week = matchup_data.get('week')
         season = matchup_data.get('season', 2024)
-        logger.info(f"Analyzing matchup {matchup_id}: Week {week}, Season {season}")
+        logger.info(f"Starting analysis for matchup {matchup_id}: Week {week}, Season {season}")
 
         # Get user roster players
         user_players_query = """
@@ -242,7 +249,7 @@ def analyze_matchup(matchup_id):
             user_players = []
         logger.info(f"Found {len(user_players)} user players to analyze")
 
-        # Use new data layer to prepare comprehensive analysis data
+        # Prepare comprehensive analysis data (fetch all opponent data once)
         analysis_data = matchup_data_service.prepare_bulk_analysis_data(
             matchup_data['user_roster_id'],
             user_players,
@@ -254,32 +261,28 @@ def analyze_matchup(matchup_id):
         delete_query = "DELETE FROM matchup_analysis WHERE matchup_id = %s"
         execute_query(delete_query, (matchup_id,))
 
-        analysis_results = []
-
-        # Analyze each player with comprehensive data
+        # Phase 1: Generate BASIC analysis immediately (no Grok calls yet)
+        basic_results = []
         for player_data in analysis_data:
             try:
                 player = player_data.get('player')
-                logger.info(f"Analyzing {player.get('player_name')} vs {player_data.get('opponent')}")
 
-                # Use comprehensive data for analysis
-                analysis = _analyze_player_with_data(
+                # Generate basic analysis without Grok reasoning
+                basic_analysis = _generate_basic_analysis(
                     player_data,
                     is_user_player=True,
                     week=week,
                     season=season
                 )
-                analysis_results.append(analysis)
+                basic_results.append(basic_analysis)
 
-                # Save to database
-                _save_matchup_analysis(matchup_id, analysis, is_user_player=True)
+                # Save to database with status='analyzing'
+                _save_matchup_analysis(matchup_id, basic_analysis, is_user_player=True, status='analyzing')
+
             except Exception as e:
-                import traceback
-                logger.error(f"Error analyzing player {player.get('player_name')}: {str(e)}")
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                raise
+                logger.error(f"Error in basic analysis for {player.get('player_name')}: {str(e)}")
 
-        # Mark matchup as analyzed
+        # Mark matchup as analyzed (basic analysis complete)
         update_query = """
             UPDATE matchups
             SET analyzed = true, analyzed_at = CURRENT_TIMESTAMP
@@ -287,14 +290,62 @@ def analyze_matchup(matchup_id):
         """
         execute_query(update_query, (matchup_id,))
 
-        # Generate recommendations
-        recommendations = _generate_recommendations(user_players, analysis_results)
+        # Generate basic recommendations
+        recommendations = _generate_recommendations(user_players, basic_results)
 
+        # Phase 2: Start background thread for Grok analysis
+        def generate_grok_analyses_async():
+            """Background task to generate Grok analyses one by one"""
+            try:
+                logger.info(f"Starting background Grok analysis for matchup {matchup_id}")
+                for player_data in analysis_data:
+                    try:
+                        player = player_data.get('player')
+                        player_name = player.get('player_name')
+
+                        logger.info(f"Generating Grok analysis for {player_name}")
+
+                        # Generate full analysis with Grok
+                        full_analysis = _analyze_player_with_data(
+                            player_data,
+                            is_user_player=True,
+                            week=week,
+                            season=season
+                        )
+
+                        # Update database with completed analysis
+                        _update_matchup_analysis_reasoning(
+                            matchup_id,
+                            player.get('player_id'),
+                            player_name,
+                            full_analysis.get('reasoning'),
+                            status='completed'
+                        )
+
+                        logger.info(f"Completed Grok analysis for {player_name}")
+
+                    except Exception as e:
+                        logger.error(f"Error in Grok analysis for {player.get('player_name')}: {str(e)}")
+                        # Mark as failed but continue with others
+                        _update_analysis_status(matchup_id, player.get('player_id'), player.get('player_name'), 'failed')
+
+                logger.info(f"Background Grok analysis completed for matchup {matchup_id}")
+            except Exception as e:
+                logger.error(f"Fatal error in background Grok analysis: {str(e)}")
+
+        # Start background thread
+        thread = threading.Thread(target=generate_grok_analyses_async)
+        thread.daemon = True
+        thread.start()
+
+        # Return immediately with basic analysis
         return jsonify({
             'data': {
                 'matchup_id': matchup_id,
-                'analysis': analysis_results,
-                'recommendations': recommendations
+                'analysis': basic_results,
+                'recommendations': recommendations,
+                'status': 'analyzing',
+                'message': 'Basic analysis complete. AI analysis generating in background...'
             }
         })
 
@@ -905,14 +956,76 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
         return '. '.join(reasoning_parts) + '.' if reasoning_parts else f"{recommendation} - Standard matchup expected."
 
 
-def _save_matchup_analysis(matchup_id, analysis, is_user_player):
-    """Save analysis to database"""
+def _generate_basic_analysis(player_data, is_user_player, week, season):
+    """
+    Generate basic analysis WITHOUT calling Grok AI.
+    This is fast and returns immediately.
+    """
+    player = player_data.get('player')
+    opponent_team = player_data.get('opponent')
+    player_id = player.get('player_id')
+    player_name = player.get('player_name')
+    player_position = player.get('position')
+
+    # Handle bye week
+    has_game = player_data.get('has_game', True)
+    if not has_game and opponent_team is None:
+        return {
+            'player_id': player_id,
+            'player_name': player_name,
+            'position': player_position,
+            'team': player.get('team'),
+            'is_user_player': is_user_player,
+            'opponent_team': 'BYE',
+            'matchup_score': 0,
+            'projected_points': 0,
+            'ai_grade': 'F',
+            'recommendation': 'SIT',
+            'injury_status': player.get('injury_status', 'HEALTHY'),
+            'injury_impact': 'Bye week - not playing',
+            'confidence_score': 100,
+            'reasoning': 'Analyzing...'
+        }
+
+    # Extract data
+    injury_status = player_data.get('injury_status', 'HEALTHY')
+    defensive_stats = player_data.get('defensive_stats')
+
+    # Calculate scores (fast, no AI)
+    matchup_score = _calculate_matchup_score(player_position, player.get('team'), opponent_team)
+    weather_data = weather_service.get_game_weather(player.get('team'))
+    injury_impact = _evaluate_injury_impact(injury_status)
+    projected_points = _calculate_projected_points(player_position, matchup_score, injury_impact, weather_data)
+    ai_grade = _assign_grade(matchup_score, injury_impact)
+    recommendation = _generate_recommendation(matchup_score, injury_impact, injury_status)
+    confidence_score = _calculate_confidence(matchup_score, injury_impact)
+
+    return {
+        'player_id': player_id,
+        'player_name': player_name,
+        'position': player_position,
+        'team': player.get('team'),
+        'is_user_player': is_user_player,
+        'opponent_team': opponent_team or 'TBD',
+        'matchup_score': round(matchup_score, 2),
+        'projected_points': round(projected_points, 2),
+        'ai_grade': ai_grade,
+        'recommendation': recommendation,
+        'injury_status': injury_status,
+        'injury_impact': injury_impact,
+        'confidence_score': round(confidence_score, 2),
+        'reasoning': 'Generating AI analysis...'
+    }
+
+
+def _save_matchup_analysis(matchup_id, analysis, is_user_player, status='completed'):
+    """Save analysis to database with status"""
     query = """
         INSERT INTO matchup_analysis
         (matchup_id, player_id, player_name, position, is_user_player, opponent_team,
          matchup_score, projected_points, ai_grade, recommendation, injury_impact,
-         confidence_score, reasoning)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+         confidence_score, reasoning, analysis_status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     execute_query(query, (
         matchup_id,
@@ -927,8 +1040,31 @@ def _save_matchup_analysis(matchup_id, analysis, is_user_player):
         analysis['recommendation'],
         analysis['injury_impact'],
         analysis['confidence_score'],
-        analysis['reasoning']
+        analysis['reasoning'],
+        status
     ))
+
+
+def _update_matchup_analysis_reasoning(matchup_id, player_id, player_name, reasoning, status='completed'):
+    """Update just the reasoning field for a player"""
+    query = """
+        UPDATE matchup_analysis
+        SET reasoning = %s, analysis_status = %s
+        WHERE matchup_id = %s
+          AND (player_id = %s OR player_name = %s)
+    """
+    execute_query(query, (reasoning, status, matchup_id, player_id, player_name))
+
+
+def _update_analysis_status(matchup_id, player_id, player_name, status):
+    """Update just the status field for a player"""
+    query = """
+        UPDATE matchup_analysis
+        SET analysis_status = %s
+        WHERE matchup_id = %s
+          AND (player_id = %s OR player_name = %s)
+    """
+    execute_query(query, (status, matchup_id, player_id, player_name))
 
 
 def _generate_recommendations(user_players, analysis_results):

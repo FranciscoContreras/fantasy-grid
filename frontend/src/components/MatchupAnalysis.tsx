@@ -51,15 +51,54 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
     try {
       setAnalyzing(true);
       setError('');
+
+      // Start analysis (returns immediately with basic analysis)
       await analyzeMatchup(matchupId);
-      // Reload matchup to get updated analysis
+
+      // Load basic analysis
       await loadMatchup();
+
+      // Start polling for Grok analysis updates
+      startPolling();
     } catch (err) {
       setError('Failed to analyze matchup');
       console.error(err);
-    } finally {
       setAnalyzing(false);
     }
+  };
+
+  const startPolling = () => {
+    // Poll every 3 seconds to check for updated analyses
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await getMatchup(matchupId);
+        const updatedMatchup = response.data;
+
+        // Check if all analyses are completed
+        const allCompleted = updatedMatchup.analysis?.every(
+          (a: any) => a.analysis_status === 'completed' || a.analysis_status === 'failed'
+        );
+
+        // Update matchup data
+        setMatchup(updatedMatchup);
+
+        // Stop polling when all complete
+        if (allCompleted) {
+          clearInterval(pollInterval);
+          setAnalyzing(false);
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+        clearInterval(pollInterval);
+        setAnalyzing(false);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Cleanup after 5 minutes max
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      setAnalyzing(false);
+    }, 300000);
   };
 
   if (loading) {
@@ -196,8 +235,18 @@ function PlayerAnalysisCard({ analysis }: { analysis: MatchupAnalysisType }) {
   const gradeColor = GRADE_COLORS[analysis.ai_grade] || 'bg-gray-500';
   const recColor = RECOMMENDATION_COLORS[analysis.recommendation] || 'bg-gray-500';
 
+  // Check if analysis is still generating
+  const isAnalyzing = (analysis as any).analysis_status === 'analyzing';
+  const isFailed = (analysis as any).analysis_status === 'failed';
+
   return (
-    <div className="border rounded-lg p-4">
+    <div className="border rounded-lg p-4 relative">
+      {isAnalyzing && (
+        <div className="absolute top-2 right-2">
+          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -235,8 +284,16 @@ function PlayerAnalysisCard({ analysis }: { analysis: MatchupAnalysisType }) {
       </div>
 
       <div className="text-sm">
-        <p className="text-muted-foreground mb-1">Analysis:</p>
-        <p>{analysis.reasoning}</p>
+        <p className="text-muted-foreground mb-1">AI Analysis:</p>
+        {isAnalyzing ? (
+          <div className="flex items-center gap-2 text-blue-600">
+            <div className="animate-pulse">Generating AI analysis...</div>
+          </div>
+        ) : isFailed ? (
+          <p className="text-red-600">Failed to generate AI analysis</p>
+        ) : (
+          <p>{analysis.reasoning}</p>
+        )}
       </div>
 
       {analysis.injury_impact && analysis.injury_impact !== 'No impact' && (
