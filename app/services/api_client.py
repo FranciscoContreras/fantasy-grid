@@ -342,6 +342,9 @@ class FantasyAPIClient:
         Returns opponent team abbreviation or None.
         """
         games = self.get_weekly_schedule(season, week)
+        if not games:
+            return None
+
         teams_map = self._get_teams()
 
         # Reverse map to get team_id from abbreviation
