@@ -110,6 +110,7 @@ def analyze_matchup(matchup_id):
             return jsonify({'error': 'Matchup not found'}), 404
 
         matchup_data = matchup[0]
+        logger.info(f"Analyzing matchup {matchup_id}: Week {matchup_data.get('week')}, Season {matchup_data.get('season')}")
 
         # Get user roster players
         user_players_query = """
@@ -121,11 +122,13 @@ def analyze_matchup(matchup_id):
         user_players = execute_query(user_players_query, (matchup_data['user_roster_id'],))
         if user_players is None:
             user_players = []
+        logger.info(f"Found {len(user_players)} user players")
 
         # Get opponent roster players
         opponent_players = execute_query(user_players_query, (matchup_data['opponent_roster_id'],))
         if opponent_players is None:
             opponent_players = []
+        logger.info(f"Found {len(opponent_players)} opponent players")
 
         # Clear existing analysis
         delete_query = "DELETE FROM matchup_analysis WHERE matchup_id = %s"
@@ -135,27 +138,39 @@ def analyze_matchup(matchup_id):
 
         # Analyze user's players
         for player in user_players:
-            analysis = _analyze_player_for_matchup(
-                player,
-                is_user_player=True,
-                week=matchup_data['week']
-            )
-            analysis_results.append(analysis)
+            try:
+                logger.info(f"Analyzing user player: {player.get('player_name')}")
+                analysis = _analyze_player_for_matchup(
+                    player,
+                    is_user_player=True,
+                    week=matchup_data['week'],
+                    season=matchup_data.get('season', 2024)
+                )
+                analysis_results.append(analysis)
 
-            # Save to database
-            _save_matchup_analysis(matchup_id, analysis, is_user_player=True)
+                # Save to database
+                _save_matchup_analysis(matchup_id, analysis, is_user_player=True)
+            except Exception as e:
+                logger.error(f"Error analyzing user player {player.get('player_name')}: {str(e)}")
+                raise
 
         # Analyze opponent's players
         for player in opponent_players:
-            analysis = _analyze_player_for_matchup(
-                player,
-                is_user_player=False,
-                week=matchup_data['week']
-            )
-            analysis_results.append(analysis)
+            try:
+                logger.info(f"Analyzing opponent player: {player.get('player_name')}")
+                analysis = _analyze_player_for_matchup(
+                    player,
+                    is_user_player=False,
+                    week=matchup_data['week'],
+                    season=matchup_data.get('season', 2024)
+                )
+                analysis_results.append(analysis)
 
-            # Save to database
-            _save_matchup_analysis(matchup_id, analysis, is_user_player=False)
+                # Save to database
+                _save_matchup_analysis(matchup_id, analysis, is_user_player=False)
+            except Exception as e:
+                logger.error(f"Error analyzing opponent player {player.get('player_name')}: {str(e)}")
+                raise
 
         # Mark matchup as analyzed
         update_query = """
