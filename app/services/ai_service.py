@@ -1,0 +1,123 @@
+import os
+from groq import Groq
+from anthropic import Anthropic
+
+class AIService:
+    def __init__(self):
+        self.groq_api_key = os.getenv('GROQ_API_KEY')
+        self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
+
+        # Initialize clients
+        self.groq_client = None
+        self.anthropic_client = None
+
+        if self.groq_api_key:
+            try:
+                self.groq_client = Groq(api_key=self.groq_api_key)
+            except Exception as e:
+                print(f"Failed to initialize Groq client: {e}")
+
+        if self.anthropic_api_key:
+            try:
+                self.anthropic_client = Anthropic(api_key=self.anthropic_api_key)
+            except Exception as e:
+                print(f"Failed to initialize Anthropic client: {e}")
+
+    def generate_analysis(self, prompt, use_premium=False):
+        """
+        Generate AI analysis using free tier by default, premium (Claude) if requested
+
+        Args:
+            prompt: The analysis prompt
+            use_premium: If True, use Claude API (costs money). If False, use Groq (free)
+
+        Returns:
+            Generated text analysis
+        """
+        if use_premium and self.anthropic_client:
+            return self._generate_with_claude(prompt)
+        elif self.groq_client:
+            return self._generate_with_groq(prompt)
+        else:
+            # Fallback to rule-based if no AI available
+            return self._generate_fallback(prompt)
+
+    def _generate_with_groq(self, prompt):
+        """Use Groq's free API (Llama 3.1 70B)"""
+        try:
+            response = self.groq_client.chat.completions.create(
+                model="llama-3.1-70b-versatile",  # Fast and free
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert fantasy football analyst. Provide concise, data-driven insights in 2-3 sentences."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=150
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"Groq API error: {e}")
+            return self._generate_fallback(prompt)
+
+    def _generate_with_claude(self, prompt):
+        """Use Claude API for premium analysis"""
+        try:
+            response = self.anthropic_client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=200,
+                temperature=0.7,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"You are an expert fantasy football analyst. Provide concise, data-driven insights in 2-3 sentences.\n\n{prompt}"
+                    }
+                ]
+            )
+            return response.content[0].text.strip()
+        except Exception as e:
+            print(f"Claude API error: {e}")
+            return self._generate_fallback(prompt)
+
+    def _generate_fallback(self, prompt):
+        """Simple rule-based fallback when no AI is available"""
+        # Parse the prompt to extract key info
+        if "favorable matchup" in prompt.lower():
+            return "Strong matchup fundamentals suggest starting this player with confidence."
+        elif "difficult matchup" in prompt.lower():
+            return "Challenging matchup conditions recommend benching or monitoring closely."
+        else:
+            return "Moderate matchup profile warrants careful consideration of recent form and injury status."
+
+    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None):
+        """
+        Generate reasoning for a player's matchup analysis
+
+        Args:
+            player_name: Player's name
+            position: Player's position
+            matchup_score: Numerical matchup score (0-100)
+            injury_status: Current injury status
+            opponent_defense: Optional opponent defense info
+
+        Returns:
+            AI-generated reasoning text
+        """
+        # Build context prompt
+        matchup_quality = "favorable" if matchup_score > 70 else "difficult" if matchup_score < 50 else "average"
+        injury_context = f" They are dealing with {injury_status} status." if injury_status != "HEALTHY" else ""
+        defense_context = f" facing the {opponent_defense} defense" if opponent_defense else ""
+
+        prompt = f"""Analyze {player_name} ({position}){defense_context}:
+- Matchup score: {matchup_score}/100 ({matchup_quality})
+- Injury status: {injury_status}{injury_context}
+
+Provide a brief 2-3 sentence recommendation focusing on start/sit decision."""
+
+        # Use free tier for individual player analysis
+        return self.generate_analysis(prompt, use_premium=False)

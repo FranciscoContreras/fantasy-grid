@@ -1,11 +1,15 @@
 from flask import Blueprint, request, jsonify
 from app.database import execute_query
+from app.services.ai_service import AIService
 import logging
 from datetime import datetime
 import random
 
 bp = Blueprint('matchups', __name__, url_prefix='/api/matchups')
 logger = logging.getLogger(__name__)
+
+# Initialize AI service
+ai_service = AIService()
 
 
 @bp.route('', methods=['POST'])
@@ -347,16 +351,29 @@ def _calculate_confidence(matchup_score, injury_impact):
 
 
 def _generate_reasoning(player, matchup_score, injury_impact, recommendation):
-    """Generate human-readable reasoning"""
-    reasoning_parts = []
+    """Generate AI-powered reasoning using Groq (free tier)"""
+    try:
+        # Use AI service for intelligent reasoning
+        reasoning = ai_service.generate_matchup_reasoning(
+            player_name=player['player_name'],
+            position=player['position'],
+            matchup_score=matchup_score,
+            injury_status=player.get('injury_status', 'HEALTHY'),
+            opponent_defense=None  # TODO: Add real opponent defense data
+        )
+        return reasoning
+    except Exception as e:
+        logger.error(f"AI reasoning failed, using fallback: {e}")
+        # Fallback to rule-based
+        reasoning_parts = []
 
-    # Matchup analysis
-    if matchup_score >= 75:
-        reasoning_parts.append(f"{player['player_name']} has a favorable matchup (score: {matchup_score:.1f})")
-    elif matchup_score >= 50:
-        reasoning_parts.append(f"{player['player_name']} has an average matchup (score: {matchup_score:.1f})")
-    else:
-        reasoning_parts.append(f"{player['player_name']} faces a tough matchup (score: {matchup_score:.1f})")
+        # Matchup analysis
+        if matchup_score >= 75:
+            reasoning_parts.append(f"{player['player_name']} has a favorable matchup (score: {matchup_score:.1f})")
+        elif matchup_score >= 50:
+            reasoning_parts.append(f"{player['player_name']} has an average matchup (score: {matchup_score:.1f})")
+        else:
+            reasoning_parts.append(f"{player['player_name']} faces a tough matchup (score: {matchup_score:.1f})")
 
     # Injury consideration
     if 'No impact' not in injury_impact:
