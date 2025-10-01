@@ -109,7 +109,7 @@ class AIService:
         else:
             return "Moderate matchup profile warrants careful consideration of recent form and injury status."
 
-    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None, historical_performance=None):
+    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None, historical_performance=None, defensive_scheme=None):
         """
         Generate reasoning for a player's matchup analysis
 
@@ -121,6 +121,7 @@ class AIService:
             opponent_defense: Optional opponent defense team abbreviation
             weather: Optional weather context string
             historical_performance: Optional historical stats vs this opponent
+            defensive_scheme: Optional defensive coordinator and key players
 
         Returns:
             AI-generated reasoning text (concise snippet)
@@ -131,12 +132,13 @@ class AIService:
         defense_context = f" facing the {opponent_defense} defense" if opponent_defense else ""
         weather_context = f"\n- Weather conditions: {weather}" if weather else ""
         historical_context = f"\n- Historical performance: {historical_performance}" if historical_performance else ""
+        scheme_context = f"\n- Defensive scheme: {defensive_scheme}" if defensive_scheme else ""
 
         prompt = f"""Analyze {player_name} ({position}){defense_context}:
 - Matchup score: {matchup_score}/100 ({matchup_quality})
-- Injury status: {injury_status}{injury_context}{weather_context}{historical_context}
+- Injury status: {injury_status}{injury_context}{weather_context}{historical_context}{scheme_context}
 
-Provide a brief 1-2 sentence snippet explaining WHY to start or sit this player. Focus on the most important factor (historical performance, matchup, weather, or injury)."""
+Provide a brief 1-2 sentence snippet explaining WHY to start or sit this player. Focus on the most important factors: defensive matchup, coordinator scheme, key defenders, historical performance, or weather."""
 
         # Use free tier for individual player analysis
         return self.generate_analysis(prompt, use_premium=False)

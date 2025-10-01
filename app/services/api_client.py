@@ -404,3 +404,69 @@ class FantasyAPIClient:
         except Exception as e:
             print(f"Failed to fetch player vs team stats: {e}")
             return None
+
+    def get_defensive_coordinator(self, team_abbr, season=2024):
+        """
+        Get defensive coordinator for a team.
+        This is simplified - in production would fetch from coaching staff API.
+        """
+        # Simplified mapping - in production would fetch from API
+        dc_mapping_2024 = {
+            'SF': 'Steve Wilks',
+            'BAL': 'Mike Macdonald',
+            'BUF': 'Leslie Frazier',
+            'DAL': 'Dan Quinn',
+            'PIT': 'Teryl Austin',
+            'CLE': 'Jim Schwartz',
+            'NYJ': 'Jeff Ulbrich',
+            'KC': 'Steve Spagnuolo',
+            'PHI': 'Sean Desai',
+            'MIA': 'Vic Fangio'
+        }
+        return dc_mapping_2024.get(team_abbr, 'Unknown')
+
+    def get_key_defensive_players(self, team_abbr, position_group='ALL'):
+        """
+        Get key defensive players for a team.
+
+        Args:
+            team_abbr: Team abbreviation
+            position_group: 'DL' (pass rush), 'LB', 'DB' (coverage), or 'ALL'
+
+        Returns:
+            List of key defensive players
+        """
+        # Simplified - in production would fetch from roster API
+        # This focuses on players who impact fantasy the most
+        key_defenders_2024 = {
+            'SF': {
+                'DL': ['Nick Bosa', 'Javon Hargrave'],
+                'LB': ['Fred Warner', 'Dre Greenlaw'],
+                'DB': ['Charvarius Ward', 'Talanoa Hufanga']
+            },
+            'BAL': {
+                'DL': ['Justin Madubuike'],
+                'LB': ['Roquan Smith', 'Patrick Queen'],
+                'DB': ['Marlon Humphrey', 'Kyle Hamilton']
+            },
+            'BUF': {
+                'DL': ['Ed Oliver', 'Von Miller'],
+                'LB': ['Terrel Bernard'],
+                'DB': ['Tre\'Davious White', 'Jordan Poyer']
+            },
+            'DAL': {
+                'DL': ['Micah Parsons', 'DeMarcus Lawrence'],
+                'LB': ['Leighton Vander Esch'],
+                'DB': ['Trevon Diggs', 'Stephon Gilmore']
+            }
+        }
+
+        team_defense = key_defenders_2024.get(team_abbr, {})
+
+        if position_group == 'ALL':
+            all_players = []
+            for group_players in team_defense.values():
+                all_players.extend(group_players)
+            return all_players
+
+        return team_defense.get(position_group, [])

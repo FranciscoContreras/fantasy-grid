@@ -18,21 +18,29 @@ api_client = FantasyAPIClient()
 
 @bp.route('', methods=['POST'])
 def create_matchup():
-    """Create a weekly matchup analysis for a roster
+    """Create a weekly roster analysis
 
-    Note: Analysis is based on how your players perform against real NFL defenses,
-    not against opponent's fantasy roster. Opponent roster is optional for tracking purposes.
+    Workflow:
+    1. Build your roster (assign players as starters)
+    2. Create matchup with roster_id + week
+    3. System determines which NFL defense each player faces
+    4. Analyzes matchup quality, defensive players, coordinator, weather, history
+    5. Returns start rankings and recommendations
     """
     data = request.json
     week = data.get('week')
-    season = data.get('season')
+    season = data.get('season', 2024)
     user_roster_id = data.get('user_roster_id')
-    opponent_roster_id = data.get('opponent_roster_id')
+    opponent_roster_id = data.get('opponent_roster_id')  # Legacy support
 
-    if not all([week, season, user_roster_id]):
-        return jsonify({'error': 'week, season, and user_roster_id are required'}), 400
+    if not all([week, user_roster_id]):
+        return jsonify({'error': 'week and user_roster_id are required'}), 400
 
-    # Opponent roster is optional - use same roster if not provided
+    # Default to current season if not provided
+    if not season:
+        season = 2024
+
+    # Opponent roster not needed but keep for backward compatibility
     if not opponent_roster_id:
         opponent_roster_id = user_roster_id
 
@@ -185,11 +193,40 @@ def analyze_matchup(matchup_id):
 
 
 def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
-    """Analyze a single player for the matchup"""
+    """
+    Comprehensive player analysis including:
+    - Real NFL opponent defense
+    - Historical performance vs that defense
+    - Defensive coordinator scheme
+    - Key defensive players they'll face
+    - Weather conditions
+    - Injury status
+    - Start ranking (1-10)
+    """
     player_team = player.get('team')
+    player_position = player['position']
 
     # Get real opponent defense from NFL schedule
     opponent_team = api_client.get_team_opponent(player_team, season, week)
+
+    # Get defensive coordinator
+    def_coordinator = None
+    key_defenders = []
+    if opponent_team:
+        def_coordinator = api_client.get_defensive_coordinator(opponent_team, season)
+
+        # Get relevant defensive players based on offensive position
+        if player_position == 'QB':
+            # QBs care about pass rush and coverage
+            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DL')
+        elif player_position in ['WR', 'TE']:
+            # Pass catchers care about coverage
+            key_defenders = api_client.get_key_defensive_players(opponent_team, 'DB')
+        elif player_position == 'RB':
+            # RBs care about front 7
+            dl = api_client.get_key_defensive_players(opponent_team, 'DL')
+            lb = api_client.get_key_defensive_players(opponent_team, 'LB')
+            key_defenders = dl + lb
 
     # Get historical performance vs this opponent
     historical_stats = None
@@ -200,7 +237,7 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
         )
 
     # Calculate matchup score based on position and opponent
-    matchup_score = _calculate_matchup_score(player['position'], player_team, opponent_team)
+    matchup_score = _calculate_matchup_score(player_position, player_team, opponent_team)
 
     # Get weather data for player's team location
     weather_data = weather_service.get_game_weather(player_team)
@@ -229,7 +266,16 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
     # Calculate confidence score
     confidence_score = _calculate_confidence(matchup_score, injury_impact)
 
-    # Generate reasoning with historical context
+    # Calculate start ranking (1-10 scale)
+    start_ranking = _calculate_start_ranking(
+        matchup_score,
+        projected_points,
+        injury_impact,
+        historical_stats,
+        player_position
+    )
+
+    # Generate reasoning with all context
     reasoning = _generate_reasoning(
         player,
         matchup_score,
@@ -237,7 +283,9 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
         recommendation,
         weather_data,
         opponent_team,
-        historical_stats
+        historical_stats,
+        def_coordinator,
+        key_defenders
     )
 
     # Prepare weather info for response
@@ -258,6 +306,13 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
             'avg_fantasy_points': historical_stats.get('avg_fantasy_points')
         }
 
+    # Prepare defensive matchup info
+    defensive_matchup = {
+        'opponent_defense': opponent_team or 'N/A',
+        'defensive_coordinator': def_coordinator,
+        'key_defenders': key_defenders[:3] if key_defenders else []  # Top 3 most relevant
+    }
+
     return {
         'player_id': player.get('player_id'),
         'player_name': player['player_name'],
@@ -265,8 +320,10 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
         'team': player['team'],
         'is_user_player': is_user_player,
         'opponent_team': opponent_team or 'N/A',
+        'defensive_matchup': defensive_matchup,
         'matchup_score': round(matchup_score, 2),
         'projected_points': round(projected_points, 2),
+        'start_ranking': start_ranking,
         'ai_grade': ai_grade,
         'recommendation': recommendation,
         'injury_status': player.get('injury_status', 'HEALTHY'),
@@ -424,7 +481,80 @@ def _calculate_confidence(matchup_score, injury_impact):
     return max(0, min(100, base_confidence))
 
 
-def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None):
+def _calculate_start_ranking(matchup_score, projected_points, injury_impact, historical_stats, position):
+    """
+    Calculate start ranking on 1-10 scale.
+
+    10 = Must start (elite matchup, high floor)
+    7-9 = Start with confidence
+    5-6 = Flex consideration / Matchup dependent
+    3-4 = Risky start / Sit if you have better options
+    1-2 = Avoid / Sit
+
+    Factors:
+    - Matchup quality (40%)
+    - Projected points (30%)
+    - Historical performance (20%)
+    - Injury status (10%)
+    """
+    ranking = 5.0  # Start at average
+
+    # Matchup quality (40% weight)
+    if matchup_score >= 85:
+        ranking += 2.0
+    elif matchup_score >= 75:
+        ranking += 1.5
+    elif matchup_score >= 65:
+        ranking += 0.5
+    elif matchup_score < 50:
+        ranking -= 1.5
+    elif matchup_score < 40:
+        ranking -= 2.0
+
+    # Projected points relative to position (30% weight)
+    position_thresholds = {
+        'QB': {'elite': 22, 'good': 18, 'poor': 12},
+        'RB': {'elite': 15, 'good': 12, 'poor': 8},
+        'WR': {'elite': 14, 'good': 11, 'poor': 7},
+        'TE': {'elite': 12, 'good': 9, 'poor': 6},
+        'K': {'elite': 10, 'good': 8, 'poor': 5},
+        'DEF': {'elite': 10, 'good': 7, 'poor': 4}
+    }
+
+    thresholds = position_thresholds.get(position, {'elite': 15, 'good': 10, 'poor': 5})
+
+    if projected_points >= thresholds['elite']:
+        ranking += 1.5
+    elif projected_points >= thresholds['good']:
+        ranking += 0.5
+    elif projected_points < thresholds['poor']:
+        ranking -= 1.0
+
+    # Historical performance (20% weight)
+    if historical_stats:
+        avg_points = historical_stats.get('avg_fantasy_points', 0)
+        if avg_points >= thresholds['elite']:
+            ranking += 1.0
+        elif avg_points >= thresholds['good']:
+            ranking += 0.5
+        elif avg_points < thresholds['poor']:
+            ranking -= 0.5
+
+    # Injury impact (10% weight)
+    if 'Cannot play' in injury_impact:
+        return 1  # Absolute avoid
+    elif 'unlikely to play' in injury_impact:
+        ranking -= 2.0
+    elif 'game-time decision' in injury_impact:
+        ranking -= 1.0
+    elif 'Minimal impact' in injury_impact:
+        ranking -= 0.3
+
+    # Cap between 1-10
+    return max(1, min(10, round(ranking)))
+
+
+def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None, def_coordinator=None, key_defenders=None):
     """Generate AI-powered reasoning using Groq (free tier)"""
     try:
         # Build weather context for AI
@@ -437,6 +567,18 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
         if historical_stats and historical_stats.get('games_played', 0) > 0:
             historical_context = f"Averages {historical_stats['avg_fantasy_points']} pts vs {opponent_team} in {historical_stats['games_played']} games"
 
+        # Build defensive context
+        defensive_context = None
+        if def_coordinator or key_defenders:
+            parts = []
+            if def_coordinator and def_coordinator != 'Unknown':
+                parts.append(f"DC: {def_coordinator}")
+            if key_defenders:
+                defenders_str = ', '.join(key_defenders[:2])  # Top 2
+                parts.append(f"Key defenders: {defenders_str}")
+            if parts:
+                defensive_context = '; '.join(parts)
+
         # Use AI service for intelligent reasoning
         reasoning = ai_service.generate_matchup_reasoning(
             player_name=player['player_name'],
@@ -445,7 +587,8 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
             injury_status=player.get('injury_status', 'HEALTHY'),
             opponent_defense=opponent_team,
             weather=weather_context,
-            historical_performance=historical_context
+            historical_performance=historical_context,
+            defensive_scheme=defensive_context
         )
         return reasoning
     except Exception as e:
