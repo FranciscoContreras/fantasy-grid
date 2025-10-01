@@ -3,6 +3,8 @@ from app.database import execute_query
 from app.services.ai_service import AIService
 from app.services.weather_service import WeatherService
 from app.services.api_client import FantasyAPIClient
+from app.services.matchup_data_service import MatchupDataService
+from app.services.season_service import SeasonService
 import logging
 from datetime import datetime
 import random
@@ -14,6 +16,8 @@ logger = logging.getLogger(__name__)
 ai_service = AIService()
 weather_service = WeatherService()
 api_client = FantasyAPIClient()
+matchup_data_service = MatchupDataService()
+season_service = SeasonService()
 
 
 @bp.route('', methods=['POST'])
@@ -59,6 +63,54 @@ def create_matchup():
     except Exception as e:
         logger.error(f"Error creating matchup: {str(e)}")
         return jsonify({'error': 'Failed to create matchup'}), 500
+
+
+@bp.route('/season/<int:roster_id>', methods=['GET'])
+def get_season_matchups(roster_id):
+    """Get comprehensive season-long matchup analysis for a roster"""
+    try:
+        # Get roster info
+        roster_query = "SELECT id, name FROM rosters WHERE id = %s"
+        roster = execute_query(roster_query, (roster_id,))
+
+        if not roster:
+            return jsonify({'error': 'Roster not found'}), 404
+
+        roster_data = roster[0]
+
+        # Get roster players
+        players_query = """
+            SELECT rp.id, rp.player_id, rp.player_name, rp.position, rp.team,
+                   rp.roster_slot, rp.is_starter, rp.injury_status
+            FROM roster_players rp
+            WHERE rp.roster_id = %s AND rp.is_starter = true
+        """
+        roster_players = execute_query(players_query, (roster_id,))
+
+        if not roster_players:
+            return jsonify({'error': 'No starters found in roster'}), 404
+
+        logger.info(f"Fetching season matchups for roster {roster_id} with {len(roster_players)} players")
+
+        # Use matchup data service to get all future matchups
+        season_data = matchup_data_service.get_season_matchups(
+            roster_id,
+            roster_players
+        )
+
+        return jsonify({
+            'data': {
+                'roster_id': roster_id,
+                'roster_name': roster_data.get('name'),
+                'season': season_data.get('season'),
+                'total_weeks': season_data.get('total_weeks'),
+                'matchups': season_data.get('matchups', {})
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching season matchups: {str(e)}")
+        return jsonify({'error': 'Failed to fetch season matchups'}), 500
 
 
 @bp.route('/<int:matchup_id>', methods=['GET'])
@@ -112,7 +164,7 @@ def get_matchup(matchup_id):
 
 @bp.route('/<int:matchup_id>/analyze', methods=['POST'])
 def analyze_matchup(matchup_id):
-    """Analyze a matchup and generate start/sit recommendations"""
+    """Analyze a matchup and generate start/sit recommendations using comprehensive data layer"""
     try:
         # Get matchup details
         matchup_query = """
@@ -126,7 +178,9 @@ def analyze_matchup(matchup_id):
             return jsonify({'error': 'Matchup not found'}), 404
 
         matchup_data = matchup[0]
-        logger.info(f"Analyzing matchup {matchup_id}: Week {matchup_data.get('week')}, Season {matchup_data.get('season')}")
+        week = matchup_data.get('week')
+        season = matchup_data.get('season', 2024)
+        logger.info(f"Analyzing matchup {matchup_id}: Week {week}, Season {season}")
 
         # Get user roster players
         user_players_query = """
@@ -138,7 +192,15 @@ def analyze_matchup(matchup_id):
         user_players = execute_query(user_players_query, (matchup_data['user_roster_id'],))
         if user_players is None:
             user_players = []
-        logger.info(f"Found {len(user_players)} user players to analyze against real NFL defenses")
+        logger.info(f"Found {len(user_players)} user players to analyze")
+
+        # Use new data layer to prepare comprehensive analysis data
+        analysis_data = matchup_data_service.prepare_bulk_analysis_data(
+            matchup_data['user_roster_id'],
+            user_players,
+            season,
+            week
+        )
 
         # Clear existing analysis
         delete_query = "DELETE FROM matchup_analysis WHERE matchup_id = %s"
@@ -146,15 +208,18 @@ def analyze_matchup(matchup_id):
 
         analysis_results = []
 
-        # Analyze user's players
-        for player in user_players:
+        # Analyze each player with comprehensive data
+        for player_data in analysis_data:
             try:
-                logger.info(f"Analyzing user player: {player.get('player_name')}")
-                analysis = _analyze_player_for_matchup(
-                    player,
+                player = player_data.get('player')
+                logger.info(f"Analyzing {player.get('player_name')} vs {player_data.get('opponent')}")
+
+                # Use comprehensive data for analysis
+                analysis = _analyze_player_with_data(
+                    player_data,
                     is_user_player=True,
-                    week=matchup_data['week'],
-                    season=matchup_data.get('season', 2024)
+                    week=week,
+                    season=season
                 )
                 analysis_results.append(analysis)
 
@@ -162,13 +227,9 @@ def analyze_matchup(matchup_id):
                 _save_matchup_analysis(matchup_id, analysis, is_user_player=True)
             except Exception as e:
                 import traceback
-                logger.error(f"Error analyzing user player {player.get('player_name')}: {str(e)}")
+                logger.error(f"Error analyzing player {player.get('player_name')}: {str(e)}")
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 raise
-
-        # Note: We don't analyze opponent roster players because fantasy matchups
-        # are determined by how your players perform against real NFL defenses,
-        # not against the opponent's fantasy roster
 
         # Mark matchup as analyzed
         update_query = """
@@ -334,6 +395,103 @@ def _analyze_player_for_matchup(player, is_user_player, week, season=2024):
         'reasoning': reasoning,
         'weather': weather_info,
         'historical_vs_opponent': historical_info
+    }
+
+
+def _analyze_player_with_data(player_data, is_user_player, week, season):
+    """
+    Analyze player using comprehensive data from matchup_data_service.
+    This replaces the old _analyze_player_for_matchup by using pre-fetched data.
+    """
+    player = player_data.get('player')
+    opponent_team = player_data.get('opponent')
+
+    # Check if player has a game this week
+    if not player_data.get('has_game', True):
+        # Player on bye week
+        return {
+            'player_id': player.get('player_id'),
+            'player_name': player.get('player_name'),
+            'position': player.get('position'),
+            'team': player.get('team'),
+            'is_user_player': is_user_player,
+            'opponent_team': 'BYE',
+            'matchup_score': 0,
+            'projected_points': 0,
+            'ai_grade': 'F',
+            'recommendation': 'SIT',
+            'injury_status': player.get('injury_status', 'HEALTHY'),
+            'injury_impact': 'Bye week - not playing',
+            'confidence_score': 100,
+            'reasoning': f"{player.get('player_name')} is on a bye week and will not play."
+        }
+
+    player_position = player.get('position')
+
+    # Extract data from comprehensive fetch
+    def_coordinator = player_data.get('defensive_coordinator')
+    key_defenders = player_data.get('key_defenders', [])
+    historical_stats = player_data.get('historical_performance')
+    injury_status = player_data.get('injury_status', 'HEALTHY')
+
+    # Calculate matchup score
+    matchup_score = _calculate_matchup_score(player_position, player.get('team'), opponent_team)
+
+    # Get weather data
+    weather_data = weather_service.get_game_weather(player.get('team'))
+
+    # Evaluate injury impact
+    injury_impact = _evaluate_injury_impact(injury_status)
+
+    # Calculate projected points
+    projected_points = _calculate_projected_points(
+        player_position,
+        matchup_score,
+        injury_impact,
+        weather_data
+    )
+
+    # Assign AI grade
+    ai_grade = _assign_grade(matchup_score, injury_impact)
+
+    # Generate recommendation
+    recommendation = _generate_recommendation(
+        matchup_score,
+        injury_impact,
+        injury_status
+    )
+
+    # Calculate confidence score
+    confidence_score = _calculate_confidence(matchup_score, injury_impact)
+
+    # Generate reasoning with all context
+    reasoning = _generate_reasoning(
+        player,
+        matchup_score,
+        injury_impact,
+        recommendation,
+        weather_data,
+        opponent_team,
+        historical_stats,
+        def_coordinator,
+        key_defenders
+    )
+
+    return {
+        'player_id': player.get('player_id'),
+        'player_name': player.get('player_name'),
+        'position': player.get('position'),
+        'team': player.get('team'),
+        'is_user_player': is_user_player,
+        'opponent_team': opponent_team or 'N/A',
+        'matchup_score': round(matchup_score, 2),
+        'projected_points': round(projected_points, 2),
+        'ai_grade': ai_grade,
+        'recommendation': recommendation,
+        'injury_status': injury_status,
+        'injury_impact': injury_impact,
+        'confidence_score': round(confidence_score, 2),
+        'reasoning': reasoning
     }
 
 

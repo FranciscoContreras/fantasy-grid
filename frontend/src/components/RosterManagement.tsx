@@ -12,6 +12,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { RosterBuilder } from './RosterBuilder';
 import { MatchupAnalysis } from './MatchupAnalysis';
+import { SeasonMatchups } from './SeasonMatchups';
 import { Badge } from './ui/badge';
 
 export function RosterManagement() {
@@ -19,7 +20,7 @@ export function RosterManagement() {
   const [selectedRosterId, setSelectedRosterId] = useState<number | null>(null);
   const [selectedMatchupId, setSelectedMatchupId] = useState<number | null>(null);
   const [matchups, setMatchups] = useState<Matchup[]>([]);
-  const [view, setView] = useState<'rosters' | 'matchup'>('rosters');
+  const [view, setView] = useState<'rosters' | 'matchup' | 'season'>('rosters');
   const [showNewRosterForm, setShowNewRosterForm] = useState(false);
   const [showNewMatchupForm, setShowNewMatchupForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -145,7 +146,14 @@ export function RosterManagement() {
           variant={view === 'matchup' ? 'default' : 'outline'}
           onClick={() => setView('matchup')}
         >
-          Matchup Analysis
+          Weekly Matchup
+        </Button>
+        <Button
+          variant={view === 'season' ? 'default' : 'outline'}
+          onClick={() => setView('season')}
+          disabled={!selectedRosterId}
+        >
+          Season Matchups
         </Button>
       </div>
 
@@ -300,6 +308,18 @@ export function RosterManagement() {
               </CardContent>
             </Card>
           )}
+        </div>
+      )}
+
+      {view === 'season' && selectedRosterId && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Season Matchups</h2>
+            <p className="text-muted-foreground mt-1">
+              View all future matchups for the selected roster
+            </p>
+          </div>
+          <SeasonMatchups rosterId={selectedRosterId} />
         </div>
       )}
 
