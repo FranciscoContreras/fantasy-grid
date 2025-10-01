@@ -18,15 +18,23 @@ api_client = FantasyAPIClient()
 
 @bp.route('', methods=['POST'])
 def create_matchup():
-    """Create a new weekly matchup between two rosters"""
+    """Create a weekly matchup analysis for a roster
+
+    Note: Analysis is based on how your players perform against real NFL defenses,
+    not against opponent's fantasy roster. Opponent roster is optional for tracking purposes.
+    """
     data = request.json
     week = data.get('week')
     season = data.get('season')
     user_roster_id = data.get('user_roster_id')
     opponent_roster_id = data.get('opponent_roster_id')
 
-    if not all([week, season, user_roster_id, opponent_roster_id]):
-        return jsonify({'error': 'week, season, user_roster_id, and opponent_roster_id are required'}), 400
+    if not all([week, season, user_roster_id]):
+        return jsonify({'error': 'week, season, and user_roster_id are required'}), 400
+
+    # Opponent roster is optional - use same roster if not provided
+    if not opponent_roster_id:
+        opponent_roster_id = user_roster_id
 
     try:
         query = """
@@ -122,13 +130,7 @@ def analyze_matchup(matchup_id):
         user_players = execute_query(user_players_query, (matchup_data['user_roster_id'],))
         if user_players is None:
             user_players = []
-        logger.info(f"Found {len(user_players)} user players")
-
-        # Get opponent roster players
-        opponent_players = execute_query(user_players_query, (matchup_data['opponent_roster_id'],))
-        if opponent_players is None:
-            opponent_players = []
-        logger.info(f"Found {len(opponent_players)} opponent players")
+        logger.info(f"Found {len(user_players)} user players to analyze against real NFL defenses")
 
         # Clear existing analysis
         delete_query = "DELETE FROM matchup_analysis WHERE matchup_id = %s"
@@ -154,23 +156,9 @@ def analyze_matchup(matchup_id):
                 logger.error(f"Error analyzing user player {player.get('player_name')}: {str(e)}")
                 raise
 
-        # Analyze opponent's players
-        for player in opponent_players:
-            try:
-                logger.info(f"Analyzing opponent player: {player.get('player_name')}")
-                analysis = _analyze_player_for_matchup(
-                    player,
-                    is_user_player=False,
-                    week=matchup_data['week'],
-                    season=matchup_data.get('season', 2024)
-                )
-                analysis_results.append(analysis)
-
-                # Save to database
-                _save_matchup_analysis(matchup_id, analysis, is_user_player=False)
-            except Exception as e:
-                logger.error(f"Error analyzing opponent player {player.get('player_name')}: {str(e)}")
-                raise
+        # Note: We don't analyze opponent roster players because fantasy matchups
+        # are determined by how your players perform against real NFL defenses,
+        # not against the opponent's fantasy roster
 
         # Mark matchup as analyzed
         update_query = """
