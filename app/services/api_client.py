@@ -5,12 +5,42 @@ class FantasyAPIClient:
     def __init__(self):
         self.base_url = os.getenv('API_BASE_URL', 'https://nfl.wearemachina.com/api/v1')
         self.api_key = os.getenv('API_KEY')
+        self._teams_cache = None
 
     def _get_headers(self, include_api_key=False):
         headers = {'Content-Type': 'application/json'}
         if include_api_key and self.api_key:
             headers['X-API-Key'] = self.api_key
         return headers
+
+    def _get_teams(self):
+        """Get and cache all teams"""
+        if self._teams_cache is None:
+            try:
+                response = requests.get(
+                    f'{self.base_url}/teams',
+                    params={'limit': 100},
+                    headers=self._get_headers()
+                )
+                response.raise_for_status()
+                teams = response.json().get('data', [])
+                # Create map of team_id -> abbreviation
+                self._teams_cache = {team['id']: team['abbreviation'] for team in teams}
+            except Exception as e:
+                print(f"Warning: Failed to load teams cache: {e}")
+                self._teams_cache = {}
+        return self._teams_cache
+
+    def _enrich_player_with_team(self, player):
+        """Add team abbreviation to player data"""
+        teams = self._get_teams()
+        team_id = player.get('team_id')
+        if team_id and team_id in teams:
+            player['team'] = teams[team_id]
+        elif not player.get('team'):
+            # If no team found, use a default
+            player['team'] = 'FA'  # Free Agent
+        return player
 
     def get_player_data(self, player_id):
         """Get player details by ID"""
@@ -19,7 +49,13 @@ class FantasyAPIClient:
             headers=self._get_headers()
         )
         response.raise_for_status()
-        return response.json()
+        player = response.json()
+        # Enrich with team abbreviation if it's in the data wrapper
+        if 'data' in player:
+            player['data'] = self._enrich_player_with_team(player['data'])
+        else:
+            player = self._enrich_player_with_team(player)
+        return player
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
@@ -42,6 +78,9 @@ class FantasyAPIClient:
         )
         response.raise_for_status()
         all_players = response.json().get('data', [])
+
+        # Enrich all players with team abbreviation
+        all_players = [self._enrich_player_with_team(player) for player in all_players]
 
         # Advanced search with relevance scoring
         # This will further filter and rank results from the API
