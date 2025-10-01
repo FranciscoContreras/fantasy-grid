@@ -642,7 +642,7 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         injury_impact,
         recommendation,
         weather_data,
-        opponent_team if opponent_team else 'Unknown',
+        opponent_team,  # Pass None if no opponent, don't use 'Unknown'
         historical_stats,
         def_coordinator,
         key_defenders,
