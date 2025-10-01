@@ -43,13 +43,21 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False):
     try:
         cursor.execute(query, params or ())
 
-        if fetch_one:
+        # Auto-detect RETURNING clause
+        is_returning = 'RETURNING' in query.upper()
+
+        if fetch_one or (is_returning and 'INSERT' in query.upper()):
             result = cursor.fetchone()
-        elif fetch_all:
+            if result:
+                result = [result]  # Wrap in list for consistency
+        elif fetch_all or 'SELECT' in query.upper() or is_returning:
             result = cursor.fetchall()
         else:
             conn.commit()
             result = None
+
+        if result is None or (isinstance(result, list) and len(result) == 0):
+            conn.commit()
 
         return result
     except Exception as e:
