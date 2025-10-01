@@ -37,7 +37,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
     }
   }, []);
 
-  // Auto-search with debounce
+  // Auto-search with minimal debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.length >= 2) {
@@ -45,7 +45,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
       } else {
         setResults([]);
       }
-    }, 300); // 300ms debounce
+    }, 150); // 150ms debounce - faster response
 
     return () => clearTimeout(timer);
   }, [query, position, handleSearch]);
@@ -78,19 +78,14 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
+        <div className="text-sm text-muted-foreground mb-2">
+          💡 Tip: Select a position first for faster, more accurate results
+        </div>
         <div className="flex gap-2">
-          <Input
-            placeholder="Search players by name (min 2 characters)..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={loading}
-            className="flex-1"
-          />
           <select
             value={position}
             onChange={(e) => setPosition(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-background"
+            className="px-3 py-2 border rounded-md bg-background min-w-[120px]"
             disabled={loading}
           >
             <option value="">All Positions</option>
@@ -101,6 +96,14 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             <option value="K">K</option>
             <option value="DEF">DEF</option>
           </select>
+          <Input
+            placeholder="Search players by name (min 2 characters)..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={loading}
+            className="flex-1"
+          />
         </div>
 
         {query.length > 0 && query.length < 2 && (

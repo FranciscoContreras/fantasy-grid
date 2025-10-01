@@ -59,14 +59,11 @@ class FantasyAPIClient:
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
-        params = {'limit': 100}
+        # Fetch more players for better search results
+        # The API doesn't support server-side search, so we need to fetch and filter client-side
+        limit = 500 if position else 2500  # Fetch all if no position filter
 
-        # Pass query to API's native search if available
-        if query:
-            # Try multiple search parameter names that APIs commonly use
-            params['search'] = query
-            params['name'] = query
-            params['q'] = query
+        params = {'limit': limit}
 
         if position:
             params['position'] = position
