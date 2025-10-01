@@ -36,10 +36,12 @@ def create_app():
         return jsonify(get_cache_stats())
 
     # Register blueprints
-    from app.routes import players, analysis, predictions
+    from app.routes import players, analysis, predictions, rosters, matchups
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
+    app.register_blueprint(rosters.bp)
+    app.register_blueprint(matchups.bp)
 
     # Serve frontend static files
     @app.route('/', defaults={'path': ''})

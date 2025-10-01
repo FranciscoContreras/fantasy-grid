@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PlayerSearch } from './components/PlayerSearch';
 import { PlayerAnalysis } from './components/PlayerAnalysis';
+import { RosterManagement } from './components/RosterManagement';
 import { analyzePlayer } from './lib/api';
 import { Player, Analysis } from './types';
 import { Input } from './components/ui/input';
@@ -8,6 +9,7 @@ import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
 function App() {
+  const [currentView, setCurrentView] = useState<'player-analysis' | 'roster-management'>('player-analysis');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [opponent, setOpponent] = useState('');
@@ -49,9 +51,28 @@ function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {/* Left Column - Search & Input */}
-          <div className="space-y-6">
+        {/* Navigation */}
+        <div className="mb-6 flex gap-2">
+          <Button
+            variant={currentView === 'player-analysis' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('player-analysis')}
+          >
+            Player Analysis
+          </Button>
+          <Button
+            variant={currentView === 'roster-management' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('roster-management')}
+          >
+            Roster & Matchups
+          </Button>
+        </div>
+
+        {currentView === 'roster-management' ? (
+          <RosterManagement />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Left Column - Search & Input */}
+            <div className="space-y-6">
             {/* Player Search */}
             <Card>
               <CardHeader>
@@ -144,7 +165,8 @@ function App() {
               </Card>
             )}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-12 text-center text-sm text-muted-foreground border-t pt-6">
