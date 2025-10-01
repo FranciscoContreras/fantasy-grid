@@ -1,5 +1,6 @@
 import os
 import hashlib
+import requests
 from groq import Groq
 from anthropic import Anthropic
 from app.services.cache_service import cache_ai_response, get_cached_ai_response
@@ -8,6 +9,7 @@ class AIService:
     def __init__(self):
         self.groq_api_key = os.getenv('GROQ_API_KEY')
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.grok_api_key = os.getenv('GROK_API_KEY')
 
         # Initialize clients
         self.groq_client = None
@@ -27,11 +29,11 @@ class AIService:
 
     def generate_analysis(self, prompt, use_premium=False):
         """
-        Generate AI analysis using free tier by default, premium (Claude) if requested
+        Generate AI analysis using Grok (default), Groq, or Claude
 
         Args:
             prompt: The analysis prompt
-            use_premium: If True, use Claude API (costs money). If False, use Groq (free)
+            use_premium: If True, use Claude API (costs money). If False, use Grok/Groq (free)
 
         Returns:
             Generated text analysis
@@ -42,9 +44,11 @@ class AIService:
         if cached:
             return cached
 
-        # Generate response
+        # Generate response - prioritize Grok (free and powerful)
         if use_premium and self.anthropic_client:
             response = self._generate_with_claude(prompt)
+        elif self.grok_api_key:
+            response = self._generate_with_grok(prompt)
         elif self.groq_client:
             response = self._generate_with_groq(prompt)
         else:
@@ -56,6 +60,41 @@ class AIService:
             cache_ai_response(prompt_hash, response)
 
         return response
+
+    def _generate_with_grok(self, prompt):
+        """Use Grok API (xAI's Grok-4-latest)"""
+        try:
+            response = requests.post(
+                'https://api.x.ai/v1/chat/completions',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.grok_api_key}'
+                },
+                json={
+                    'messages': [
+                        {
+                            'role': 'system',
+                            'content': 'You are an expert fantasy football analyst with deep knowledge of NFL players, defenses, and matchups. Provide concise, data-driven insights in 2-3 sentences.'
+                        },
+                        {
+                            'role': 'user',
+                            'content': prompt
+                        }
+                    ],
+                    'model': 'grok-4-latest',
+                    'stream': False,
+                    'temperature': 0.7
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content'].strip()
+        except Exception as e:
+            print(f"Grok API error: {e}")
+            # Fallback to Groq if Grok fails
+            if self.groq_client:
+                return self._generate_with_groq(prompt)
+            return self._generate_fallback(prompt)
 
     def _generate_with_groq(self, prompt):
         """Use Groq's free API (Llama 3.1 70B)"""
