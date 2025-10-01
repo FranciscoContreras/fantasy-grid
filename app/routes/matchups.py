@@ -451,9 +451,14 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
     Analyze player using comprehensive data from matchup_data_service.
     This replaces the old _analyze_player_for_matchup by using pre-fetched data.
     Falls back to simulated analysis if no opponent data is available.
+    Uses two-tier caching (Redis + PostgreSQL) to avoid duplicate Grok calls.
     """
+    from app.services.cache_service import get_cached_analysis, cache_analysis
+
     player = player_data.get('player')
     opponent_team = player_data.get('opponent')
+    player_id = player.get('player_id')
+    player_name = player.get('player_name')
 
     # If no opponent found but not explicitly marked as bye week,
     # treat as a regular game with unknown opponent (generate analysis anyway)
@@ -461,8 +466,8 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
     if not has_game and opponent_team is None:
         # True bye week - no game scheduled
         return {
-            'player_id': player.get('player_id'),
-            'player_name': player.get('player_name'),
+            'player_id': player_id,
+            'player_name': player_name,
             'position': player.get('position'),
             'team': player.get('team'),
             'is_user_player': is_user_player,
@@ -474,8 +479,31 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
             'injury_status': player.get('injury_status', 'HEALTHY'),
             'injury_impact': 'Bye week - not playing',
             'confidence_score': 100,
-            'reasoning': f"{player.get('player_name')} is on a bye week and will not play."
+            'reasoning': f"{player_name} is on a bye week and will not play."
         }
+
+    # Check cache first (only if opponent is known)
+    if opponent_team:
+        cached = get_cached_analysis(player_id, player_name, opponent_team, week, season)
+        if cached:
+            logger.info(f"Using cached analysis for {player_name} vs {opponent_team} Week {week}")
+            # Return cached data merged with player info
+            return {
+                'player_id': player_id,
+                'player_name': player_name,
+                'position': player.get('position'),
+                'team': player.get('team'),
+                'is_user_player': is_user_player,
+                'opponent_team': opponent_team,
+                'matchup_score': cached.get('matchup_score', 0),
+                'projected_points': cached.get('projected_points', 0),
+                'ai_grade': cached.get('ai_grade', 'C'),
+                'recommendation': cached.get('recommendation', 'CONSIDER'),
+                'injury_status': cached.get('injury_status', 'HEALTHY'),
+                'injury_impact': _evaluate_injury_impact(cached.get('injury_status', 'HEALTHY')),
+                'confidence_score': cached.get('confidence_score', 70),
+                'reasoning': cached.get('reasoning', '')
+            }
 
     player_position = player.get('position')
 
@@ -532,10 +560,40 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         defensive_stats
     )
 
+    # Cache the analysis for future use (only if opponent is known)
+    if opponent_team:
+        try:
+            opponent_def_rank = None
+            if defensive_stats:
+                opponent_def_rank = defensive_stats.get('defensive_rank')
+
+            cache_analysis(
+                player_id=player_id,
+                player_name=player_name,
+                position=player_position,
+                team=player.get('team'),
+                opponent_team=opponent_team,
+                week=week,
+                season=season,
+                matchup_score=round(matchup_score, 2),
+                projected_points=round(projected_points, 2),
+                recommendation=recommendation,
+                ai_grade=ai_grade,
+                confidence_score=round(confidence_score, 2),
+                reasoning=reasoning,
+                injury_status=injury_status,
+                opponent_defense_rank=opponent_def_rank,
+                historical_performance=historical_stats
+            )
+            logger.debug(f"Cached analysis for {player_name} vs {opponent_team} Week {week}")
+        except Exception as e:
+            logger.error(f"Error caching analysis: {e}")
+            # Don't fail the analysis if caching fails
+
     return {
-        'player_id': player.get('player_id'),
-        'player_name': player.get('player_name'),
-        'position': player.get('position'),
+        'player_id': player_id,
+        'player_name': player_name,
+        'position': player_position,
         'team': player.get('team'),
         'is_user_player': is_user_player,
         'opponent_team': opponent_team or 'TBD',
