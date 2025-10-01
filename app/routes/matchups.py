@@ -67,6 +67,16 @@ def get_matchup(matchup_id):
         """
         analysis = execute_query(analysis_query, (matchup_id,))
 
+        # Convert DECIMAL fields to float for JSON serialization
+        if analysis:
+            for item in analysis:
+                if 'matchup_score' in item and item['matchup_score'] is not None:
+                    item['matchup_score'] = float(item['matchup_score'])
+                if 'projected_points' in item and item['projected_points'] is not None:
+                    item['projected_points'] = float(item['projected_points'])
+                if 'confidence_score' in item and item['confidence_score'] is not None:
+                    item['confidence_score'] = float(item['confidence_score'])
+
         matchup_data = matchup[0]
         matchup_data['analysis'] = analysis if analysis else []
 
