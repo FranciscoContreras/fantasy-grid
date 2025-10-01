@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { searchPlayers } from '@/lib/api';
 import { Player } from '@/types';
+import { getPlayerImageUrl, getTeamLogoUrl } from '@/lib/images';
 
 interface PlayerSearchProps {
   onSelectPlayer: (player: Player) => void;
@@ -142,22 +143,42 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
                 }}
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <p className="font-semibold">
-                      {highlightMatch(player.name, query)}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {player.position}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {player.team}
-                      </Badge>
-                      {player.status && player.status.toUpperCase() === 'ACTIVE' && (
-                        <Badge className="text-xs bg-green-600 text-white">
-                          Active
+                  <div className="flex items-center gap-3 flex-1">
+                    {/* Player Image */}
+                    <img
+                      src={getPlayerImageUrl(player.player_id || player.nfl_id)}
+                      alt={player.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
+                      }}
+                    />
+                    {/* Team Logo */}
+                    {player.team && (
+                      <img
+                        src={getTeamLogoUrl(player.team)}
+                        alt={player.team}
+                        className="w-7 h-7 object-contain"
+                        onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {highlightMatch(player.name, query)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {player.position}
                         </Badge>
-                      )}
+                        <Badge variant="outline" className="text-xs">
+                          {player.team}
+                        </Badge>
+                        {player.status && player.status.toUpperCase() === 'ACTIVE' && (
+                          <Badge className="text-xs bg-green-600 text-white">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {player.jersey_number && (

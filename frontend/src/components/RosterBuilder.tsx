@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { PlayerSearch } from './PlayerSearch';
 import { Badge } from './ui/badge';
+import { getPlayerImageUrl, getTeamLogoUrl } from '../lib/images';
 
 interface RosterBuilderProps {
   rosterId: number;
@@ -181,23 +182,43 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
                     {slotInfo.label}
                   </p>
                   {player ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="font-semibold">{player.player_name}</p>
-                      <Badge variant="outline" className="text-xs">
-                        {player.position}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {player.team}
-                      </Badge>
-                      {player.injury_status !== 'HEALTHY' && (
-                        <Badge
-                          className={`text-xs text-white ${
-                            INJURY_STATUS_COLORS[player.injury_status]
-                          }`}
-                        >
-                          {player.injury_status}
-                        </Badge>
+                    <div className="flex items-center gap-3 mt-1">
+                      {/* Player Image */}
+                      <img
+                        src={getPlayerImageUrl(player.player_id)}
+                        alt={player.player_name}
+                        className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
+                        }}
+                      />
+                      {/* Team Logo */}
+                      {player.team && (
+                        <img
+                          src={getTeamLogoUrl(player.team)}
+                          alt={player.team}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => e.currentTarget.style.display = 'none'}
+                        />
                       )}
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{player.player_name}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {player.position}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {player.team}
+                        </Badge>
+                        {player.injury_status !== 'HEALTHY' && (
+                          <Badge
+                            className={`text-xs text-white ${
+                              INJURY_STATUS_COLORS[player.injury_status]
+                            }`}
+                          >
+                            {player.injury_status}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground mt-1">Empty</p>
@@ -263,23 +284,43 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
                   key={player.id}
                   className="flex items-center justify-between p-2 border rounded-md"
                 >
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{player.player_name}</p>
-                    <Badge variant="outline" className="text-xs">
-                      {player.position}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {player.team}
-                    </Badge>
-                    {player.injury_status !== 'HEALTHY' && (
-                      <Badge
-                        className={`text-xs text-white ${
-                          INJURY_STATUS_COLORS[player.injury_status]
-                        }`}
-                      >
-                        {player.injury_status}
-                      </Badge>
+                  <div className="flex items-center gap-3">
+                    {/* Player Image */}
+                    <img
+                      src={getPlayerImageUrl(player.player_id)}
+                      alt={player.player_name}
+                      className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
+                      }}
+                    />
+                    {/* Team Logo */}
+                    {player.team && (
+                      <img
+                        src={getTeamLogoUrl(player.team)}
+                        alt={player.team}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
                     )}
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{player.player_name}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {player.position}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {player.team}
+                      </Badge>
+                      {player.injury_status !== 'HEALTHY' && (
+                        <Badge
+                          className={`text-xs text-white ${
+                            INJURY_STATUS_COLORS[player.injury_status]
+                          }`}
+                        >
+                          {player.injury_status}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <Button
                     size="sm"

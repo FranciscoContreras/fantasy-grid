@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getSeasonMatchups } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { getPlayerImageUrl, getTeamLogoUrl } from '../lib/images';
 
 interface SeasonMatchupsProps {
   rosterId: number;
@@ -115,6 +116,24 @@ function PlayerMatchupRow({ matchup }: { matchup: PlayerMatchup }) {
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg">
       <div className="flex items-center gap-3">
+        {/* Player Image */}
+        <img
+          src={getPlayerImageUrl(player.player_id)}
+          alt={player.player_name}
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+          onError={(e) => {
+            e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
+          }}
+        />
+        {/* Team Logo */}
+        {player.team && (
+          <img
+            src={getTeamLogoUrl(player.team)}
+            alt={player.team}
+            className="w-6 h-6 object-contain"
+            onError={(e) => e.currentTarget.style.display = 'none'}
+          />
+        )}
         <div>
           <p className="font-medium">{player.player_name}</p>
           <div className="flex gap-2 mt-1">
@@ -130,6 +149,15 @@ function PlayerMatchupRow({ matchup }: { matchup: PlayerMatchup }) {
         ) : (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">vs</span>
+            {/* Opponent Team Logo */}
+            {matchup.opponent_team && (
+              <img
+                src={getTeamLogoUrl(matchup.opponent_team)}
+                alt={matchup.opponent_team}
+                className="w-6 h-6 object-contain"
+                onError={(e) => e.currentTarget.style.display = 'none'}
+              />
+            )}
             <Badge className="bg-blue-600 text-white">{matchup.opponent_team}</Badge>
           </div>
         )}
