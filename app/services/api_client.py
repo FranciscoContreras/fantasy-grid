@@ -579,7 +579,7 @@ class FantasyAPIClient:
 
     def get_team_defensive_rankings(self, team_abbr, season=2024):
         """
-        Get comprehensive defensive stats and rankings for a team.
+        Get comprehensive defensive stats and rankings for a team using AI Garden.
 
         Args:
             team_abbr: Team abbreviation
@@ -592,44 +592,50 @@ class FantasyAPIClient:
         logger = logging.getLogger(__name__)
 
         try:
-            # Get team_id from abbreviation
-            teams_map = self._get_teams()
-            abbr_to_id = {abbr: tid for tid, abbr in teams_map.items()}
-            team_id = abbr_to_id.get(team_abbr)
+            # Use AI Garden to query defensive stats
+            query = f"Get defensive statistics for {team_abbr} in {season} season including points allowed, yards allowed, pass defense ranking, and rush defense ranking"
 
-            if not team_id:
-                logger.warning(f"Team not found: {team_abbr}")
-                return None
-
-            # Fetch team stats
-            response = requests.get(
-                f'{self.base_url}/teams/{team_id}/stats',
-                params={'season': season},
+            response = requests.post(
+                f'{self.base_url}/garden/query',
+                json={'query': query},
                 headers=self._get_headers(),
-                timeout=10
+                timeout=15
             )
             response.raise_for_status()
-            stats = response.json().get('data', {})
+            garden_response = response.json()
 
-            if not stats:
-                logger.warning(f"No stats data for {team_abbr}")
+            # Extract stats from AI Garden response
+            # AI Garden may return data in various formats, try to parse intelligently
+            logger.debug(f"AI Garden response for {team_abbr}: {garden_response}")
+
+            stats = garden_response.get('data', {})
+            answer = garden_response.get('answer', '')
+
+            # If data is empty but answer has content, parse the text response
+            if not stats and answer:
+                logger.info(f"AI Garden returned text answer for {team_abbr}: {answer[:200]}...")
+                # Return None to trigger fallback - AI Garden text responses need parsing
                 return None
 
-            # Extract defensive metrics
+            if not stats:
+                logger.warning(f"No stats data from AI Garden for {team_abbr}")
+                return None
+
+            # Extract defensive metrics with flexible key matching
             defensive_stats = {
-                'points_allowed_per_game': stats.get('points_allowed_per_game', 0),
-                'yards_allowed_per_game': stats.get('yards_allowed_per_game', 0),
-                'pass_yards_allowed_per_game': stats.get('pass_yards_allowed_per_game', 0),
-                'rush_yards_allowed_per_game': stats.get('rush_yards_allowed_per_game', 0),
+                'points_allowed_per_game': stats.get('points_allowed_per_game') or stats.get('pointsAllowedPerGame', 0),
+                'yards_allowed_per_game': stats.get('yards_allowed_per_game') or stats.get('yardsAllowedPerGame', 0),
+                'pass_yards_allowed_per_game': stats.get('pass_yards_allowed_per_game') or stats.get('passYardsAllowedPerGame', 0),
+                'rush_yards_allowed_per_game': stats.get('rush_yards_allowed_per_game') or stats.get('rushYardsAllowedPerGame', 0),
                 'sacks': stats.get('sacks', 0),
                 'interceptions': stats.get('interceptions', 0),
-                'forced_fumbles': stats.get('forced_fumbles', 0),
-                'defensive_rank': stats.get('defensive_rank', 16),  # Default to middle
-                'pass_defense_rank': stats.get('pass_defense_rank', 16),
-                'rush_defense_rank': stats.get('rush_defense_rank', 16)
+                'forced_fumbles': stats.get('forced_fumbles') or stats.get('forcedFumbles', 0),
+                'defensive_rank': stats.get('defensive_rank') or stats.get('defensiveRank', 16),
+                'pass_defense_rank': stats.get('pass_defense_rank') or stats.get('passDefenseRank', 16),
+                'rush_defense_rank': stats.get('rush_defense_rank') or stats.get('rushDefenseRank', 16)
             }
 
-            logger.info(f"Fetched defensive stats for {team_abbr}")
+            logger.info(f"Fetched defensive stats for {team_abbr} from AI Garden: {defensive_stats}")
             return defensive_stats
 
         except Exception as e:
