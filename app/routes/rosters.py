@@ -171,6 +171,10 @@ def delete_roster(roster_id):
 def add_player_to_roster(roster_id):
     """Add a player to a roster"""
     data = request.json
+
+    # Log incoming data for debugging
+    logger.info(f"Adding player to roster {roster_id}: {data}")
+
     player_id = data.get('player_id')
     player_name = data.get('player_name')
     position = data.get('position')
@@ -180,7 +184,11 @@ def add_player_to_roster(roster_id):
     injury_status = data.get('injury_status', 'HEALTHY')
 
     if not all([player_name, position, team]):
-        return jsonify({'error': 'player_name, position, and team are required'}), 400
+        logger.error(f"Missing required fields: name={player_name}, position={position}, team={team}")
+        return jsonify({
+            'error': 'player_name, position, and team are required',
+            'received': {'player_name': player_name, 'position': position, 'team': team}
+        }), 400
 
     try:
         query = """
@@ -193,12 +201,14 @@ def add_player_to_roster(roster_id):
                                       roster_slot, is_starter, injury_status))
 
         if result:
+            logger.info(f"Successfully added player {player_name} to roster {roster_id}")
             return jsonify({'data': result[0]}), 201
         else:
-            return jsonify({'error': 'Failed to add player'}), 500
+            logger.error(f"Query returned no result for roster {roster_id}")
+            return jsonify({'error': 'Failed to add player - no result from database'}), 500
     except Exception as e:
-        logger.error(f"Error adding player to roster {roster_id}: {str(e)}")
-        return jsonify({'error': 'Failed to add player'}), 500
+        logger.error(f"Error adding player to roster {roster_id}: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to add player: {str(e)}'}), 500
 
 
 @bp.route('/<int:roster_id>/players/<int:player_roster_id>', methods=['PUT'])
