@@ -145,6 +145,7 @@ class MatchupDataService:
             {
                 'player': player_data,
                 'opponent': opponent_team,
+                'opponent_roster': {...},
                 'defensive_stats': {...},
                 'historical_performance': {...},
                 'defensive_coordinator': 'Name',
@@ -166,6 +167,16 @@ class MatchupDataService:
         try:
             player_id = player.get('player_id')
             player_position = player.get('position')
+
+            # Get opponent roster (offensive players)
+            opponent_roster = self.api_client.get_team_roster(opponent_team, season)
+            data['opponent_roster'] = opponent_roster
+            logger.debug(f"Fetched opponent roster for {opponent_team}")
+
+            # Get opponent defensive rankings
+            defensive_stats = self.api_client.get_team_defensive_rankings(opponent_team, season)
+            data['defensive_stats'] = defensive_stats
+            logger.debug(f"Fetched defensive stats for {opponent_team}")
 
             # Get defensive coordinator
             dc = self.api_client.get_defensive_coordinator(opponent_team, season)

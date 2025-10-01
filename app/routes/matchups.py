@@ -484,6 +484,8 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
     key_defenders = player_data.get('key_defenders', [])
     historical_stats = player_data.get('historical_performance')
     injury_status = player_data.get('injury_status', 'HEALTHY')
+    opponent_roster = player_data.get('opponent_roster')
+    defensive_stats = player_data.get('defensive_stats')
 
     # Calculate matchup score (works even without opponent)
     matchup_score = _calculate_matchup_score(player_position, player.get('team'), opponent_team)
@@ -525,7 +527,9 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
         opponent_team if opponent_team else 'Unknown',
         historical_stats,
         def_coordinator,
-        key_defenders
+        key_defenders,
+        opponent_roster,
+        defensive_stats
     )
 
     return {
@@ -765,7 +769,7 @@ def _calculate_start_ranking(matchup_score, projected_points, injury_impact, his
     return max(1, min(10, round(ranking)))
 
 
-def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None, def_coordinator=None, key_defenders=None):
+def _generate_reasoning(player, matchup_score, injury_impact, recommendation, weather_data=None, opponent_team=None, historical_stats=None, def_coordinator=None, key_defenders=None, opponent_roster=None, defensive_stats=None):
     """Generate AI-powered reasoning using Groq (free tier)"""
     try:
         # Build weather context for AI
@@ -790,13 +794,16 @@ def _generate_reasoning(player, matchup_score, injury_impact, recommendation, we
             if parts:
                 defensive_context = '; '.join(parts)
 
-        # Use AI service for intelligent reasoning
+        # Use AI service for intelligent reasoning with enhanced context
         reasoning = ai_service.generate_matchup_reasoning(
             player_name=player['player_name'],
             position=player['position'],
+            team=player.get('team', 'N/A'),
             matchup_score=matchup_score,
             injury_status=player.get('injury_status', 'HEALTHY'),
             opponent_defense=opponent_team,
+            opponent_roster=opponent_roster,
+            defensive_stats=defensive_stats,
             weather=weather_context,
             historical_performance=historical_context,
             defensive_scheme=defensive_context

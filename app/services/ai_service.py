@@ -172,16 +172,19 @@ class AIService:
         else:
             return "Moderate matchup profile warrants careful consideration of recent form and injury status."
 
-    def generate_matchup_reasoning(self, player_name, position, matchup_score, injury_status, opponent_defense=None, weather=None, historical_performance=None, defensive_scheme=None):
+    def generate_matchup_reasoning(self, player_name, position, team, matchup_score, injury_status, opponent_defense=None, opponent_roster=None, defensive_stats=None, weather=None, historical_performance=None, defensive_scheme=None):
         """
         Generate reasoning for a player's matchup analysis
 
         Args:
             player_name: Player's name
             position: Player's position
+            team: Player's team abbreviation
             matchup_score: Numerical matchup score (0-100)
             injury_status: Current injury status
             opponent_defense: Optional opponent defense team abbreviation
+            opponent_roster: Optional dict of opponent's offensive players
+            defensive_stats: Optional dict of opponent's defensive rankings
             weather: Optional weather context string
             historical_performance: Optional historical stats vs this opponent
             defensive_scheme: Optional defensive coordinator and key players
@@ -192,16 +195,48 @@ class AIService:
         # Build context prompt
         matchup_quality = "favorable" if matchup_score > 70 else "difficult" if matchup_score < 50 else "average"
         injury_context = f" They are dealing with {injury_status} status." if injury_status != "HEALTHY" else ""
-        defense_context = f" facing the {opponent_defense} defense" if opponent_defense else ""
+        defense_context = f" vs {opponent_defense}" if opponent_defense else ""
+
+        # Enhanced opponent context
+        roster_context = ""
+        if opponent_roster:
+            # Build concise roster summary
+            roster_parts = []
+            for pos, players in opponent_roster.items():
+                if players:
+                    names = [p['name'] for p in players[:2]]  # Top 2 per position
+                    if names:
+                        roster_parts.append(f"{pos}: {', '.join(names)}")
+            if roster_parts:
+                roster_context = f"\n- Opponent roster: {'; '.join(roster_parts)}"
+
+        # Enhanced defensive stats context
+        defense_stats_context = ""
+        if defensive_stats:
+            ppg = defensive_stats.get('points_allowed_per_game', 0)
+            def_rank = defensive_stats.get('defensive_rank', 16)
+
+            # Position-specific defensive metrics
+            if position in ['QB', 'WR', 'TE']:
+                pass_def_rank = defensive_stats.get('pass_defense_rank', 16)
+                pass_yards = defensive_stats.get('pass_yards_allowed_per_game', 0)
+                defense_stats_context = f"\n- {opponent_defense} pass defense: Rank #{pass_def_rank}, {pass_yards:.0f} yds/game, {ppg:.1f} PPG allowed"
+            elif position == 'RB':
+                rush_def_rank = defensive_stats.get('rush_defense_rank', 16)
+                rush_yards = defensive_stats.get('rush_yards_allowed_per_game', 0)
+                defense_stats_context = f"\n- {opponent_defense} run defense: Rank #{rush_def_rank}, {rush_yards:.0f} yds/game, {ppg:.1f} PPG allowed"
+            else:
+                defense_stats_context = f"\n- {opponent_defense} defense: Rank #{def_rank}, {ppg:.1f} PPG allowed"
+
         weather_context = f"\n- Weather conditions: {weather}" if weather else ""
         historical_context = f"\n- Historical performance: {historical_performance}" if historical_performance else ""
         scheme_context = f"\n- Defensive scheme: {defensive_scheme}" if defensive_scheme else ""
 
-        prompt = f"""Analyze {player_name} ({position}){defense_context}:
+        prompt = f"""Analyze {player_name} ({team} {position}){defense_context}:
 - Matchup score: {matchup_score}/100 ({matchup_quality})
-- Injury status: {injury_status}{injury_context}{weather_context}{historical_context}{scheme_context}
+- Injury status: {injury_status}{injury_context}{defense_stats_context}{scheme_context}{roster_context}{historical_context}{weather_context}
 
-Provide a brief 1-2 sentence snippet explaining WHY to start or sit this player. Focus on the most important factors: defensive matchup, coordinator scheme, key defenders, historical performance, or weather."""
+Provide a concise 1-2 sentence analysis with clear START/SIT/CONSIDER recommendation. Focus on the most impactful factors: matchup strength, defensive rankings, and key defensive players."""
 
         # Use free tier for individual player analysis
         return self.generate_analysis(prompt, use_premium=False)

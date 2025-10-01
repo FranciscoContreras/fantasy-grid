@@ -479,3 +479,142 @@ class FantasyAPIClient:
             return all_players
 
         return team_defense.get(position_group, [])
+
+    def get_team_roster(self, team_abbr, season=2024):
+        """
+        Get complete roster for a team, focusing on top offensive players.
+
+        Args:
+            team_abbr: Team abbreviation (e.g., 'KC', 'WSH')
+            season: Season year
+
+        Returns:
+            Dictionary with offensive players by position
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Get team_id from abbreviation
+            teams_map = self._get_teams()
+            abbr_to_id = {abbr: tid for tid, abbr in teams_map.items()}
+            team_id = abbr_to_id.get(team_abbr)
+
+            if not team_id:
+                logger.warning(f"Team not found: {team_abbr}")
+                return None
+
+            # Fetch team roster
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/players',
+                params={'season': season, 'limit': 100},
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            players = response.json().get('data', [])
+
+            if not players:
+                logger.warning(f"No roster data for {team_abbr}")
+                return None
+
+            # Organize by position (focus on offensive skill positions)
+            roster = {
+                'QB': [],
+                'RB': [],
+                'WR': [],
+                'TE': []
+            }
+
+            for player in players:
+                pos = player.get('position', '')
+                name = player.get('name', '')
+
+                if pos in roster and name:
+                    roster[pos].append({
+                        'name': name,
+                        'position': pos,
+                        'status': player.get('status', 'unknown')
+                    })
+
+            # Limit to top players per position (most relevant)
+            for pos in roster:
+                roster[pos] = roster[pos][:3]  # Top 3 per position
+
+            logger.info(f"Fetched roster for {team_abbr}: {sum(len(v) for v in roster.values())} players")
+            return roster
+
+        except Exception as e:
+            logger.error(f"Failed to fetch roster for {team_abbr}: {e}")
+            return None
+
+    def get_team_defensive_rankings(self, team_abbr, season=2024):
+        """
+        Get comprehensive defensive stats and rankings for a team.
+
+        Args:
+            team_abbr: Team abbreviation
+            season: Season year
+
+        Returns:
+            Dictionary with defensive stats and rankings
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Get team_id from abbreviation
+            teams_map = self._get_teams()
+            abbr_to_id = {abbr: tid for tid, abbr in teams_map.items()}
+            team_id = abbr_to_id.get(team_abbr)
+
+            if not team_id:
+                logger.warning(f"Team not found: {team_abbr}")
+                return None
+
+            # Fetch team stats
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/stats',
+                params={'season': season},
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            stats = response.json().get('data', {})
+
+            if not stats:
+                logger.warning(f"No stats data for {team_abbr}")
+                return None
+
+            # Extract defensive metrics
+            defensive_stats = {
+                'points_allowed_per_game': stats.get('points_allowed_per_game', 0),
+                'yards_allowed_per_game': stats.get('yards_allowed_per_game', 0),
+                'pass_yards_allowed_per_game': stats.get('pass_yards_allowed_per_game', 0),
+                'rush_yards_allowed_per_game': stats.get('rush_yards_allowed_per_game', 0),
+                'sacks': stats.get('sacks', 0),
+                'interceptions': stats.get('interceptions', 0),
+                'forced_fumbles': stats.get('forced_fumbles', 0),
+                'defensive_rank': stats.get('defensive_rank', 16),  # Default to middle
+                'pass_defense_rank': stats.get('pass_defense_rank', 16),
+                'rush_defense_rank': stats.get('rush_defense_rank', 16)
+            }
+
+            logger.info(f"Fetched defensive stats for {team_abbr}")
+            return defensive_stats
+
+        except Exception as e:
+            logger.error(f"Failed to fetch defensive rankings for {team_abbr}: {e}")
+            # Return fallback data with reasonable defaults
+            return {
+                'points_allowed_per_game': 22.0,
+                'yards_allowed_per_game': 340.0,
+                'pass_yards_allowed_per_game': 230.0,
+                'rush_yards_allowed_per_game': 110.0,
+                'sacks': 20,
+                'interceptions': 10,
+                'forced_fumbles': 8,
+                'defensive_rank': 16,
+                'pass_defense_rank': 16,
+                'rush_defense_rank': 16
+            }
