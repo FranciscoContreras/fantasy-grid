@@ -119,9 +119,13 @@ def analyze_matchup(matchup_id):
             WHERE rp.roster_id = %s AND rp.is_starter = true
         """
         user_players = execute_query(user_players_query, (matchup_data['user_roster_id'],))
+        if user_players is None:
+            user_players = []
 
         # Get opponent roster players
         opponent_players = execute_query(user_players_query, (matchup_data['opponent_roster_id'],))
+        if opponent_players is None:
+            opponent_players = []
 
         # Clear existing analysis
         delete_query = "DELETE FROM matchup_analysis WHERE matchup_id = %s"
