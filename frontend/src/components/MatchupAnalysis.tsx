@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { getTeamLogoUrl } from '../lib/images';
 import { PlayerDetailModal } from './PlayerDetailModal';
+import { AnalysisLoadingAnimation } from './AnalysisLoadingAnimation';
 
 interface MatchupAnalysisProps {
   matchupId: number;
@@ -167,6 +168,16 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
         <div className="p-3 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-md text-sm">
           {error}
         </div>
+      )}
+
+      {/* Loading Animation */}
+      {analyzing && matchup.analysis && (
+        <AnalysisLoadingAnimation
+          totalPlayers={matchup.analysis.length}
+          completedPlayers={matchup.analysis.filter((a) =>
+            (a as any).analysis_status === 'completed' || (a as any).analysis_status === 'failed'
+          ).length}
+        />
       )}
 
       {matchup.analyzed && matchup.analysis && matchup.analysis.length > 0 && (
