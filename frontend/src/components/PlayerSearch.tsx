@@ -93,7 +93,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             <option value="RB">RB</option>
             <option value="WR">WR</option>
             <option value="TE">TE</option>
-            <option value="K">K</option>
+            <option value="PK">K</option>
             <option value="DEF">DEF</option>
           </select>
           <Input

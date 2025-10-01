@@ -59,6 +59,10 @@ class FantasyAPIClient:
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
+        # Special case: DEF means team defenses, not individual players
+        if position == 'DEF':
+            return self._search_team_defenses(query)
+
         # The API limits responses to 100 per request, so we need to paginate
         # Fetch ALL players for the position to ensure we don't miss anyone
 
@@ -104,6 +108,38 @@ class FantasyAPIClient:
             return scored_players[:20]  # Return top 20 most relevant
 
         return all_players[:20]
+
+    def _search_team_defenses(self, query):
+        """Search for team defenses"""
+        response = requests.get(
+            f'{self.base_url}/teams',
+            params={'limit': 100},
+            headers=self._get_headers()
+        )
+        response.raise_for_status()
+        teams = response.json().get('data', [])
+
+        # Convert teams to player-like format for consistency
+        defenses = []
+        for team in teams:
+            defense = {
+                'id': team['id'],
+                'player_id': team['id'],
+                'name': f"{team['city']} {team['name']}",
+                'position': 'DEF',
+                'team': team['abbreviation'],
+                'status': 'active'
+            }
+            defenses.append(defense)
+
+        # Filter by query if provided
+        if query:
+            query_lower = query.lower()
+            defenses = [d for d in defenses if
+                       query_lower in d['name'].lower() or
+                       query_lower in d['team'].lower()]
+
+        return defenses[:20]
 
     def _score_and_filter_players(self, players, query):
         """
