@@ -66,7 +66,7 @@ export interface Matchup {
   week: number;
   season: number;
   user_roster_id: number;
-  opponent_roster_id: number;
+  opponent_roster_id?: number;
   user_roster_name?: string;
   opponent_roster_name?: string;
   analyzed: boolean;

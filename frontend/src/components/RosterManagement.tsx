@@ -34,7 +34,6 @@ export function RosterManagement() {
   const [matchupWeek, setMatchupWeek] = useState(1);
   const [matchupSeason, setMatchupSeason] = useState(2025);
   const [matchupUserRoster, setMatchupUserRoster] = useState<number | null>(null);
-  const [matchupOpponentRoster, setMatchupOpponentRoster] = useState<number | null>(null);
 
   useEffect(() => {
     loadRosters();
@@ -103,8 +102,8 @@ export function RosterManagement() {
 
   const handleCreateMatchup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!matchupUserRoster || !matchupOpponentRoster) {
-      setError('Please select both rosters');
+    if (!matchupUserRoster) {
+      setError('Please select a roster');
       return;
     }
 
@@ -113,7 +112,6 @@ export function RosterManagement() {
         week: matchupWeek,
         season: matchupSeason,
         user_roster_id: matchupUserRoster,
-        opponent_roster_id: matchupOpponentRoster,
       });
       setShowNewMatchupForm(false);
       setSelectedMatchupId(response.data.id);
@@ -279,8 +277,7 @@ export function RosterManagement() {
                         Week {matchup.week} • {matchup.season}
                       </p>
                       <p className="font-semibold">{matchup.user_roster_name}</p>
-                      <p className="text-sm text-muted-foreground">vs</p>
-                      <p className="font-semibold">{matchup.opponent_roster_name}</p>
+                      <p className="text-sm text-muted-foreground">vs NFL Defenses</p>
                     </div>
                     {matchup.analyzed && (
                       <Badge className="bg-green-600 text-white">Analyzed</Badge>
@@ -402,29 +399,11 @@ export function RosterManagement() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">
-                    Your Roster <span className="text-red-500">*</span>
+                    Select Roster <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={matchupUserRoster || ''}
                     onChange={(e) => setMatchupUserRoster(parseInt(e.target.value))}
-                    required
-                    className="w-full mt-1 px-3 py-2 border rounded-md"
-                  >
-                    <option value="">Select roster...</option>
-                    {rosters.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">
-                    Opponent Roster <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={matchupOpponentRoster || ''}
-                    onChange={(e) => setMatchupOpponentRoster(parseInt(e.target.value))}
                     required
                     className="w-full mt-1 px-3 py-2 border rounded-md"
                   >

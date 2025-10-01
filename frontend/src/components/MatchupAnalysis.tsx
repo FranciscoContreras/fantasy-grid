@@ -83,7 +83,6 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
   }
 
   const userAnalysis = matchup.analysis?.filter((a) => a.is_user_player) || [];
-  const opponentAnalysis = matchup.analysis?.filter((a) => !a.is_user_player) || [];
 
   const startPlayers = userAnalysis.filter((a) => a.recommendation === 'START');
   const sitPlayers = userAnalysis.filter((a) => a.recommendation === 'SIT');
@@ -105,10 +104,10 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>
-                Week {matchup.week} Matchup - {matchup.season}
+                Week {matchup.week} Analysis - {matchup.season}
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {matchup.user_roster_name} vs {matchup.opponent_roster_name}
+                {matchup.user_roster_name} vs Real NFL Defenses
               </p>
             </div>
             <Button
@@ -174,21 +173,8 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
             </CardContent>
           </Card>
 
-          {/* Opponent's Players */}
-          {opponentAnalysis.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Opponent's Players</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {opponentAnalysis.map((player) => (
-                    <PlayerAnalysisCard key={player.id} analysis={player} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Note: Opponent roster analysis removed - fantasy matchups depend on
+              your players' performance against real NFL defenses, not opponent's roster */}
         </>
       )}
 

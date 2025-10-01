@@ -95,7 +95,7 @@ export const createMatchup = async (data: {
   week: number;
   season: number;
   user_roster_id: number;
-  opponent_roster_id: number;
+  opponent_roster_id?: number;
 }) => {
   const response = await api.post('/matchups', data);
   return response.data;
