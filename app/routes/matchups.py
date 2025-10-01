@@ -161,7 +161,9 @@ def analyze_matchup(matchup_id):
                 # Save to database
                 _save_matchup_analysis(matchup_id, analysis, is_user_player=True)
             except Exception as e:
+                import traceback
                 logger.error(f"Error analyzing user player {player.get('player_name')}: {str(e)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
                 raise
 
         # Note: We don't analyze opponent roster players because fantasy matchups
