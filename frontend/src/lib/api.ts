@@ -133,4 +133,9 @@ export const getAvailableWeeks = async (season?: number, startWeek?: number) => 
   return response.data;
 };
 
+export const getPlayerDetails = async (playerId: string) => {
+  const response = await api.get(`/matchups/player/${playerId}`);
+  return response.data;
+};
+
 export default api;

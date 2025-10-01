@@ -313,6 +313,35 @@ class FantasyAPIClient:
         response.raise_for_status()
         return response.json()
 
+    def get_player_recent_games(self, player_id, limit=20):
+        """
+        Get recent game logs for a player.
+
+        Args:
+            player_id: Player ID
+            limit: Number of recent games to fetch (default 20)
+
+        Returns:
+            List of recent game stats
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/games',
+                params={'limit': limit},
+                headers=self._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            games = response.json().get('data', [])
+            logger.info(f"Fetched {len(games)} recent games for player {player_id}")
+            return games
+        except Exception as e:
+            logger.error(f"Failed to fetch recent games for player {player_id}: {e}")
+            return []
+
     def get_weekly_schedule(self, season, week):
         """
         Get NFL schedule for a specific week.

@@ -211,6 +211,41 @@ def get_matchup(matchup_id):
         return jsonify({'error': 'Failed to fetch matchup'}), 500
 
 
+@bp.route('/player/<player_id>', methods=['GET'])
+def get_player_details(player_id):
+    """
+    Get detailed player information including recent games and career stats.
+
+    Returns:
+        Player info, career stats, and last 20 games performance
+    """
+    try:
+        # Get player basic info
+        player_info = api_client.get_player_data(player_id)
+
+        # Get recent games (last 20)
+        recent_games = api_client.get_player_recent_games(player_id, limit=20)
+
+        # Get career stats
+        try:
+            career_stats = api_client.get_player_career_stats(player_id)
+        except Exception as e:
+            logger.warning(f"Could not fetch career stats for {player_id}: {e}")
+            career_stats = None
+
+        return jsonify({
+            'data': {
+                'player': player_info,
+                'recent_games': recent_games,
+                'career_stats': career_stats
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching player details for {player_id}: {str(e)}")
+        return jsonify({'error': 'Failed to fetch player details'}), 500
+
+
 @bp.route('/<int:matchup_id>/analyze', methods=['POST'])
 def analyze_matchup(matchup_id):
     """

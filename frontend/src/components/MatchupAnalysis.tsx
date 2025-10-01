@@ -4,6 +4,8 @@ import { getMatchup, analyzeMatchup } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { getTeamLogoUrl } from '../lib/images';
+import { PlayerDetailModal } from './PlayerDetailModal';
 
 interface MatchupAnalysisProps {
   matchupId: number;
@@ -29,6 +31,7 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     loadMatchup();
@@ -206,7 +209,11 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
             <CardContent>
               <div className="space-y-4">
                 {userAnalysis.map((player) => (
-                  <PlayerAnalysisCard key={player.id} analysis={player} />
+                  <PlayerAnalysisCard
+                    key={player.id}
+                    analysis={player}
+                    onPlayerClick={(playerId, playerName) => setSelectedPlayer({ id: playerId, name: playerName })}
+                  />
                 ))}
               </div>
             </CardContent>
@@ -227,11 +234,20 @@ export function MatchupAnalysis({ matchupId }: MatchupAnalysisProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <PlayerDetailModal
+          playerId={selectedPlayer.id}
+          playerName={selectedPlayer.name}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   );
 }
 
-function PlayerAnalysisCard({ analysis }: { analysis: MatchupAnalysisType }) {
+function PlayerAnalysisCard({ analysis, onPlayerClick }: { analysis: MatchupAnalysisType; onPlayerClick: (playerId: string, playerName: string) => void }) {
   const gradeColor = GRADE_COLORS[analysis.ai_grade] || 'bg-gray-500';
   const recColor = RECOMMENDATION_COLORS[analysis.recommendation] || 'bg-gray-500';
 
@@ -251,7 +267,24 @@ function PlayerAnalysisCard({ analysis }: { analysis: MatchupAnalysisType }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-lg">{analysis.player_name}</h3>
+            {/* Team Logo */}
+            {analysis.team && (
+              <img
+                src={getTeamLogoUrl(analysis.team)}
+                alt={analysis.team}
+                className="w-6 h-6 object-contain"
+                onError={(e) => e.currentTarget.style.display = 'none'}
+              />
+            )}
+
+            {/* Clickable Player Name */}
+            <h3
+              className="font-semibold text-lg cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => onPlayerClick((analysis as any).player_id, analysis.player_name)}
+            >
+              {analysis.player_name}
+            </h3>
+
             <Badge variant="outline">{analysis.position}</Badge>
             <Badge variant="outline">{analysis.team}</Badge>
             {analysis.injury_status && analysis.injury_status !== 'HEALTHY' && (
