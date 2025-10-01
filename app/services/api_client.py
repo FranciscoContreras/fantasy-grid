@@ -332,7 +332,9 @@ class FantasyAPIClient:
                 headers=self._get_headers()
             )
             response.raise_for_status()
-            games = response.json().get('data', [])
+            games = response.json().get('data') or []
+            if games is None:
+                games = []
             logger.info(f"Fetched {len(games)} games for {season} Week {week}")
             self._schedule_cache[cache_key] = games
             return games
