@@ -23,7 +23,15 @@ class FantasyAPIClient:
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
-        params = {'limit': 100}  # Get more results for better filtering
+        params = {'limit': 100}
+
+        # Pass query to API's native search if available
+        if query:
+            # Try multiple search parameter names that APIs commonly use
+            params['search'] = query
+            params['name'] = query
+            params['q'] = query
+
         if position:
             params['position'] = position
 
@@ -36,7 +44,8 @@ class FantasyAPIClient:
         all_players = response.json().get('data', [])
 
         # Advanced search with relevance scoring
-        if query:
+        # This will further filter and rank results from the API
+        if query and all_players:
             scored_players = self._score_and_filter_players(all_players, query)
             return scored_players[:20]  # Return top 20 most relevant
 
@@ -77,15 +86,31 @@ class FantasyAPIClient:
                 # Fuzzy matching with word boundaries
                 name_parts = name_lower.split()
 
-                # Check if any name part starts with any query part
+                # Check each query part against each name part
                 for query_part in query_parts:
+                    best_part_score = 0
                     for name_part in name_parts:
-                        if name_part.startswith(query_part):
-                            score += 30
+                        # Exact word match
+                        if name_part == query_part:
+                            best_part_score = max(best_part_score, 40)
+                        # Starts with
+                        elif name_part.startswith(query_part):
+                            best_part_score = max(best_part_score, 35)
+                        # Contains
                         elif query_part in name_part:
-                            score += 20
+                            best_part_score = max(best_part_score, 25)
+                        # Edit distance check for misspellings
+                        else:
+                            edit_dist = self._levenshtein_distance(query_part, name_part)
+                            # Allow up to 2 character differences for words > 4 chars
+                            if len(query_part) > 4 and edit_dist <= 2:
+                                best_part_score = max(best_part_score, 30 - (edit_dist * 5))
+                            elif len(query_part) > 3 and edit_dist <= 1:
+                                best_part_score = max(best_part_score, 25)
 
-                # Calculate Levenshtein-like score
+                    score += best_part_score
+
+                # Calculate sequential fuzzy score for full name
                 if len(query_lower) >= 3:
                     fuzzy_score = self._fuzzy_match_score(name_lower, query_lower)
                     score += fuzzy_score
@@ -110,6 +135,27 @@ class FantasyAPIClient:
         scored_results.sort(key=lambda x: (-x['score'], x['name']))
 
         return [item['player'] for item in scored_results]
+
+    def _levenshtein_distance(self, s1, s2):
+        """Calculate Levenshtein distance between two strings (edit distance)"""
+        if len(s1) < len(s2):
+            return self._levenshtein_distance(s2, s1)
+
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                # Cost of insertions, deletions, or substitutions
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+
+        return previous_row[-1]
 
     def _fuzzy_match_score(self, text, pattern):
         """Calculate fuzzy match score based on character proximity"""
