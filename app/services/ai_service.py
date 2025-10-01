@@ -1,9 +1,12 @@
 import os
 import hashlib
 import requests
+import logging
 from groq import Groq
 from anthropic import Anthropic
 from app.services.cache_service import cache_ai_response, get_cached_ai_response
+
+logger = logging.getLogger(__name__)
 
 class AIService:
     def __init__(self):
@@ -42,28 +45,37 @@ class AIService:
         prompt_hash = hashlib.md5(prompt.encode()).hexdigest()
         cached = get_cached_ai_response(prompt_hash)
         if cached:
+            logger.info(f"Using cached AI response for prompt hash: {prompt_hash}")
             return cached
+
+        logger.info(f"Generating new AI analysis (use_premium={use_premium})")
+        logger.debug(f"Prompt: {prompt[:200]}...")
 
         # Generate response - prioritize Grok (free and powerful)
         if use_premium and self.anthropic_client:
+            logger.info("Using Claude for premium analysis")
             response = self._generate_with_claude(prompt)
         elif self.grok_api_key:
+            logger.info("Using Grok for analysis")
             response = self._generate_with_grok(prompt)
         elif self.groq_client:
+            logger.info("Using Groq for analysis")
             response = self._generate_with_groq(prompt)
         else:
-            # Fallback to rule-based if no AI available
+            logger.warning("No AI service available, using fallback")
             response = self._generate_fallback(prompt)
 
         # Cache the response
         if response:
             cache_ai_response(prompt_hash, response)
+            logger.info(f"Cached AI response: {response[:100]}...")
 
         return response
 
     def _generate_with_grok(self, prompt):
         """Use Grok API (xAI's Grok-4-latest)"""
         try:
+            logger.debug(f"Calling Grok API with prompt: {prompt[:100]}...")
             response = requests.post(
                 'https://api.x.ai/v1/chat/completions',
                 headers={
@@ -88,12 +100,16 @@ class AIService:
                 timeout=10
             )
             response.raise_for_status()
-            return response.json()['choices'][0]['message']['content'].strip()
+            result = response.json()['choices'][0]['message']['content'].strip()
+            logger.info(f"Grok API success: {result[:100]}...")
+            return result
         except Exception as e:
-            print(f"Grok API error: {e}")
+            logger.error(f"Grok API error: {e}")
             # Fallback to Groq if Grok fails
             if self.groq_client:
+                logger.info("Falling back to Groq")
                 return self._generate_with_groq(prompt)
+            logger.warning("No Groq available, using rule-based fallback")
             return self._generate_fallback(prompt)
 
     def _generate_with_groq(self, prompt):
