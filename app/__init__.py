@@ -136,8 +136,13 @@ def create_app():
     from app.database import close_all_connections
     atexit.register(close_all_connections)
     
+    # Initialize Flask-Bcrypt for password hashing
+    from app.services.auth_service import bcrypt
+    bcrypt.init_app(app)
+    
     # Register blueprints
-    from app.routes import players, analysis, predictions, rosters, matchups
+    from app.routes import players, analysis, predictions, rosters, matchups, auth
+    app.register_blueprint(auth.bp)
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)

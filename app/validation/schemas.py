@@ -22,7 +22,6 @@ class CreateRosterSchema(Schema):
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     league_name = fields.Str(required=False, allow_none=True, validate=validate.Length(max=100))
     scoring_type = fields.Str(required=False, validate=validate.OneOf(['PPR', 'STANDARD', 'HALF_PPR']))
-    user_id = fields.Str(required=True, validate=validate.Length(min=1, max=100))
 
 class AddPlayerToRosterSchema(Schema):
     """Schema for adding a player to a roster"""
@@ -82,3 +81,30 @@ class RosterIdSchema(Schema):
 class UserIdSchema(Schema):
     """Schema for user ID parameter"""
     user_id = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+
+
+# Authentication schemas
+class RegisterSchema(Schema):
+    """Schema for user registration"""
+    email = fields.Email(required=True, validate=validate.Length(max=255))
+    username = fields.Str(required=True, validate=validate.Length(min=3, max=100))
+    password = fields.Str(required=True, validate=validate.Length(min=8, max=255))
+    first_name = fields.Str(required=False, allow_none=True, validate=validate.Length(max=100))
+    last_name = fields.Str(required=False, allow_none=True, validate=validate.Length(max=100))
+
+class LoginSchema(Schema):
+    """Schema for user login"""
+    email_or_username = fields.Str(required=True, validate=validate.Length(min=1, max=255))
+    password = fields.Str(required=True, validate=validate.Length(min=1, max=255))
+
+class UpdateUserSchema(Schema):
+    """Schema for updating user information"""
+    first_name = fields.Str(required=False, allow_none=True, validate=validate.Length(max=100))
+    last_name = fields.Str(required=False, allow_none=True, validate=validate.Length(max=100))
+    email = fields.Email(required=False, allow_none=True, validate=validate.Length(max=255))
+    username = fields.Str(required=False, allow_none=True, validate=validate.Length(min=3, max=100))
+
+class ChangePasswordSchema(Schema):
+    """Schema for changing password"""
+    old_password = fields.Str(required=True, validate=validate.Length(min=1, max=255))
+    new_password = fields.Str(required=True, validate=validate.Length(min=8, max=255))

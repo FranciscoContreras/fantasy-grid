@@ -1,18 +1,50 @@
 from flask import Blueprint, request, jsonify
-from flask import Blueprint, request, jsonify
 from app.database import execute_query
 from app.validation.decorators import validate_json, validate_query_params
 from app.validation.schemas import CreateRosterSchema, UserIdSchema, AddPlayerToRosterSchema
+from app.routes.auth import require_auth
 import logging
 
 bp = Blueprint('rosters', __name__, url_prefix='/api/rosters')
 logger = logging.getLogger(__name__)
 
 
+def verify_roster_ownership(roster_id, user_id):
+    """
+    Verify that a roster belongs to the specified user.
+    
+    Args:
+        roster_id: Roster ID to check
+        user_id: User ID to verify against
+        
+    Returns:
+        Tuple of (success: bool, error_response: tuple or None)
+    """
+    try:
+        result = execute_query(
+            "SELECT user_id FROM rosters WHERE id = %s",
+            (roster_id,),
+            fetch_one=True
+        )
+        
+        if not result or len(result) == 0:
+            return False, (jsonify({'error': 'Roster not found'}), 404)
+        
+        if result[0]['user_id'] != user_id:
+            return False, (jsonify({'error': 'Unauthorized access to this roster'}), 403)
+        
+        return True, None
+        
+    except Exception as e:
+        logger.error(f"Error verifying roster ownership: {e}")
+        return False, (jsonify({'error': 'Failed to verify roster ownership'}), 500)
+
+
 @bp.route('', methods=['GET'])
-def get_rosters():
-    """Get all rosters for a user"""
-    user_id = request.args.get('user_id', 'default_user')
+@require_auth
+def get_rosters(current_user):
+    """Get all rosters for authenticated user"""
+    user_id = current_user['id']
 
     try:
         query = """
@@ -33,10 +65,11 @@ def get_rosters():
 
 
 @bp.route('', methods=['POST'])
+@require_auth
 @validate_json(CreateRosterSchema)
-def create_roster(data):
-    """Create a new roster"""
-    user_id = data['user_id']
+def create_roster(current_user, data):
+    """Create a new roster for authenticated user"""
+    user_id = current_user['id']
     name = data['name']
     league_name = data.get('league_name', '')
     scoring_type = data.get('scoring_type', 'PPR')
@@ -59,8 +92,9 @@ def create_roster(data):
 
 
 @bp.route('/<int:roster_id>', methods=['GET'])
-def get_roster(roster_id):
-    """Get a specific roster with all players"""
+@require_auth
+def get_roster(current_user, roster_id):
+    """Get a specific roster with all players (must be owned by user)"""
     try:
         # Get roster details
         roster_query = """
@@ -72,6 +106,10 @@ def get_roster(roster_id):
 
         if not roster:
             return jsonify({'error': 'Roster not found'}), 404
+        
+        # Verify ownership
+        if roster[0]['user_id'] != current_user['id']:
+            return jsonify({'error': 'Unauthorized access to this roster'}), 403
 
         # Get all players in roster
         players_query = """
@@ -106,8 +144,14 @@ def get_roster(roster_id):
 
 
 @bp.route('/<int:roster_id>', methods=['PUT'])
-def update_roster(roster_id):
-    """Update roster details"""
+@require_auth
+def update_roster(current_user, roster_id):
+    """Update roster details (must be owned by user)"""
+    
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     data = request.json
     name = data.get('name')
     league_name = data.get('league_name')
@@ -155,8 +199,14 @@ def update_roster(roster_id):
 
 
 @bp.route('/<int:roster_id>', methods=['DELETE'])
-def delete_roster(roster_id):
-    """Delete a roster"""
+@require_auth
+def delete_roster(current_user, roster_id):
+    """Delete a roster (must be owned by user)"""
+    
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     try:
         query = "DELETE FROM rosters WHERE id = %s"
         execute_query(query, (roster_id,))
@@ -168,8 +218,14 @@ def delete_roster(roster_id):
 
 
 @bp.route('/<int:roster_id>/players', methods=['POST'])
-def add_player_to_roster(roster_id):
-    """Add a player to a roster"""
+@require_auth
+def add_player_to_roster(current_user, roster_id):
+    """Add a player to a roster (must be owned by user)"""
+    
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     data = request.json
 
     # Log incoming data for debugging
@@ -212,8 +268,14 @@ def add_player_to_roster(roster_id):
 
 
 @bp.route('/<int:roster_id>/players/<int:player_roster_id>', methods=['PUT'])
-def update_roster_player(roster_id, player_roster_id):
-    """Update a player's roster information"""
+@require_auth
+def update_roster_player(current_user, roster_id, player_roster_id):
+    """Update a player's roster information (must own roster)"""
+    
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     data = request.json
     roster_slot = data.get('roster_slot')
     is_starter = data.get('is_starter')
@@ -256,8 +318,14 @@ def update_roster_player(roster_id, player_roster_id):
 
 
 @bp.route('/<int:roster_id>/players/<int:player_roster_id>', methods=['DELETE'])
-def remove_player_from_roster(roster_id, player_roster_id):
-    """Remove a player from a roster"""
+@require_auth
+def remove_player_from_roster(current_user, roster_id, player_roster_id):
+    """Remove a player from a roster (must own roster)"""
+    
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     try:
         query = "DELETE FROM roster_players WHERE roster_id = %s AND id = %s"
         execute_query(query, (roster_id, player_roster_id))
@@ -269,11 +337,17 @@ def remove_player_from_roster(roster_id, player_roster_id):
 
 
 @bp.route('/<int:roster_id>/analyze', methods=['POST'])
-def analyze_roster(roster_id):
+@require_auth
+def analyze_roster(current_user, roster_id):
     """
     Analyze entire roster for the current/specified week.
     Creates a matchup and triggers analysis for all players.
+    Must own roster.
     """
+    # Verify ownership
+    is_owner, error = verify_roster_ownership(roster_id, current_user['id'])
+    if not is_owner:
+        return error
     data = request.json or {}
     week = data.get('week')
     season = data.get('season')
