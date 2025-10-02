@@ -102,26 +102,26 @@ class FantasyAPIClient:
                 timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
-        data = response.json()
-        all_players.extend(data.get('data', []))
-        total = data.get('meta', {}).get('total', 0)
+            data = response.json()
+            all_players.extend(data.get('data', []))
+            total = data.get('meta', {}).get('total', 0)
 
-        # Fetch remaining pages (limit to 1000 total for performance)
-        max_fetch = min(total, 1000 if not position else total)
-        while offset + limit < max_fetch:
-            offset += limit
-            params['offset'] = offset
-            response = requests.get(
-            f'{self.base_url}/players',
-            params=params,
-            headers=self._get_headers(),
-            timeout=self.REQUEST_TIMEOUT
-        )
-            response.raise_for_status()
-            all_players.extend(response.json().get('data', []))
+            # Fetch remaining pages (limit to 1000 total for performance)
+            max_fetch = min(total, 1000 if not position else total)
+            while offset + limit < max_fetch:
+                offset += limit
+                params['offset'] = offset
+                response = requests.get(
+                    f'{self.base_url}/players',
+                    params=params,
+                    headers=self._get_headers(),
+                    timeout=self.REQUEST_TIMEOUT
+                )
+                response.raise_for_status()
+                all_players.extend(response.json().get('data', []))
 
-        # Enrich all players with team abbreviation
-        all_players = [self._enrich_player_with_team(player) for player in all_players]
+            # Enrich all players with team abbreviation
+            all_players = [self._enrich_player_with_team(player) for player in all_players]
 
             # Advanced search with relevance scoring
             # This will further filter and rank results from the API
