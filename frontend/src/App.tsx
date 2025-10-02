@@ -66,7 +66,7 @@ function App() {
   // Show auth modal/page if triggered
   if (!authenticated && showAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         {/* Back button */}
         <div className="p-4">
           <Button variant="outline" onClick={handleBackToLanding} className="gap-2">
