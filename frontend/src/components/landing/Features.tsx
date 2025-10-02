@@ -5,7 +5,6 @@ const features = [
       'Clear START, CONSIDER, or BENCH recommendations powered by machine learning. No more second-guessing.',
     stat: '92%',
     statLabel: 'Accuracy',
-    gradient: 'from-emerald-400 to-green-600',
   },
   {
     title: 'NEXT GEN STATS',
@@ -13,7 +12,6 @@ const features = [
       "NFL's official tracking data: EPA, CPOE, air yards, separation. Professional analytics.",
     stat: '20+',
     statLabel: 'Data Points',
-    gradient: 'from-cyan-400 to-blue-600',
   },
   {
     title: 'WEATHER INTEL',
@@ -21,7 +19,6 @@ const features = [
       'Real-time weather impact analysis. Know how wind, rain, and snow affect performance.',
     stat: '100%',
     statLabel: 'Coverage',
-    gradient: 'from-blue-400 to-indigo-600',
   },
   {
     title: 'INJURY TRACKING',
@@ -29,7 +26,6 @@ const features = [
       'Instant alerts on status changes and practice participation. Stay ahead of the news.',
     stat: 'Live',
     statLabel: 'Updates',
-    gradient: 'from-red-400 to-rose-600',
   },
   {
     title: 'MATCHUP RATINGS',
@@ -37,7 +33,6 @@ const features = [
       'Advanced defensive metrics for every position. Target the weak defenses.',
     stat: 'A+ to F',
     statLabel: 'Grading',
-    gradient: 'from-purple-400 to-pink-600',
   },
   {
     title: 'PLAYER GRADES',
@@ -45,34 +40,24 @@ const features = [
       'AI analyzes 20+ factors to grade each player with confidence scores every week.',
     stat: '73%',
     statLabel: 'Win Rate',
-    gradient: 'from-yellow-400 to-orange-600',
   },
 ];
 
 export function Features() {
   return (
     <div className="relative py-24 sm:py-32 bg-black text-white overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: 'linear-gradient(rgba(0, 247, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 247, 255, 0.1) 1px, transparent 1px)',
-        backgroundSize: '50px 50px'
-      }}></div>
-
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full mb-6">
-            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-6">
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
               Built for Winners
             </span>
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-6 leading-none">
+          <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-none">
             EVERY
             <br />
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-              ADVANTAGE
-            </span>
+            ADVANTAGE
           </h2>
           <p className="text-xl sm:text-2xl text-gray-400 font-light max-w-2xl">
             Professional-grade analytics. Real-time insights. Zero compromise.
@@ -84,18 +69,15 @@ export function Features() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all hover:scale-105 hover:border-cyan-500/50"
+              className="group relative bg-white/5 border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all hover:scale-105"
             >
-              {/* Gradient overlay on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`}></div>
-
               <div className="relative">
                 {/* Stat */}
                 <div className="mb-6">
-                  <div className={`text-5xl font-black bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent mb-1`}>
+                  <div className="text-5xl font-black text-white mb-1">
                     {feature.stat}
                   </div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
                     {feature.statLabel}
                   </div>
                 </div>
@@ -116,18 +98,15 @@ export function Features() {
 
         {/* Bottom CTA Section */}
         <div className="mt-20 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 blur-3xl opacity-20"></div>
-          <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-12 sm:p-16">
+          <div className="relative bg-white/5 border border-white/10 rounded-3xl p-12 sm:p-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h3 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight">
                   POWERED BY
                   <br />
-                  <span className="bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
-                    NEXT GEN TECH
-                  </span>
+                  NEXT GEN TECH
                 </h3>
-                <p className="text-lg text-gray-300 leading-relaxed">
+                <p className="text-lg text-gray-400 leading-relaxed">
                   Real-time data pipeline. Machine learning models. NFL-grade analytics.
                   All working together to give you the edge.
                 </p>
@@ -136,19 +115,19 @@ export function Features() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                   <div className="text-3xl font-black text-white mb-1">&lt; 50ms</div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Response Time</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Response Time</div>
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                   <div className="text-3xl font-black text-white mb-1">1M+</div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Predictions</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Predictions</div>
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                   <div className="text-3xl font-black text-white mb-1">24/7</div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Live Updates</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Live Updates</div>
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                   <div className="text-3xl font-black text-white mb-1">99.9%</div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Uptime</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Uptime</div>
                 </div>
               </div>
             </div>
