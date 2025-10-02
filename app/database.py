@@ -12,19 +12,26 @@ _connection_pool = None
 def init_connection_pool(minconn=2, maxconn=10):
     """
     Initialize the database connection pool.
-    
+
     Args:
         minconn: Minimum number of connections to maintain
         maxconn: Maximum number of connections allowed
     """
     global _connection_pool
-    
+
+    database_url = os.getenv('DATABASE_URL')
+
+    # Skip initialization if no DATABASE_URL is configured
+    if not database_url:
+        logger.warning("DATABASE_URL not configured - running in API-only mode (no local caching)")
+        return
+
     if _connection_pool is None:
         try:
             _connection_pool = pool.SimpleConnectionPool(
                 minconn,
                 maxconn,
-                os.getenv('DATABASE_URL')
+                database_url
             )
             logger.info(f"Database connection pool initialized: min={minconn}, max={maxconn}")
         except Exception as e:
