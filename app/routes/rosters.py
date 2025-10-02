@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from app.database import execute_query
+from app.validation.decorators import validate_json, validate_query_params
+from app.validation.schemas import CreateRosterSchema, UserIdSchema, AddPlayerToRosterSchema
 import logging
 
 bp = Blueprint('rosters', __name__, url_prefix='/api/rosters')
@@ -30,16 +33,13 @@ def get_rosters():
 
 
 @bp.route('', methods=['POST'])
-def create_roster():
+@validate_json(CreateRosterSchema)
+def create_roster(data):
     """Create a new roster"""
-    data = request.json
-    user_id = data.get('user_id', 'default_user')
-    name = data.get('name')
+    user_id = data['user_id']
+    name = data['name']
     league_name = data.get('league_name', '')
     scoring_type = data.get('scoring_type', 'PPR')
-
-    if not name:
-        return jsonify({'error': 'Roster name is required'}), 400
 
     try:
         query = """

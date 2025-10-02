@@ -1,10 +1,13 @@
 from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from app.database import execute_query
 from app.services.ai_service import AIService
 from app.services.weather_service import WeatherService
 from app.services.api_client import FantasyAPIClient
 from app.services.matchup_data_service import MatchupDataService
 from app.services.season_service import SeasonService
+from app.validation.decorators import validate_json, validate_query_params
+from app.validation.schemas import CreateMatchupSchema, WeekSeasonSchema
 import logging
 from datetime import datetime
 import random
@@ -21,7 +24,8 @@ season_service = SeasonService()
 
 
 @bp.route('', methods=['POST'])
-def create_matchup():
+@validate_json(CreateMatchupSchema)
+def create_matchup(data):
     """Create a weekly roster analysis
 
     Workflow:
@@ -31,22 +35,10 @@ def create_matchup():
     4. Analyzes matchup quality, defensive players, coordinator, weather, history
     5. Returns start rankings and recommendations
     """
-    data = request.json
-    week = data.get('week')
+    week = data['week']
     season = data.get('season', 2024)
-    user_roster_id = data.get('user_roster_id')
-    opponent_roster_id = data.get('opponent_roster_id')  # Legacy support
-
-    if not all([week, user_roster_id]):
-        return jsonify({'error': 'week and user_roster_id are required'}), 400
-
-    # Default to current season if not provided
-    if not season:
-        season = 2024
-
-    # Opponent roster not needed but keep for backward compatibility
-    if not opponent_roster_id:
-        opponent_roster_id = user_roster_id
+    user_roster_id = data['user_roster_id']
+    opponent_roster_id = data.get('opponent_roster_id', user_roster_id)
 
     # Validate schedule availability before creating matchup
     if not season_service.validate_week(season, week):
@@ -92,11 +84,12 @@ def get_current_week():
 
 
 @bp.route('/available-weeks', methods=['GET'])
-def get_available_weeks():
+@validate_query_params(WeekSeasonSchema)
+def get_available_weeks(data):
     """Get list of weeks with available schedule data"""
     try:
-        season = request.args.get('season', type=int)
-        start_week = request.args.get('start_week', type=int, default=1)
+        season = data.get('season')
+        start_week = data.get('week', 1)
 
         # Default to current season if not provided
         if not season:

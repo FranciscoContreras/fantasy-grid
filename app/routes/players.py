@@ -1,9 +1,12 @@
 from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, jsonify
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
 from app.database import execute_query
 from app.utils.cache import cached_route, get_cached_or_fetch
+from app.validation.decorators import validate_query_params
+from app.validation.schemas import PlayerSearchSchema
 from datetime import datetime
 import logging
 
@@ -18,18 +21,16 @@ grader = AIGrader()
 
 @bp.route('/search', methods=['GET'])
 @cached_route(expiry=1800, key_prefix='players_search')  # Cache for 30 minutes
-def search_players():
+@validate_query_params(PlayerSearchSchema)
+def search_players(data):
     """
     Search for players by name/position
     Query params:
         - q: search query
         - position: optional position filter (QB, RB, WR, TE, etc.)
     """
-    query = request.args.get('q', '')
-    position = request.args.get('position', None)
-
-    if not query:
-        return jsonify({'error': 'Query parameter "q" is required'}), 400
+    query = data.get('query', '')
+    position = data.get('position')
 
     try:
         players = api_client.search_players(query, position)
