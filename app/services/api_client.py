@@ -19,8 +19,10 @@ class FantasyAPIClient:
         
         logger.info(f"FantasyAPIClient initialized with API {api_version}: {self.base_url}")
 
-    def _get_headers(self, include_api_key=False):
+    def _get_headers(self, include_api_key=True):
+        """Get request headers, including API key by default for unlimited access"""
         headers = {'Content-Type': 'application/json'}
+        # Always include API key if available (provides unlimited rate limit)
         if include_api_key and self.api_key:
             headers['X-API-Key'] = self.api_key
         return headers
@@ -1535,4 +1537,271 @@ class FantasyAPIClient:
             return roster
         except Exception as e:
             logger.error(f"Failed to fetch roster for team {team_id}: {e}")
+            return []
+
+    # ========================================================================
+    # Additional API v2 Methods - Complete Coverage
+    # Added: October 2, 2025
+    # ========================================================================
+
+    def get_players_list_v2(self, position=None, status=None, team=None, limit=50, offset=0):
+        """
+        List players with flexible filtering (API v2).
+        
+        API v2 endpoint: GET /api/v2/players
+        
+        Args:
+            position: Filter by position (QB, RB, WR, TE, etc.)
+            status: Filter by status (active, injured, etc.)
+            team: Filter by team UUID
+            limit: Results per page (default: 50)
+            offset: Pagination offset (default: 0)
+        
+        Returns:
+            Paginated list of players matching filters
+        """
+        try:
+            params = {'limit': limit, 'offset': offset}
+            if position:
+                params['position'] = position
+            if status:
+                params['status'] = status
+            if team:
+                params['team'] = team
+            
+            response = requests.get(
+                f'{self.base_url}/players',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            data = response.json().get('data', [])
+            logger.info(f"Fetched {len(data)} players (position={position}, status={status})")
+            return data
+        except Exception as e:
+            logger.error(f"Failed to fetch players list: {e}")
+            return []
+
+    def get_teams_list_v2(self):
+        """
+        Get all 32 NFL teams (API v2).
+        
+        API v2 endpoint: GET /api/v2/teams
+        
+        Returns:
+            List of all NFL teams with complete details:
+            - Team ID
+            - Name and abbreviation
+            - City and stadium
+            - Conference and division
+            - Colors, logos
+        """
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            teams = response.json().get('data', [])
+            logger.info(f"Fetched {len(teams)} NFL teams")
+            return teams
+        except Exception as e:
+            logger.error(f"Failed to fetch teams list: {e}")
+            return []
+
+    def get_team_by_id_v2(self, team_id):
+        """
+        Get detailed team information (API v2).
+        
+        API v2 endpoint: GET /api/v2/teams/:id
+        
+        Args:
+            team_id: Team UUID or abbreviation
+        
+        Returns:
+            Detailed team information:
+            - Basic info (name, city, abbreviation)
+            - Stadium details
+            - Colors and branding
+            - Historical data
+            - Current season record
+        """
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            team = response.json().get('data', {})
+            logger.info(f"Fetched details for team {team_id}")
+            return team
+        except Exception as e:
+            logger.error(f"Failed to fetch team details for {team_id}: {e}")
+            return None
+
+    def get_player_team_history_v2(self, player_id):
+        """
+        Get player's team history (API v2).
+        
+        API v2 endpoint: GET /api/v2/players/:id/history
+        
+        Args:
+            player_id: Player UUID
+        
+        Returns:
+            List of teams player has been on:
+            - Team name and ID
+            - Seasons played
+            - Position(s) played
+            - Notable achievements
+        """
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/history',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            history = response.json().get('data', [])
+            logger.info(f"Fetched team history for player {player_id}: {len(history)} teams")
+            return history
+        except Exception as e:
+            logger.error(f"Failed to fetch player team history for {player_id}: {e}")
+            return []
+
+    def get_player_vs_defense_v2(self, player_id, defense_team_id, season=None, limit=10):
+        """
+        Get player's performance vs specific defense (API v2).
+        
+        API v2 endpoint: GET /api/v2/players/:id/vs-defense/:teamId
+        
+        Args:
+            player_id: Player UUID
+            defense_team_id: Defending team UUID
+            season: Optional season filter
+            limit: Max games to return
+        
+        Returns:
+            Historical performance data:
+            - Game-by-game stats vs this defense
+            - Success rate
+            - Fantasy points
+            - Trends
+        """
+        try:
+            params = {'limit': limit}
+            if season:
+                params['season'] = season
+            
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/vs-defense/{defense_team_id}',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            performance = response.json().get('data', [])
+            logger.info(f"Fetched vs defense stats for player {player_id} vs {defense_team_id}")
+            return performance
+        except Exception as e:
+            logger.error(f"Failed to fetch player vs defense: {e}")
+            return []
+
+    def get_game_team_stats_v2(self, game_id):
+        """
+        Get team statistics for a specific game (API v2).
+        
+        API v2 endpoint: GET /api/v2/games/:id/stats
+        
+        Args:
+            game_id: Game UUID
+        
+        Returns:
+            Team-level statistics for the game:
+            - Total yards
+            - First downs
+            - Time of possession
+            - Turnovers
+            - Red zone efficiency
+            - Third down conversions
+        """
+        try:
+            response = requests.get(
+                f'{self.base_url}/games/{game_id}/stats',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            stats = response.json().get('data', {})
+            logger.info(f"Fetched team stats for game {game_id}")
+            return stats
+        except Exception as e:
+            logger.error(f"Failed to fetch game team stats for {game_id}: {e}")
+            return None
+
+    def get_player_by_id_v2(self, player_id):
+        """
+        Get detailed player information by ID (API v2).
+        
+        API v2 endpoint: GET /api/v2/players/:id
+        
+        This is an alias/wrapper for get_player_data that ensures v2 endpoint usage.
+        
+        Args:
+            player_id: Player UUID
+        
+        Returns:
+            Detailed player information
+        """
+        return self.get_player_data(player_id)
+
+    def get_game_by_id_v2(self, game_id):
+        """
+        Get detailed game information by ID (API v2).
+        
+        API v2 endpoint: GET /api/v2/games/:id
+        
+        This is an alias/wrapper for get_game_details_v2.
+        
+        Args:
+            game_id: Game UUID
+        
+        Returns:
+            Detailed game information
+        """
+        return self.get_game_details_v2(game_id)
+
+    def get_team_schedule_detailed_v2(self, team_id, season=2024):
+        """
+        Get detailed team schedule with game results (API v2).
+        
+        API v2 endpoint: GET /api/v2/teams/:id/schedule
+        
+        Args:
+            team_id: Team UUID or abbreviation
+            season: Season year
+        
+        Returns:
+            Complete schedule with:
+            - All games for the season
+            - Results (if completed)
+            - Opponent details
+            - Game locations
+        """
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/schedule',
+                params={'season': season},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            schedule = response.json().get('data', [])
+            logger.info(f"Fetched schedule for team {team_id} ({season}): {len(schedule)} games")
+            return schedule
+        except Exception as e:
+            logger.error(f"Failed to fetch schedule for team {team_id}: {e}")
             return []
