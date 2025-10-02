@@ -28,25 +28,24 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
       <Pricing onGetStarted={onGetStarted} />
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="relative bg-black text-gray-400 py-16 border-t border-white/10">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-3xl">🏈</span>
-                <h3 className="text-2xl font-bold text-white">Fantasy Grid</h3>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg"></div>
+                <h3 className="text-2xl font-black text-white tracking-tight">FANTASY GRID</h3>
               </div>
-              <p className="text-gray-400 mb-4 max-w-md">
-                AI-powered fantasy football analysis and start/sit recommendations.
-                Make smarter lineup decisions every week.
+              <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
+                AI-powered fantasy football analysis. Make smarter lineup decisions every week.
               </p>
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <a
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/50 flex items-center justify-center transition-all"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
@@ -56,7 +55,7 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
                   href="https://facebook.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/50 flex items-center justify-center transition-all"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
@@ -66,7 +65,7 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
                   href="https://reddit.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/50 flex items-center justify-center transition-all"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
@@ -77,25 +76,25 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
 
             {/* Product */}
             <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2">
+              <h4 className="text-white font-black mb-4 text-sm uppercase tracking-wider">Product</h4>
+              <ul className="space-y-3">
                 <li>
-                  <a href="#features" className="hover:text-white transition-colors">
+                  <a href="#features" className="hover:text-cyan-400 transition-colors text-sm">
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-white transition-colors">
+                  <a href="#pricing" className="hover:text-cyan-400 transition-colors text-sm">
                     Pricing
                   </a>
                 </li>
                 <li>
-                  <a href="#how-it-works" className="hover:text-white transition-colors">
+                  <a href="#how-it-works" className="hover:text-cyan-400 transition-colors text-sm">
                     How It Works
                   </a>
                 </li>
                 <li>
-                  <a href="#testimonials" className="hover:text-white transition-colors">
+                  <a href="#testimonials" className="hover:text-cyan-400 transition-colors text-sm">
                     Testimonials
                   </a>
                 </li>
@@ -104,25 +103,25 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
 
             {/* Company */}
             <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2">
+              <h4 className="text-white font-black mb-4 text-sm uppercase tracking-wider">Company</h4>
+              <ul className="space-y-3">
                 <li>
-                  <a href="#about" className="hover:text-white transition-colors">
+                  <a href="#about" className="hover:text-cyan-400 transition-colors text-sm">
                     About Us
                   </a>
                 </li>
                 <li>
-                  <a href="#blog" className="hover:text-white transition-colors">
+                  <a href="#blog" className="hover:text-cyan-400 transition-colors text-sm">
                     Blog
                   </a>
                 </li>
                 <li>
-                  <a href="#contact" className="hover:text-white transition-colors">
+                  <a href="#contact" className="hover:text-cyan-400 transition-colors text-sm">
                     Contact
                   </a>
                 </li>
                 <li>
-                  <a href="#careers" className="hover:text-white transition-colors">
+                  <a href="#careers" className="hover:text-cyan-400 transition-colors text-sm">
                     Careers
                   </a>
                 </li>
@@ -131,36 +130,36 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm">
-              © 2025 Fantasy Grid. All rights reserved.
+          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">
+              © 2025 Fantasy Grid. All Rights Reserved.
             </p>
-            <div className="flex gap-6 text-sm">
-              <a href="#privacy" className="hover:text-white transition-colors">
-                Privacy Policy
+            <div className="flex gap-8 text-sm">
+              <a href="#privacy" className="hover:text-cyan-400 transition-colors">
+                Privacy
               </a>
-              <a href="#terms" className="hover:text-white transition-colors">
-                Terms of Service
+              <a href="#terms" className="hover:text-cyan-400 transition-colors">
+                Terms
               </a>
-              <a href="#cookies" className="hover:text-white transition-colors">
-                Cookie Policy
+              <a href="#cookies" className="hover:text-cyan-400 transition-colors">
+                Cookies
               </a>
             </div>
           </div>
 
           {/* API Credit */}
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-            <p>
+          <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm">
+            <p className="text-gray-500">
               Powered by{' '}
               <a
                 href="https://nfl.wearemachina.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-cyan-400 hover:text-cyan-300 transition-colors font-semibold"
               >
                 Grid Iron Mind NFL API
               </a>
-              {' '}• NFL-grade analytics and AI insights
+              {' '}• NFL-Grade Analytics
             </p>
           </div>
         </div>

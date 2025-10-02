@@ -1,133 +1,155 @@
-import { Card, CardContent } from '../ui/card';
-
 const features = [
   {
-    icon: '🎯',
-    title: 'Smart Start/Sit Recommendations',
+    title: 'START/SIT AI',
     description:
-      'Get clear START, CONSIDER, or BENCH recommendations for every player on your roster based on matchups, weather, and advanced analytics. No more second-guessing your lineup decisions.',
-    color: 'from-green-500 to-emerald-500',
+      'Clear START, CONSIDER, or BENCH recommendations powered by machine learning. No more second-guessing.',
+    stat: '92%',
+    statLabel: 'Accuracy',
+    gradient: 'from-emerald-400 to-green-600',
   },
   {
-    icon: '🤖',
-    title: 'AI-Powered Player Grading',
+    title: 'NEXT GEN STATS',
     description:
-      'Machine learning models analyze 20+ factors to grade each player (A+ to F) with confidence scores. Know exactly who to trust in your lineup every week.',
-    color: 'from-blue-500 to-indigo-500',
+      "NFL's official tracking data: EPA, CPOE, air yards, separation. Professional analytics.",
+    stat: '20+',
+    statLabel: 'Data Points',
+    gradient: 'from-cyan-400 to-blue-600',
   },
   {
-    icon: '📊',
-    title: 'Next Gen Stats Integration',
+    title: 'WEATHER INTEL',
     description:
-      "Leverage NFL's official tracking data: EPA, CPOE, air yards, separation, route running, and more. Professional-grade analytics at your fingertips.",
-    color: 'from-purple-500 to-pink-500',
+      'Real-time weather impact analysis. Know how wind, rain, and snow affect performance.',
+    stat: '100%',
+    statLabel: 'Coverage',
+    gradient: 'from-blue-400 to-indigo-600',
   },
   {
-    icon: '⛈️',
-    title: 'Weather Impact Analysis',
+    title: 'INJURY TRACKING',
     description:
-      "Know exactly how weather conditions affect your players' performance before kickoff. Wind, rain, snow, and temperature all factored into recommendations.",
-    color: 'from-cyan-500 to-blue-500',
+      'Instant alerts on status changes and practice participation. Stay ahead of the news.',
+    stat: 'Live',
+    statLabel: 'Updates',
+    gradient: 'from-red-400 to-rose-600',
   },
   {
-    icon: '🏥',
-    title: 'Real-Time Injury Updates',
+    title: 'MATCHUP RATINGS',
     description:
-      'Get instant alerts on injury status changes and practice participation. Never get caught off-guard by a last-minute inactive designation.',
-    color: 'from-red-500 to-orange-500',
+      'Advanced defensive metrics for every position. Target the weak defenses.',
+    stat: 'A+ to F',
+    statLabel: 'Grading',
+    gradient: 'from-purple-400 to-pink-600',
   },
   {
-    icon: '🛡️',
-    title: 'Defense Matchup Ratings',
+    title: 'PLAYER GRADES',
     description:
-      'See how defenses rank against each position with advanced defensive metrics. Target the weak defenses and avoid the elite units.',
-    color: 'from-indigo-500 to-purple-500',
+      'AI analyzes 20+ factors to grade each player with confidence scores every week.',
+    stat: '73%',
+    statLabel: 'Win Rate',
+    gradient: 'from-yellow-400 to-orange-600',
   },
 ];
 
 export function Features() {
   return (
-    <div className="py-16 sm:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative py-24 sm:py-32 bg-black text-white overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10" style={{
+        backgroundImage: 'linear-gradient(rgba(0, 247, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 247, 255, 0.1) 1px, transparent 1px)',
+        backgroundSize: '50px 50px'
+      }}></div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
-            Everything You Need to
-            <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Dominate Your League
+        <div className="max-w-3xl mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full mb-6">
+            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+              Built for Winners
+            </span>
+          </div>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-6 leading-none">
+            EVERY
+            <br />
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+              ADVANTAGE
             </span>
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600">
-            Professional-grade analytics and AI-powered insights that give you the edge over your competition.
+          <p className="text-xl sm:text-2xl text-gray-400 font-light max-w-2xl">
+            Professional-grade analytics. Real-time insights. Zero compromise.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
-            <Card
+            <div
               key={index}
-              className="group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 hover:border-blue-200"
+              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all hover:scale-105 hover:border-cyan-500/50"
             >
-              <CardContent className="p-6 sm:p-8">
-                {/* Icon */}
+              {/* Gradient overlay on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`}></div>
+
+              <div className="relative">
+                {/* Stat */}
                 <div className="mb-6">
-                  <div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-3xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all`}
-                  >
-                    {feature.icon}
+                  <div className={`text-5xl font-black bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent mb-1`}>
+                    {feature.stat}
+                  </div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">
+                    {feature.statLabel}
                   </div>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-xl font-black mb-3 tracking-tight">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </CardContent>
-            </Card>
+                <p className="text-gray-400 leading-relaxed text-sm">
+                  {feature.description}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Additional Features */}
-        <div className="mt-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 sm:p-12">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">And Much More...</h3>
-            <p className="text-lg text-gray-600">Additional features to give you every advantage</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📱</span>
+        {/* Bottom CTA Section */}
+        <div className="mt-20 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 blur-3xl opacity-20"></div>
+          <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-12 sm:p-16">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
-                <div className="font-semibold text-gray-900">Mobile Optimized</div>
-                <div className="text-sm text-gray-600">Set lineups on the go</div>
+                <h3 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight">
+                  POWERED BY
+                  <br />
+                  <span className="bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+                    NEXT GEN TECH
+                  </span>
+                </h3>
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  Real-time data pipeline. Machine learning models. NFL-grade analytics.
+                  All working together to give you the edge.
+                </p>
               </div>
-            </div>
 
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">⚡</span>
-              <div>
-                <div className="font-semibold text-gray-900">Lightning Fast</div>
-                <div className="text-sm text-gray-600">Instant analysis results</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🔒</span>
-              <div>
-                <div className="font-semibold text-gray-900">Secure & Private</div>
-                <div className="text-sm text-gray-600">Your data is protected</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🔄</span>
-              <div>
-                <div className="font-semibold text-gray-900">Weekly Updates</div>
-                <div className="text-sm text-gray-600">Fresh data every week</div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="text-3xl font-black text-white mb-1">&lt; 50ms</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Response Time</div>
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="text-3xl font-black text-white mb-1">1M+</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Predictions</div>
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="text-3xl font-black text-white mb-1">24/7</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Live Updates</div>
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="text-3xl font-black text-white mb-1">99.9%</div>
+                  <div className="text-sm text-gray-400 uppercase tracking-wider font-semibold">Uptime</div>
+                </div>
               </div>
             </div>
           </div>
