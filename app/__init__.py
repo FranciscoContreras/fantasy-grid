@@ -63,7 +63,50 @@ def create_app():
     # Health check endpoint
     @app.route('/health')
     def health():
-        return {'status': 'healthy', 'service': 'Fantasy Grid API', 'version': '1.0.0'}
+        """
+        Comprehensive health check endpoint
+        Returns service status, dependencies, and system info
+        """
+        import time
+        from datetime import datetime
+        
+        start_time = time.time()
+        health_status = {
+            'status': 'healthy',
+            'service': 'Fantasy Grid API',
+            'version': '1.0.0',
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'checks': {}
+        }
+        
+        # Check database connection
+        try:
+            from app.database import execute_query
+            execute_query("SELECT 1")
+            health_status['checks']['database'] = {'status': 'up', 'message': 'Connected'}
+        except Exception as e:
+            health_status['status'] = 'degraded'
+            health_status['checks']['database'] = {'status': 'down', 'error': str(e)}
+        
+        # Check Redis cache
+        try:
+            from app.utils.cache import cache
+            if hasattr(cache, 'redis_client') and cache.redis_client:
+                cache.redis_client.ping()
+                health_status['checks']['redis'] = {'status': 'up', 'message': 'Connected'}
+            else:
+                health_status['checks']['redis'] = {'status': 'disabled', 'message': 'Using in-memory cache'}
+        except Exception as e:
+            health_status['status'] = 'degraded'
+            health_status['checks']['redis'] = {'status': 'down', 'error': str(e)}
+        
+        # Response time
+        health_status['response_time_ms'] = round((time.time() - start_time) * 1000, 2)
+        
+        # Return 200 if healthy, 503 if any critical service is down
+        status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
+        
+        return health_status, status_code
 
     # Cache stats endpoint
     @app.route('/api/cache/stats')
