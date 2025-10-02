@@ -3,7 +3,7 @@ Authentication routes for user registration, login, and management
 """
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
-from app.validation.decorators import validate_json_body
+from app.validation.decorators import validate_json
 from app.validation.schemas import RegisterSchema, LoginSchema, UpdateUserSchema, ChangePasswordSchema
 from functools import wraps
 import logging
@@ -54,7 +54,7 @@ def require_auth(f):
 
 
 @bp.route('/register', methods=['POST'])
-@validate_json_body(RegisterSchema)
+@validate_json(RegisterSchema)
 def register(data):
     """
     Register a new user
@@ -111,7 +111,7 @@ def register(data):
 
 
 @bp.route('/login', methods=['POST'])
-@validate_json_body(LoginSchema)
+@validate_json(LoginSchema)
 def login(data):
     """
     Login with email/username and password
@@ -176,7 +176,7 @@ def get_current_user(current_user):
 
 @bp.route('/me', methods=['PUT'])
 @require_auth
-@validate_json_body(UpdateUserSchema)
+@validate_json(UpdateUserSchema)
 def update_current_user(current_user, data):
     """
     Update current user information
@@ -221,7 +221,7 @@ def update_current_user(current_user, data):
 
 @bp.route('/change-password', methods=['POST'])
 @require_auth
-@validate_json_body(ChangePasswordSchema)
+@validate_json(ChangePasswordSchema)
 def change_password(current_user, data):
     """
     Change user password
