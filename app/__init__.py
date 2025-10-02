@@ -7,6 +7,10 @@ from logging.handlers import RotatingFileHandler
 def create_app():
     app = Flask(__name__, static_folder='static', static_url_path='')
     CORS(app)
+    
+    # Initialize database connection pool
+    from app.database import init_connection_pool
+    init_connection_pool(minconn=2, maxconn=10)
 
     # Configure logging
     if not app.debug:
@@ -35,6 +39,11 @@ def create_app():
         from app.utils.cache import get_cache_stats
         return jsonify(get_cache_stats())
 
+    # Register cleanup handler for graceful shutdown
+    import atexit
+    from app.database import close_all_connections
+    atexit.register(close_all_connections)
+    
     # Register blueprints
     from app.routes import players, analysis, predictions, rosters, matchups
     app.register_blueprint(players.bp)
