@@ -149,18 +149,18 @@ class FantasyAPIClient:
             response.raise_for_status()
             teams = response.json().get('data', [])
 
-        # Convert teams to player-like format for consistency
-        defenses = []
-        for team in teams:
-            defense = {
-                'id': team['id'],
-                'player_id': team['id'],
-                'name': f"{team['city']} {team['name']}",
-                'position': 'DEF',
-                'team': team['abbreviation'],
-                'status': 'active'
-            }
-            defenses.append(defense)
+            # Convert teams to player-like format for consistency
+            defenses = []
+            for team in teams:
+                defense = {
+                    'id': team['id'],
+                    'player_id': team['id'],
+                    'name': f"{team['city']} {team['name']}",
+                    'position': 'DEF',
+                    'team': team['abbreviation'],
+                    'status': 'active'
+                }
+                defenses.append(defense)
 
             # Filter by query if provided
             if query:
