@@ -18,6 +18,115 @@ ai_grader = AIGrader()
 analyzer = PlayerAnalyzer()
 
 
+@bp.route('/players', methods=['GET'])
+def list_players():
+    """
+    List players with flexible filtering (API v2).
+
+    Query params:
+        - position (str): Filter by position (QB, RB, WR, TE, etc.)
+        - status (str): Filter by status (active, injured, etc.)
+        - team (str): Filter by team abbreviation or ID
+        - limit (int): Results per page (default: 50)
+        - offset (int): Pagination offset (default: 0)
+
+    Returns:
+        List of players matching filters with basic info
+    """
+    try:
+        position = request.args.get('position')
+        status = request.args.get('status')
+        team = request.args.get('team')
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        players = api_client.get_players_list_v2(
+            position=position,
+            status=status,
+            team=team,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({
+            'data': players,
+            'meta': {
+                'position': position,
+                'status': status,
+                'team': team,
+                'limit': limit,
+                'offset': offset,
+                'count': len(players)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to list players: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/players/<player_id>/history', methods=['GET'])
+def get_player_history(player_id):
+    """
+    Get player's complete team history (API v2).
+
+    Returns:
+        List of all teams the player has been on with seasons
+    """
+    try:
+        history = api_client.get_player_team_history_v2(player_id)
+
+        return jsonify({
+            'data': history,
+            'meta': {
+                'player_id': player_id,
+                'teams_count': len(history) if history else 0
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch player history for {player_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/players/<player_id>/vs-defense/<defense_team_id>', methods=['GET'])
+def get_player_vs_defense(player_id, defense_team_id):
+    """
+    Get player's performance vs a specific defense (API v2).
+
+    Query params:
+        - season (int): Filter by season (optional)
+        - limit (int): Number of games (default: 10)
+
+    Returns:
+        Historical performance data vs the specified defense
+    """
+    try:
+        season = request.args.get('season', type=int)
+        limit = request.args.get('limit', 10, type=int)
+
+        stats = api_client.get_player_vs_defense_v2(
+            player_id=player_id,
+            defense_team_id=defense_team_id,
+            season=season,
+            limit=limit
+        )
+
+        return jsonify({
+            'data': stats,
+            'meta': {
+                'player_id': player_id,
+                'defense_team_id': defense_team_id,
+                'season': season,
+                'games': len(stats) if isinstance(stats, list) else 0
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch player vs defense stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/players/<player_id>/nextgen', methods=['GET'])
 def get_player_nextgen_stats(player_id):
     """
@@ -478,4 +587,205 @@ def get_standings():
 
     except Exception as e:
         logger.error(f"Failed to fetch standings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/teams', methods=['GET'])
+def list_teams():
+    """
+    Get all 32 NFL teams (API v2).
+
+    Returns:
+        Complete list of NFL teams with details:
+        - Team names and abbreviations
+        - Locations and stadiums
+        - Conference and division
+        - Colors and logos
+    """
+    try:
+        teams = api_client.get_teams_list_v2()
+
+        return jsonify({
+            'data': teams,
+            'meta': {
+                'count': len(teams)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to list teams: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/teams/<team_id>', methods=['GET'])
+def get_team_details(team_id):
+    """
+    Get detailed team information (API v2).
+
+    Returns:
+        Complete team profile:
+        - Stadium and capacity
+        - Conference and division
+        - Team colors
+        - Historical data
+        - Current season record
+    """
+    try:
+        team = api_client.get_team_by_id_v2(team_id)
+
+        if not team:
+            return jsonify({'error': 'Team not found'}), 404
+
+        return jsonify({
+            'data': team,
+            'meta': {
+                'team_id': team_id
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch team details for {team_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/teams/<team_id>/schedule', methods=['GET'])
+def get_team_schedule(team_id):
+    """
+    Get detailed team schedule with game results (API v2).
+
+    Query params:
+        - season (int): Season year (default: 2024)
+
+    Returns:
+        Complete schedule with:
+        - Game dates and opponents
+        - Results (if played)
+        - Home/away status
+        - Venue information
+    """
+    try:
+        season = request.args.get('season', 2024, type=int)
+
+        schedule = api_client.get_team_schedule_detailed_v2(team_id, season=season)
+
+        return jsonify({
+            'data': schedule,
+            'meta': {
+                'team_id': team_id,
+                'season': season,
+                'games': len(schedule) if schedule else 0
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch team schedule for {team_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/games/<game_id>/stats', methods=['GET'])
+def get_game_stats(game_id):
+    """
+    Get team statistics for a specific game (API v2).
+
+    Returns:
+        Team-level statistics:
+        - Total yards (passing/rushing)
+        - First downs
+        - Time of possession
+        - Turnovers
+        - Third down efficiency
+        - Red zone performance
+    """
+    try:
+        stats = api_client.get_game_team_stats_v2(game_id)
+
+        if not stats:
+            return jsonify({'error': 'Game stats not found'}), 404
+
+        return jsonify({
+            'data': stats,
+            'meta': {
+                'game_id': game_id
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch game stats for {game_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/games', methods=['GET'])
+def list_games():
+    """
+    List games with filtering (API v2).
+
+    Query params:
+        - season (int): Season year (required)
+        - week (int): Week number (optional)
+        - team (str): Filter by team abbreviation (optional)
+        - status (str): Filter by status (scheduled, live, final) (optional)
+        - limit (int): Results per page (default: 20)
+
+    Returns:
+        List of games matching filters
+    """
+    try:
+        season = request.args.get('season', 2024, type=int)
+        week = request.args.get('week', type=int)
+        team = request.args.get('team')
+        status = request.args.get('status')
+        limit = request.args.get('limit', 20, type=int)
+
+        games = api_client.get_games_v2(
+            season=season,
+            week=week,
+            team=team,
+            limit=limit
+        )
+
+        return jsonify({
+            'data': games,
+            'meta': {
+                'season': season,
+                'week': week,
+                'team': team,
+                'status': status,
+                'limit': limit,
+                'count': len(games) if games else 0
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to list games: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/games/<game_id>', methods=['GET'])
+def get_game_details(game_id):
+    """
+    Get detailed game information (API v2).
+
+    Returns:
+        Complete game details:
+        - Teams and scores
+        - Date and venue
+        - Weather conditions
+        - Game status
+        - Broadcast info
+    """
+    try:
+        game = api_client.get_game_by_id_v2(game_id)
+
+        if not game:
+            return jsonify({'error': 'Game not found'}), 404
+
+        return jsonify({
+            'data': game,
+            'meta': {
+                'game_id': game_id
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to fetch game details for {game_id}: {e}")
         return jsonify({'error': str(e)}), 500
