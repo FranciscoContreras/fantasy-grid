@@ -4,6 +4,7 @@ import requests
 import logging
 from groq import Groq
 from anthropic import Anthropic
+import google.generativeai as genai
 from app.services.cache_service import cache_ai_response, get_cached_ai_response
 
 logger = logging.getLogger(__name__)
@@ -12,31 +13,40 @@ class AIService:
     def __init__(self):
         self.groq_api_key = os.getenv('GROQ_API_KEY')
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
-        self.grok_api_key = os.getenv('GROK_API_KEY')
-
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyBHlAoGFQVlAuuQAv_PkEo9JXkMs28CNhA')
+        
         # Initialize clients
         self.groq_client = None
         self.anthropic_client = None
-
+        self.gemini_model = None
+        
         if self.groq_api_key:
             try:
                 self.groq_client = Groq(api_key=self.groq_api_key)
             except Exception as e:
-                print(f"Failed to initialize Groq client: {e}")
-
+                logger.warning(f"Failed to initialize Groq client: {e}")
+        
         if self.anthropic_api_key:
             try:
                 self.anthropic_client = Anthropic(api_key=self.anthropic_api_key)
             except Exception as e:
-                print(f"Failed to initialize Anthropic client: {e}")
+                logger.warning(f"Failed to initialize Anthropic client: {e}")
+        
+        if self.gemini_api_key:
+            try:
+                genai.configure(api_key=self.gemini_api_key)
+                self.gemini_model = genai.GenerativeModel('gemini-pro')
+                logger.info("Gemini API initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini client: {e}")
 
     def generate_analysis(self, prompt, use_premium=False):
         """
-        Generate AI analysis using Grok (default), Groq, or Claude
+        Generate AI analysis using Gemini (default), Grok, Groq, or Claude
 
         Args:
             prompt: The analysis prompt
-            use_premium: If True, use Claude API (costs money). If False, use Grok/Groq (free)
+            use_premium: If True, use Claude API (costs money). If False, use free options
 
         Returns:
             Generated text analysis
@@ -51,13 +61,13 @@ class AIService:
         logger.info(f"Generating new AI analysis (use_premium={use_premium})")
         logger.debug(f"Prompt: {prompt[:200]}...")
 
-        # Generate response - prioritize Grok (free and powerful)
+        # Generate response - prioritize Gemini (free and powerful)
         if use_premium and self.anthropic_client:
             logger.info("Using Claude for premium analysis")
             response = self._generate_with_claude(prompt)
-        elif self.grok_api_key:
-            logger.info("Using Grok for analysis")
-            response = self._generate_with_grok(prompt)
+        elif self.gemini_model:
+            logger.info("Using Gemini for analysis")
+            response = self._generate_with_gemini(prompt)
         elif self.groq_client:
             logger.info("Using Groq for analysis")
             response = self._generate_with_groq(prompt)
@@ -114,6 +124,31 @@ class AIService:
         except Exception as e:
             logger.error(f"Grok API error: {e}")
             # Fallback to Groq if Grok fails
+            if self.groq_client:
+                logger.info("Falling back to Groq")
+                return self._generate_with_groq(prompt)
+            logger.warning("No Groq available, using rule-based fallback")
+            return self._generate_fallback(prompt)
+
+    def _generate_with_gemini(self, prompt):
+        """Use Google Gemini API (free tier)"""
+        try:
+            logger.debug(f"Calling Gemini API with prompt: {prompt[:100]}...")
+            response = self.gemini_model.generate_content(
+                f"""You are an expert fantasy football analyst with deep knowledge of NFL players, defenses, and matchups. Provide concise, data-driven insights in 2-3 sentences.
+
+{prompt}""",
+                generation_config={
+                    'temperature': 0.7,
+                    'max_output_tokens': 150,
+                }
+            )
+            result = response.text.strip()
+            logger.info(f"Gemini API success: {result[:100]}...")
+            return result
+        except Exception as e:
+            logger.error(f"Gemini API error: {e}")
+            # Fallback to Groq if Gemini fails
             if self.groq_client:
                 logger.info("Falling back to Groq")
                 return self._generate_with_groq(prompt)

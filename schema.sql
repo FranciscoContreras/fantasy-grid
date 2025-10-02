@@ -80,6 +80,8 @@ CREATE TABLE matchups (
     season INT NOT NULL,
     user_roster_id INT REFERENCES rosters(id) ON DELETE CASCADE,
     opponent_roster_id INT REFERENCES rosters(id) ON DELETE CASCADE,
+    user_roster_name VARCHAR(100),
+    opponent_roster_name VARCHAR(100),
     analyzed BOOLEAN DEFAULT false,
     analyzed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -101,6 +103,7 @@ CREATE TABLE matchup_analysis (
     injury_impact TEXT,
     confidence_score DECIMAL(5,2), -- 0-100
     reasoning TEXT,
+    analysis_status VARCHAR(20) DEFAULT 'completed',
     analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -110,5 +113,7 @@ CREATE INDEX idx_analysis_history_player ON analysis_history(player_id);
 CREATE INDEX idx_analysis_history_date ON analysis_history(analyzed_at);
 CREATE INDEX idx_rosters_user ON rosters(user_id);
 CREATE INDEX idx_roster_players_roster ON roster_players(roster_id);
+CREATE INDEX idx_roster_players_roster_position ON roster_players(roster_id, position);
 CREATE INDEX idx_matchups_week ON matchups(week, season);
 CREATE INDEX idx_matchup_analysis_matchup ON matchup_analysis(matchup_id);
+CREATE INDEX idx_matchup_analysis_status ON matchup_analysis(analysis_status);
