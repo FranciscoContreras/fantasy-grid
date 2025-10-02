@@ -1,12 +1,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Analysis } from '@/types';
+import { AdvancedStatsPanel } from './AdvancedStatsPanel';
+import { AdvancedPlayerStats } from '@/types/advancedStats';
+import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 
 interface PlayerAnalysisProps {
   analysis: Analysis;
 }
 
 export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
+  const [advancedStats, setAdvancedStats] = useState<AdvancedPlayerStats | null>(null);
+  const [loadingAdvanced, setLoadingAdvanced] = useState(false);
+
+  useEffect(() => {
+    // Fetch advanced stats for the player
+    const fetchAdvancedStats = async () => {
+      if (!analysis.player?.id) return;
+
+      try {
+        setLoadingAdvanced(true);
+        const response = await api.get(`/advanced/players/${analysis.player.id}/nextgen`, {
+          params: { season: 2024 }
+        });
+        setAdvancedStats(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch advanced stats:', error);
+        // Gracefully handle - advanced stats are optional
+      } finally {
+        setLoadingAdvanced(false);
+      }
+    };
+
+    fetchAdvancedStats();
+  }, [analysis.player?.id]);
+
   const getRecommendationColor = (status: string) => {
     switch (status) {
       case 'START':
@@ -134,6 +163,9 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Advanced Stats Panel - API v2 Next Gen Stats */}
+      <AdvancedStatsPanel stats={advancedStats} loading={loadingAdvanced} />
     </div>
   );
 }

@@ -184,13 +184,14 @@ def create_app():
     bcrypt.init_app(app)
     
     # Register blueprints
-    from app.routes import players, analysis, predictions, rosters, matchups, auth
+    from app.routes import players, analysis, predictions, rosters, matchups, auth, advanced_stats
     app.register_blueprint(auth.bp)
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
     app.register_blueprint(rosters.bp)
     app.register_blueprint(matchups.bp)
+    app.register_blueprint(advanced_stats.bp)  # API v2 advanced stats
 
     # Serve frontend static files
     @app.route('/', defaults={'path': ''})

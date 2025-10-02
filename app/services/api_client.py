@@ -9,10 +9,15 @@ class FantasyAPIClient:
     REQUEST_TIMEOUT = 10
 
     def __init__(self):
-        self.base_url = os.getenv('API_BASE_URL', 'https://nfl.wearemachina.com/api/v1')
+        # Use API v2 by default, fallback to v1 if specified
+        api_version = os.getenv('API_VERSION', 'v2')
+        self.base_url = os.getenv('API_BASE_URL', f'https://nfl.wearemachina.com/api/{api_version}')
         self.api_key = os.getenv('API_KEY')
+        self.api_version = api_version
         self._teams_cache = None
         self._schedule_cache = {}
+        
+        logger.info(f"FantasyAPIClient initialized with API {api_version}: {self.base_url}")
 
     def _get_headers(self, include_api_key=False):
         headers = {'Content-Type': 'application/json'}
@@ -968,3 +973,566 @@ class FantasyAPIClient:
         except Exception as e:
             logger.error(f"AI enrichment failed for player {player_id}: {e}")
             return None
+
+    # ========================================
+    # API V2 - ADVANCED STATS & ANALYTICS
+    # ========================================
+
+    def get_player_advanced_stats(self, player_id, season=2024, week=None, stat_type=None):
+        """
+        Get advanced stats for a player (Next Gen Stats, EPA, CPOE).
+        
+        API v2 endpoint: GET /api/v2/players/:id/advanced-stats
+        
+        Args:
+            player_id: Player ID
+            season: Season year (default: 2024)
+            week: Optional specific week number
+            stat_type: Optional filter by stat type (nextgen, epa, cpoe, air_yards, yac)
+        
+        Returns:
+            Advanced statistics including:
+            - Next Gen Stats (air yards, completion above expectation, etc.)
+            - EPA (Expected Points Added)
+            - CPOE (Completion Percentage Over Expected)
+            - Rushing/receiving yards after catch
+            - Route running metrics
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            params = {'season': season}
+            if week:
+                params['week'] = week
+            if stat_type:
+                params['stat_type'] = stat_type
+            
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/advanced-stats',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            stats = response.json().get('data', {})
+            logger.info(f"Fetched advanced stats for player {player_id} (season: {season}, week: {week})")
+            return stats
+        except Exception as e:
+            logger.error(f"Failed to fetch advanced stats for player {player_id}: {e}")
+            return None
+
+    def get_game_play_by_play(self, game_id):
+        """
+        Get detailed play-by-play data for a game.
+        
+        API v2 endpoint: GET /api/v2/games/:id/play-by-play
+        
+        Args:
+            game_id: Game ID
+        
+        Returns:
+            Complete play-by-play data including:
+            - Drive information
+            - Down and distance
+            - Play outcomes
+            - Player involvement
+            - Time remaining
+            - Field position
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/games/{game_id}/play-by-play',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            plays = response.json().get('data', [])
+            logger.info(f"Fetched {len(plays)} plays for game {game_id}")
+            return plays
+        except Exception as e:
+            logger.error(f"Failed to fetch play-by-play for game {game_id}: {e}")
+            return []
+
+    def get_game_scoring_plays(self, game_id):
+        """
+        Get all scoring plays from a game.
+        
+        API v2 endpoint: GET /api/v2/games/:id/scoring-plays
+        
+        Args:
+            game_id: Game ID
+        
+        Returns:
+            List of scoring plays with details:
+            - Play description
+            - Players involved
+            - Score change
+            - Time
+            - Quarter
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/games/{game_id}/scoring-plays',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            scoring = response.json().get('data', [])
+            logger.info(f"Fetched {len(scoring)} scoring plays for game {game_id}")
+            return scoring
+        except Exception as e:
+            logger.error(f"Failed to fetch scoring plays for game {game_id}: {e}")
+            return []
+
+    def get_team_injuries_v2(self, team_id):
+        """
+        Get current injury report for a team (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/teams/:id/injuries
+        
+        Args:
+            team_id: Team ID or abbreviation
+        
+        Returns:
+            Detailed injury report with:
+            - Player name and position
+            - Injury type and body part
+            - Status (Out, Doubtful, Questionable, Probable)
+            - Last update timestamp
+            - Expected return date (if available)
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/injuries',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            injuries = response.json().get('data', [])
+            logger.info(f"Fetched {len(injuries)} injury reports for team {team_id}")
+            return injuries
+        except Exception as e:
+            logger.error(f"Failed to fetch injuries for team {team_id}: {e}")
+            return []
+
+    def get_player_injuries_v2(self, player_id):
+        """
+        Get injury history and current status for a player (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/players/:id/injuries
+        
+        Args:
+            player_id: Player ID
+        
+        Returns:
+            Comprehensive injury data:
+            - Current injury status
+            - Historical injuries
+            - Recovery timeline
+            - Practice participation
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/injuries',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            injuries = response.json().get('data', [])
+            logger.info(f"Fetched {len(injuries)} injury records for player {player_id}")
+            return injuries
+        except Exception as e:
+            logger.error(f"Failed to fetch injuries for player {player_id}: {e}")
+            return []
+
+    def get_team_schedule_v2(self, team_id, season=2024):
+        """
+        Get complete season schedule for a team (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/teams/:id/schedule
+        
+        Args:
+            team_id: Team ID or abbreviation
+            season: Season year
+        
+        Returns:
+            Complete schedule with:
+            - Game dates and times
+            - Opponents
+            - Home/away status
+            - Game results (if completed)
+            - Bye weeks
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/schedule',
+                params={'season': season},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            schedule = response.json().get('data', [])
+            logger.info(f"Fetched schedule for team {team_id} ({season}): {len(schedule)} games")
+            return schedule
+        except Exception as e:
+            logger.error(f"Failed to fetch schedule for team {team_id}: {e}")
+            return []
+
+    def get_defense_rankings_v2(self, category='overall', season=2024):
+        """
+        Get defensive rankings across the league (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/defense/rankings
+        
+        Args:
+            category: Ranking category (overall, pass, rush, scoring, etc.)
+            season: Season year
+        
+        Returns:
+            League-wide defensive rankings with:
+            - Team rankings
+            - Statistical breakdowns
+            - Strength of schedule adjustments
+            - Advanced metrics (EPA allowed, success rate, etc.)
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/defense/rankings',
+                params={'category': category, 'season': season},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            rankings = response.json().get('data', [])
+            logger.info(f"Fetched defensive rankings for {category} ({season}): {len(rankings)} teams")
+            return rankings
+        except Exception as e:
+            logger.error(f"Failed to fetch defense rankings ({category}): {e}")
+            return []
+
+    def get_standings_v2(self, season=2024, division=None):
+        """
+        Get league standings (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/standings
+        
+        Args:
+            season: Season year
+            division: Optional division filter (AFC East, NFC West, etc.)
+        
+        Returns:
+            Current standings with:
+            - Win/loss records
+            - Division/conference standings
+            - Playoff positioning
+            - Strength of victory/schedule
+            - Tiebreaker info
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            params = {'season': season}
+            if division:
+                params['division'] = division
+            
+            response = requests.get(
+                f'{self.base_url}/standings',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            standings = response.json().get('data', [])
+            logger.info(f"Fetched standings for {season} (division: {division})")
+            return standings
+        except Exception as e:
+            logger.error(f"Failed to fetch standings ({season}): {e}")
+            return []
+
+    def ai_predict_game_v2(self, game_id):
+        """
+        Get AI-powered game prediction (enhanced v2 endpoint with Claude).
+        
+        API v2 endpoint: GET /api/v2/ai/predict/game/:id
+        
+        Args:
+            game_id: Game ID
+        
+        Returns:
+            Comprehensive AI prediction:
+            - Win probabilities for each team
+            - Predicted final score
+            - Confidence level
+            - Key factors analysis
+            - Player impact projections
+            - Claude-powered insights
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/ai/predict/game/{game_id}',
+                headers=self._get_headers(include_api_key=True),
+                timeout=30  # AI endpoints may take longer
+            )
+            response.raise_for_status()
+            prediction = response.json().get('data', {})
+            logger.info(f"Fetched AI game prediction for game {game_id}")
+            return prediction
+        except Exception as e:
+            logger.error(f"Failed to fetch AI game prediction for {game_id}: {e}")
+            return None
+
+    def ai_predict_player_v2(self, player_id, game_context=None):
+        """
+        Get AI-powered player performance prediction (enhanced v2 endpoint with Claude).
+        
+        API v2 endpoint: GET /api/v2/ai/predict/player/:id
+        
+        Args:
+            player_id: Player ID
+            game_context: Optional dict with game context (opponent, weather, etc.)
+        
+        Returns:
+            AI-powered prediction:
+            - Projected fantasy points
+            - Statistical projections (yards, TDs, receptions, etc.)
+            - Confidence score
+            - Risk factors
+            - Opportunity analysis
+            - Claude-powered narrative insights
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            params = game_context if game_context else {}
+            
+            response = requests.get(
+                f'{self.base_url}/ai/predict/player/{player_id}',
+                params=params,
+                headers=self._get_headers(include_api_key=True),
+                timeout=30  # AI endpoints may take longer
+            )
+            response.raise_for_status()
+            prediction = response.json().get('data', {})
+            logger.info(f"Fetched AI player prediction for player {player_id}")
+            return prediction
+        except Exception as e:
+            logger.error(f"Failed to fetch AI player prediction for {player_id}: {e}")
+            return None
+
+    def ai_player_insights_v2(self, player_id):
+        """
+        Get comprehensive AI insights for a player (enhanced v2 endpoint with Claude).
+        
+        API v2 endpoint: GET /api/v2/ai/insights/player/:id
+        
+        Args:
+            player_id: Player ID
+        
+        Returns:
+            Deep AI analysis:
+            - Performance trends
+            - Strengths and weaknesses
+            - Matchup advantages
+            - Season outlook
+            - Trade value assessment
+            - Claude-powered narrative analysis
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/ai/insights/player/{player_id}',
+                headers=self._get_headers(include_api_key=True),
+                timeout=30  # AI endpoints may take longer
+            )
+            response.raise_for_status()
+            insights = response.json().get('data', {})
+            logger.info(f"Fetched AI insights for player {player_id}")
+            return insights
+        except Exception as e:
+            logger.error(f"Failed to fetch AI insights for player {player_id}: {e}")
+            return None
+
+    def ai_query_v2(self, query):
+        """
+        Natural language query to AI (enhanced v2 endpoint with Claude).
+        
+        API v2 endpoint: POST /api/v2/ai/query
+        
+        Args:
+            query: Natural language question about NFL data
+        
+        Returns:
+            AI-generated response with:
+            - Direct answer to query
+            - Supporting data and statistics
+            - Relevant insights
+            - Data visualizations (if applicable)
+            - Claude-powered natural language response
+        
+        Examples:
+            - "Who are the top 5 rushing leaders this season?"
+            - "Compare Patrick Mahomes vs Josh Allen passing stats"
+            - "Which defenses are best against tight ends?"
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.post(
+                f'{self.base_url}/ai/query',
+                json={'query': query},
+                headers=self._get_headers(include_api_key=True),
+                timeout=30  # AI endpoints may take longer
+            )
+            response.raise_for_status()
+            result = response.json().get('data', {})
+            logger.info(f"AI query successful: {query[:50]}...")
+            return result
+        except Exception as e:
+            logger.error(f"AI query failed ({query[:30]}...): {e}")
+            return None
+
+    def get_games_v2(self, season=None, week=None, team=None, status=None, limit=50):
+        """
+        Get games with enhanced filtering (v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/games
+        
+        Args:
+            season: Filter by season year
+            week: Filter by week number
+            team: Filter by team ID or abbreviation
+            status: Filter by game status (scheduled, live, final)
+            limit: Max number of results
+        
+        Returns:
+            List of games with enhanced metadata
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            params = {'limit': limit}
+            if season:
+                params['season'] = season
+            if week:
+                params['week'] = week
+            if team:
+                params['team'] = team
+            if status:
+                params['status'] = status
+            
+            response = requests.get(
+                f'{self.base_url}/games',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            data = response.json()
+            games = data.get('data', [])
+            meta = data.get('meta', {})
+            
+            logger.info(f"Fetched {len(games)} games (total: {meta.get('total', 'unknown')})")
+            return games
+        except Exception as e:
+            logger.error(f"Failed to fetch games: {e}")
+            return []
+
+    def get_game_details_v2(self, game_id):
+        """
+        Get comprehensive game details (v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/games/:id
+        
+        Args:
+            game_id: Game ID
+        
+        Returns:
+            Detailed game information including:
+            - Teams and rosters
+            - Score and quarter
+            - Time remaining
+            - Possession
+            - Weather conditions
+            - Stadium info
+            - Betting lines (if available)
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/games/{game_id}',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            game = response.json().get('data', {})
+            logger.info(f"Fetched details for game {game_id}")
+            return game
+        except Exception as e:
+            logger.error(f"Failed to fetch game details for {game_id}: {e}")
+            return None
+
+    def get_team_roster_v2(self, team_id, season=2024):
+        """
+        Get complete team roster (enhanced v2 endpoint).
+        
+        API v2 endpoint: GET /api/v2/teams/:id/roster
+        
+        Args:
+            team_id: Team ID or abbreviation
+            season: Season year
+        
+        Returns:
+            Complete roster with enhanced player info:
+            - Player details
+            - Position depth chart
+            - Contract info (if available)
+            - Jersey numbers
+            - Status
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}/roster',
+                params={'season': season},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            roster = response.json().get('data', [])
+            logger.info(f"Fetched roster for team {team_id} ({season}): {len(roster)} players")
+            return roster
+        except Exception as e:
+            logger.error(f"Failed to fetch roster for team {team_id}: {e}")
+            return []
