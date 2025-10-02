@@ -174,3 +174,168 @@ def calculate_hit_rate(hits, misses):
     if total == 0:
         return 0.0
     return round((hits / total) * 100, 2)
+
+
+
+def invalidate_player_cache(player_id):
+    """
+    Invalidate all cache entries for a specific player.
+    Call this when player data is updated.
+    
+    Args:
+        player_id: Player ID to invalidate
+    """
+    if not CACHE_ENABLED:
+        return
+    
+    try:
+        patterns = [
+            f"players:*{player_id}*",
+            f"player_details:{player_id}*",
+            f"player_career:{player_id}*",
+            f"analysis:*{player_id}*"
+        ]
+        
+        total_invalidated = 0
+        for pattern in patterns:
+            keys = cache.keys(pattern)
+            if keys:
+                cache.delete(*keys)
+                total_invalidated += len(keys)
+        
+        logger.info(f"Invalidated {total_invalidated} cache entries for player {player_id}")
+    except Exception as e:
+        logger.error(f"Failed to invalidate player cache: {e}")
+
+
+def invalidate_matchup_cache(matchup_id=None, week=None, season=None):
+    """
+    Invalidate matchup-related cache entries.
+    Call this when matchup data changes.
+    
+    Args:
+        matchup_id: Specific matchup ID (optional)
+        week: Week number (optional)
+        season: Season year (optional)
+    """
+    if not CACHE_ENABLED:
+        return
+    
+    try:
+        patterns = []
+        
+        if matchup_id:
+            patterns.append(f"matchup:{matchup_id}*")
+        
+        if week and season:
+            patterns.extend([
+                f"matchups:*week={week}*season={season}*",
+                f"analysis:*:{week}:{season}*"
+            ])
+        
+        if not patterns:
+            # Invalidate all matchup caches
+            patterns = ["matchup:*", "matchups:*"]
+        
+        total_invalidated = 0
+        for pattern in patterns:
+            keys = cache.keys(pattern)
+            if keys:
+                cache.delete(*keys)
+                total_invalidated += len(keys)
+        
+        logger.info(f"Invalidated {total_invalidated} matchup cache entries")
+    except Exception as e:
+        logger.error(f"Failed to invalidate matchup cache: {e}")
+
+
+def invalidate_weather_cache(team_abbr=None):
+    """
+    Invalidate weather cache entries.
+    Call this when weather data should be refreshed.
+    
+    Args:
+        team_abbr: Team abbreviation (optional, None = all weather)
+    """
+    if not CACHE_ENABLED:
+        return
+    
+    try:
+        pattern = f"weather:{team_abbr}" if team_abbr else "weather:*"
+        keys = cache.keys(pattern)
+        
+        if keys:
+            cache.delete(*keys)
+            logger.info(f"Invalidated {len(keys)} weather cache entries")
+    except Exception as e:
+        logger.error(f"Failed to invalidate weather cache: {e}")
+
+
+def invalidate_analysis_cache(player_id=None, week=None, season=None):
+    """
+    Invalidate AI analysis cache entries.
+    Call this when analysis should be regenerated.
+    
+    Args:
+        player_id: Player ID (optional)
+        week: Week number (optional)
+        season: Season year (optional)
+    """
+    if not CACHE_ENABLED:
+        return
+    
+    try:
+        # Invalidate Redis cache
+        if player_id and week and season:
+            pattern = f"analysis:{player_id}:*:{week}:{season}"
+        elif week and season:
+            pattern = f"analysis:*:{week}:{season}"
+        elif player_id:
+            pattern = f"analysis:{player_id}:*"
+        else:
+            pattern = "analysis:*"
+        
+        keys = cache.keys(pattern)
+        if keys:
+            cache.delete(*keys)
+            logger.info(f"Invalidated {len(keys)} Redis analysis cache entries")
+        
+        # Also invalidate PostgreSQL cache
+        from app.database import execute_query
+        
+        if player_id and week and season:
+            query = "DELETE FROM ai_analysis_cache WHERE player_id = %s AND week = %s AND season = %s"
+            execute_query(query, (player_id, week, season))
+            logger.info(f"Invalidated PostgreSQL analysis cache for player {player_id}, week {week}, season {season}")
+        elif week and season:
+            query = "DELETE FROM ai_analysis_cache WHERE week = %s AND season = %s"
+            execute_query(query, (week, season))
+            logger.info(f"Invalidated PostgreSQL analysis cache for week {week}, season {season}")
+        elif player_id:
+            query = "DELETE FROM ai_analysis_cache WHERE player_id = %s"
+            execute_query(query, (player_id,))
+            logger.info(f"Invalidated PostgreSQL analysis cache for player {player_id}")
+        
+    except Exception as e:
+        logger.error(f"Failed to invalidate analysis cache: {e}")
+
+
+def schedule_cache_cleanup(max_age_days=7):
+    """
+    Schedule periodic cleanup of old cache entries from PostgreSQL.
+    Should be called periodically (e.g., daily cron job).
+    
+    Args:
+        max_age_days: Maximum age of cache entries in days
+    """
+    try:
+        from app.database import execute_query
+        
+        query = """
+            DELETE FROM ai_analysis_cache
+            WHERE created_at < NOW() - INTERVAL '%s days'
+        """
+        execute_query(query, (max_age_days,))
+        logger.info(f"Cleaned up analysis cache entries older than {max_age_days} days")
+    except Exception as e:
+        logger.error(f"Failed to cleanup old cache entries: {e}")

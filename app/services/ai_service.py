@@ -175,7 +175,7 @@ class AIService:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            print(f"Groq API error: {e}")
+            logger.error(f"Groq API error: {e}")
             return self._generate_fallback(prompt)
 
     def _generate_with_claude(self, prompt):
@@ -194,7 +194,7 @@ class AIService:
             )
             return response.content[0].text.strip()
         except Exception as e:
-            print(f"Claude API error: {e}")
+            logger.error(f"Claude API error: {e}")
             return self._generate_fallback(prompt)
 
     def _generate_fallback(self, prompt):
