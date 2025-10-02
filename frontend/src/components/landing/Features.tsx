@@ -26,7 +26,7 @@ const features = [
     icon: '⛈️',
     title: 'Weather Impact Analysis',
     description:
-      'Know exactly how weather conditions affect your players' performance before kickoff. Wind, rain, snow, and temperature all factored into recommendations.',
+      "Know exactly how weather conditions affect your players' performance before kickoff. Wind, rain, snow, and temperature all factored into recommendations.",
     color: 'from-cyan-500 to-blue-500',
   },
   {
