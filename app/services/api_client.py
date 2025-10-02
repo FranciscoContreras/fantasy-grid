@@ -1,7 +1,13 @@
 import requests
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FantasyAPIClient:
+    # API request timeout in seconds
+    REQUEST_TIMEOUT = 10
+
     def __init__(self):
         self.base_url = os.getenv('API_BASE_URL', 'https://nfl.wearemachina.com/api/v1')
         self.api_key = os.getenv('API_KEY')
@@ -21,14 +27,18 @@ class FantasyAPIClient:
                 response = requests.get(
                     f'{self.base_url}/teams',
                     params={'limit': 100},
-                    headers=self._get_headers()
+                    headers=self._get_headers(),
+                    timeout=self.REQUEST_TIMEOUT
                 )
                 response.raise_for_status()
                 teams = response.json().get('data', [])
                 # Create map of team_id -> abbreviation
                 self._teams_cache = {team['id']: team['abbreviation'] for team in teams}
+            except requests.Timeout:
+                logger.error("Timeout loading teams cache")
+                self._teams_cache = {}
             except Exception as e:
-                print(f"Warning: Failed to load teams cache: {e}")
+                logger.error(f"Failed to load teams cache: {e}")
                 self._teams_cache = {}
         return self._teams_cache
 
@@ -45,18 +55,26 @@ class FantasyAPIClient:
 
     def get_player_data(self, player_id):
         """Get player details by ID"""
-        response = requests.get(
-            f'{self.base_url}/players/{player_id}',
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        player = response.json()
-        # Enrich with team abbreviation if it's in the data wrapper
-        if 'data' in player:
-            player['data'] = self._enrich_player_with_team(player['data'])
-        else:
-            player = self._enrich_player_with_team(player)
-        return player
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            player = response.json()
+            # Enrich with team abbreviation if it's in the data wrapper
+            if 'data' in player:
+                player['data'] = self._enrich_player_with_team(player['data'])
+            else:
+                player = self._enrich_player_with_team(player)
+            return player
+        except requests.Timeout:
+            logger.error(f"Timeout getting player data for {player_id}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get player data for {player_id}: {e}")
+            return None
 
     def search_players(self, query, position=None):
         """Search for players by name and optionally filter by position"""
@@ -71,17 +89,19 @@ class FantasyAPIClient:
         limit = 100
         offset = 0
 
-        # First request to get total count
-        params = {'limit': limit, 'offset': offset}
-        if position:
-            params['position'] = position
+        try:
+            # First request to get total count
+            params = {'limit': limit, 'offset': offset}
+            if position:
+                params['position'] = position
 
-        response = requests.get(
-            f'{self.base_url}/players',
-            params=params,
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
+            response = requests.get(
+                f'{self.base_url}/players',
+                params=params,
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
         data = response.json()
         all_players.extend(data.get('data', []))
         total = data.get('meta', {}).get('total', 0)
@@ -92,33 +112,42 @@ class FantasyAPIClient:
             offset += limit
             params['offset'] = offset
             response = requests.get(
-                f'{self.base_url}/players',
-                params=params,
-                headers=self._get_headers()
-            )
+            f'{self.base_url}/players',
+            params=params,
+            headers=self._get_headers(),
+            timeout=self.REQUEST_TIMEOUT
+        )
             response.raise_for_status()
             all_players.extend(response.json().get('data', []))
 
         # Enrich all players with team abbreviation
         all_players = [self._enrich_player_with_team(player) for player in all_players]
 
-        # Advanced search with relevance scoring
-        # This will further filter and rank results from the API
-        if query and all_players:
-            scored_players = self._score_and_filter_players(all_players, query)
-            return scored_players[:20]  # Return top 20 most relevant
+            # Advanced search with relevance scoring
+            # This will further filter and rank results from the API
+            if query and all_players:
+                scored_players = self._score_and_filter_players(all_players, query)
+                return scored_players[:20]  # Return top 20 most relevant
 
-        return all_players[:20]
+            return all_players[:20]
+        except requests.Timeout:
+            logger.error(f"Timeout searching for players: query={query}, position={position}")
+            return []
+        except Exception as e:
+            logger.error(f"Failed to search players: {e}")
+            return []
 
     def _search_team_defenses(self, query):
         """Search for team defenses"""
-        response = requests.get(
-            f'{self.base_url}/teams',
-            params={'limit': 100},
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        teams = response.json().get('data', [])
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams',
+                params={'limit': 100},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            teams = response.json().get('data', [])
 
         # Convert teams to player-like format for consistency
         defenses = []
@@ -133,14 +162,20 @@ class FantasyAPIClient:
             }
             defenses.append(defense)
 
-        # Filter by query if provided
-        if query:
-            query_lower = query.lower()
-            defenses = [d for d in defenses if
-                       query_lower in d['name'].lower() or
-                       query_lower in d['team'].lower()]
+            # Filter by query if provided
+            if query:
+                query_lower = query.lower()
+                defenses = [d for d in defenses if
+                           query_lower in d['name'].lower() or
+                           query_lower in d['team'].lower()]
 
-        return defenses[:20]
+            return defenses[:20]
+        except requests.Timeout:
+            logger.error(f"Timeout searching for team defenses: query={query}")
+            return []
+        except Exception as e:
+            logger.error(f"Failed to search team defenses: {e}")
+            return []
 
     def _score_and_filter_players(self, players, query):
         """
@@ -287,31 +322,55 @@ class FantasyAPIClient:
 
     def get_defense_stats(self, team_id):
         """Get defensive statistics for a team"""
-        response = requests.get(
-            f'{self.base_url}/teams/{team_id}',
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.get(
+                f'{self.base_url}/teams/{team_id}',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.Timeout:
+            logger.error(f"Timeout getting defense stats for team {team_id}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get defense stats for team {team_id}: {e}")
+            return None
 
     def get_weather_data(self, location):
         """Get current weather for a location"""
-        response = requests.get(
-            f'{self.base_url}/weather/current',
-            params={'location': location},
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.get(
+                f'{self.base_url}/weather/current',
+                params={'location': location},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.Timeout:
+            logger.error(f"Timeout getting weather data for {location}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get weather data for {location}: {e}")
+            return None
 
     def get_player_career_stats(self, player_id):
         """Get career statistics for a player"""
-        response = requests.get(
-            f'{self.base_url}/players/{player_id}/career',
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.get(
+                f'{self.base_url}/players/{player_id}/career',
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.Timeout:
+            logger.error(f"Timeout getting career stats for player {player_id}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get career stats for player {player_id}: {e}")
+            return None
 
     def get_player_recent_games(self, player_id, limit=20):
         """
@@ -358,7 +417,8 @@ class FantasyAPIClient:
             response = requests.get(
                 f'{self.base_url}/games',
                 params={'season': season, 'week': week, 'limit': 100},
-                headers=self._get_headers()
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             games = response.json().get('data') or []
@@ -410,7 +470,8 @@ class FantasyAPIClient:
             response = requests.get(
                 f'{self.base_url}/players/{player_id}/games',
                 params={'limit': 100},  # Last 100 games
-                headers=self._get_headers()
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             games = response.json().get('data', [])
@@ -439,8 +500,11 @@ class FantasyAPIClient:
                 'total_fantasy_points': round(total_points, 1),
                 'recent_games': vs_games[:3]  # Last 3 games vs this team
             }
+        except requests.Timeout:
+            logger.error(f"Timeout getting player {player_id} stats vs team {opponent_team_abbr}")
+            return None
         except Exception as e:
-            print(f"Failed to fetch player vs team stats: {e}")
+            logger.error(f"Failed to fetch player vs team stats: {e}")
             return None
 
     def get_defensive_coordinator(self, team_abbr, season=2024):
@@ -538,7 +602,7 @@ class FantasyAPIClient:
                 f'{self.base_url}/teams/{team_id}/players',
                 params={'season': season, 'limit': 100},
                 headers=self._get_headers(),
-                timeout=10
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             players = response.json().get('data', [])
@@ -609,7 +673,7 @@ class FantasyAPIClient:
                 f'{self.base_url}/teams/{team_id}/defense/stats',
                 params={'season': season},
                 headers=self._get_headers(),
-                timeout=15
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             stats_data = response.json()
@@ -672,7 +736,7 @@ class FantasyAPIClient:
             response = requests.get(
                 f'{self.base_url}/players/{player_id}/injuries',
                 headers=self._get_headers(),
-                timeout=10
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             injuries = response.json().get('data', [])
@@ -705,7 +769,7 @@ class FantasyAPIClient:
                 f'{self.base_url}/weather/forecast',
                 params=params,
                 headers=self._get_headers(),
-                timeout=10
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             forecast = response.json().get('data', {})
@@ -732,7 +796,7 @@ class FantasyAPIClient:
             response = requests.get(
                 f'{self.base_url}/stats/game/{game_id}',
                 headers=self._get_headers(),
-                timeout=10
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             stats = response.json().get('data', {})
@@ -762,7 +826,7 @@ class FantasyAPIClient:
                 f'{self.base_url}/stats/leaders',
                 params={'category': category, 'season': season, 'limit': limit},
                 headers=self._get_headers(),
-                timeout=10
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             leaders = response.json().get('data', [])
@@ -790,7 +854,7 @@ class FantasyAPIClient:
                 f'{self.base_url}/garden/query',
                 json={'query': query},
                 headers=self._get_headers(include_api_key=True),
-                timeout=30
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             result = response.json().get('data', {})
@@ -817,7 +881,7 @@ class FantasyAPIClient:
             response = requests.post(
                 f'{self.base_url}/garden/enrich/player/{player_id}',
                 headers=self._get_headers(include_api_key=True),
-                timeout=30
+                timeout=self.REQUEST_TIMEOUT
             )
             response.raise_for_status()
             enriched = response.json().get('data', {})
