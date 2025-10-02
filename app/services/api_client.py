@@ -510,22 +510,51 @@ class FantasyAPIClient:
     def get_defensive_coordinator(self, team_abbr, season=2024):
         """
         Get defensive coordinator for a team.
-        This is simplified - in production would fetch from coaching staff API.
+        Attempts to fetch from API, falls back to cached data if unavailable.
         """
-        # Simplified mapping - in production would fetch from API
+        try:
+            # Try to fetch from coaching staff API endpoint
+            response = requests.get(
+                f'{self.base_url}/teams/{team_abbr}/coaches',
+                params={'season': season},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            coaches_data = response.json().get('data', {})
+            
+            # Look for defensive coordinator
+            for coach in coaches_data.get('coaches', []):
+                if 'defensive coordinator' in coach.get('position', '').lower():
+                    return coach.get('name', 'Unknown')
+                    
+        except requests.Timeout:
+            logger.warning(f"Timeout fetching coaching staff for {team_abbr}")
+        except Exception as e:
+            logger.debug(f"Could not fetch coaching staff from API for {team_abbr}: {e}")
+        
+        # Fallback to 2024 cached mapping (updated periodically)
         dc_mapping_2024 = {
-            'SF': 'Steve Wilks',
-            'BAL': 'Mike Macdonald',
-            'BUF': 'Leslie Frazier',
-            'DAL': 'Dan Quinn',
+            'SF': 'Nick Sorensen',
+            'BAL': 'Zach Orr', 
+            'BUF': 'Bobby Babich',
+            'DAL': 'Mike Zimmer',
             'PIT': 'Teryl Austin',
             'CLE': 'Jim Schwartz',
             'NYJ': 'Jeff Ulbrich',
             'KC': 'Steve Spagnuolo',
-            'PHI': 'Sean Desai',
-            'MIA': 'Vic Fangio'
+            'PHI': 'Vic Fangio',
+            'MIA': 'Anthony Weaver',
+            'DET': 'Aaron Glenn',
+            'GB': 'Jeff Hafley',
+            'MIN': 'Brian Flores',
+            'HOU': 'Matt Burke'
         }
-        return dc_mapping_2024.get(team_abbr, 'Unknown')
+        
+        coordinator = dc_mapping_2024.get(team_abbr)
+        if coordinator:
+            logger.debug(f"Using cached DC for {team_abbr}: {coordinator}")
+        return coordinator or 'Unknown'
 
     def get_key_defensive_players(self, team_abbr, position_group='ALL'):
         """
@@ -536,10 +565,45 @@ class FantasyAPIClient:
             position_group: 'DL' (pass rush), 'LB', 'DB' (coverage), or 'ALL'
 
         Returns:
-            List of key defensive players
+            List of key defensive player names
         """
-        # Simplified - in production would fetch from roster API
-        # This focuses on players who impact fantasy the most
+        try:
+            # Try to fetch from team roster API
+            response = requests.get(
+                f'{self.base_url}/teams/{team_abbr}/players',
+                params={'position_side': 'defense'},
+                headers=self._get_headers(),
+                timeout=self.REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            roster_data = response.json().get('data', [])
+            
+            # Filter by position group if specified
+            position_map = {
+                'DL': ['DE', 'DT', 'NT'],
+                'LB': ['LB', 'MLB', 'OLB', 'ILB'],
+                'DB': ['CB', 'S', 'SS', 'FS', 'DB']
+            }
+            
+            if position_group != 'ALL' and position_group in position_map:
+                target_positions = position_map[position_group]
+                filtered_players = [
+                    p.get('name') for p in roster_data 
+                    if p.get('position') in target_positions
+                ]
+                # Return top 3 by some metric
+                return filtered_players[:3] if filtered_players else []
+            else:
+                # Return top defenders across all positions
+                all_defenders = [p.get('name') for p in roster_data]
+                return all_defenders[:5] if all_defenders else []
+                
+        except requests.Timeout:
+            logger.warning(f"Timeout fetching roster for {team_abbr}")
+        except Exception as e:
+            logger.debug(f"Could not fetch roster from API for {team_abbr}: {e}")
+        
+        # Fallback to cached 2024 key defenders (top impact players)
         key_defenders_2024 = {
             'SF': {
                 'DL': ['Nick Bosa', 'Javon Hargrave'],
@@ -548,18 +612,28 @@ class FantasyAPIClient:
             },
             'BAL': {
                 'DL': ['Justin Madubuike'],
-                'LB': ['Roquan Smith', 'Patrick Queen'],
+                'LB': ['Roquan Smith', 'Kyle Van Noy'],
                 'DB': ['Marlon Humphrey', 'Kyle Hamilton']
             },
             'BUF': {
                 'DL': ['Ed Oliver', 'Von Miller'],
-                'LB': ['Terrel Bernard'],
+                'LB': ['Terrel Bernard', 'Matt Milano'],
                 'DB': ['Tre\'Davious White', 'Jordan Poyer']
             },
             'DAL': {
                 'DL': ['Micah Parsons', 'DeMarcus Lawrence'],
                 'LB': ['Leighton Vander Esch'],
-                'DB': ['Trevon Diggs', 'Stephon Gilmore']
+                'DB': ['Trevon Diggs', 'DaRon Bland']
+            },
+            'PIT': {
+                'DL': ['T.J. Watt', 'Cameron Heyward'],
+                'LB': ['Alex Highsmith'],
+                'DB': ['Minkah Fitzpatrick', 'Patrick Peterson']
+            },
+            'KC': {
+                'DL': ['Chris Jones', 'George Karlaftis'],
+                'LB': ['Nick Bolton'],
+                'DB': ['Trent McDuffie', 'Justin Reid']
             }
         }
 
@@ -569,9 +643,13 @@ class FantasyAPIClient:
             all_players = []
             for group_players in team_defense.values():
                 all_players.extend(group_players)
+            logger.debug(f"Using cached key defenders for {team_abbr} (all positions)")
             return all_players
 
-        return team_defense.get(position_group, [])
+        players = team_defense.get(position_group, [])
+        if players:
+            logger.debug(f"Using cached key defenders for {team_abbr} ({position_group})")
+        return players
 
     def get_team_roster(self, team_abbr, season=2024):
         """

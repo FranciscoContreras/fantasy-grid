@@ -712,8 +712,11 @@ def _analyze_player_with_data(player_data, is_user_player, week, season):
 
 
 def _calculate_matchup_score(position, team, opponent_team=None):
-    """Calculate matchup difficulty score (0-100)"""
-    # Base score by position
+    """
+    Calculate matchup difficulty score (0-100) using real defensive stats.
+    Higher score = better matchup for the offensive player.
+    """
+    # Base score by position (league average matchup)
     base_scores = {
         'QB': 75,
         'RB': 70,
@@ -725,25 +728,84 @@ def _calculate_matchup_score(position, team, opponent_team=None):
 
     base = base_scores.get(position, 70)
 
-    # If we have opponent data, adjust based on known tough/easy defenses
-    # This is simplified - in production would fetch real defensive rankings
+    # If we have opponent data, adjust based on real defensive stats from API
     if opponent_team:
-        # Tough defenses against pass (lower score = tougher matchup)
-        tough_vs_pass = ['SF', 'BAL', 'BUF', 'DAL', 'PIT']
-        # Tough defenses against run
-        tough_vs_run = ['SF', 'BAL', 'CLE', 'NYJ']
-        # Weak defenses (favorable matchups)
-        weak_defenses = ['ARI', 'CAR', 'DEN', 'LV', 'WAS']
+        try:
+            # Fetch real defensive stats from API
+            defense_stats = api_client.get_defense_stats(opponent_team)
+            
+            if defense_stats and isinstance(defense_stats, dict):
+                data = defense_stats.get('data', {})
+                
+                # Extract relevant defensive metrics
+                # Lower ranks (1-10) = tougher defense, higher points allowed = weaker defense
+                points_allowed_per_game = data.get('points_allowed_per_game', 21)  # League avg ~21
+                yards_allowed_per_game = data.get('yards_allowed_per_game', 340)  # League avg ~340
+                defensive_rank = data.get('defensive_rank', 16)  # 1-32, lower is better
+                
+                # Position-specific adjustments
+                if position in ['QB', 'WR', 'TE']:
+                    # Passing game - use pass defense metrics
+                    pass_defense_rank = data.get('pass_defense_rank', 16)
+                    pass_yards_allowed = data.get('pass_yards_allowed_per_game', 220)
+                    
+                    # Top 10 pass defense = tougher matchup
+                    if pass_defense_rank <= 10:
+                        base -= 15
+                    # Bottom 10 pass defense = easier matchup
+                    elif pass_defense_rank >= 23:
+                        base += 15
+                    # Middle tier
+                    else:
+                        # Use yards allowed for fine-tuning
+                        if pass_yards_allowed > 250:
+                            base += 8
+                        elif pass_yards_allowed < 200:
+                            base -= 8
+                            
+                elif position == 'RB':
+                    # Running game - use rush defense metrics
+                    rush_defense_rank = data.get('rush_defense_rank', 16)
+                    rush_yards_allowed = data.get('rush_yards_allowed_per_game', 120)
+                    
+                    # Top 10 run defense = tougher matchup
+                    if rush_defense_rank <= 10:
+                        base -= 15
+                    # Bottom 10 run defense = easier matchup
+                    elif rush_defense_rank >= 23:
+                        base += 15
+                    # Middle tier
+                    else:
+                        if rush_yards_allowed > 135:
+                            base += 8
+                        elif rush_yards_allowed < 105:
+                            base -= 8
+                
+                # Overall defensive strength adjustment (applies to all positions)
+                if defensive_rank <= 5:
+                    base -= 5  # Elite defense
+                elif defensive_rank >= 28:
+                    base += 5  # Weak defense
+                    
+                logger.debug(f"Matchup score for {position} vs {opponent_team}: base={base}, def_rank={defensive_rank}")
+                
+        except Exception as e:
+            logger.warning(f"Could not fetch defensive stats for {opponent_team}, using default scoring: {e}")
+            # Fall back to simplified logic if API fails
+            # Fallback: Use hardcoded lists only as emergency backup
+            tough_vs_pass = ['SF', 'BAL', 'BUF', 'DAL', 'PIT']
+            tough_vs_run = ['SF', 'BAL', 'CLE', 'NYJ']
+            weak_defenses = ['ARI', 'CAR', 'DEN', 'LV', 'WAS']
+            
+            if position in ['QB', 'WR', 'TE'] and opponent_team in tough_vs_pass:
+                base -= 12
+            elif position == 'RB' and opponent_team in tough_vs_run:
+                base -= 12
+            elif opponent_team in weak_defenses:
+                base += 12
 
-        if position in ['QB', 'WR', 'TE'] and opponent_team in tough_vs_pass:
-            base -= 12
-        elif position == 'RB' and opponent_team in tough_vs_run:
-            base -= 12
-        elif opponent_team in weak_defenses:
-            base += 12
-
-    # Add some variance (+/- 8 points) for variability
-    variance = random.uniform(-8, 8)
+    # Add some variance (+/- 5 points) for game-to-game variability
+    variance = random.uniform(-5, 5)
 
     return max(0, min(100, base + variance))
 
