@@ -249,7 +249,8 @@ def analyze_matchup(matchup_id):
     Phase 1: Returns immediately with basic analysis (no Grok)
     Phase 2: Triggers background Grok analysis that updates progressively
     """
-    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import time
 
     try:
         # Get matchup details
@@ -324,50 +325,64 @@ def analyze_matchup(matchup_id):
         # Generate basic recommendations
         recommendations = _generate_recommendations(user_players, basic_results)
 
-        # Phase 2: Start background thread for Grok analysis
-        def generate_grok_analyses_async():
-            """Background task to generate Grok analyses one by one"""
-            try:
-                logger.info(f"Starting background Grok analysis for matchup {matchup_id}")
-                for player_data in analysis_data:
-                    try:
-                        player = player_data.get('player')
-                        player_name = player.get('player_name')
-
-                        logger.info(f"Generating Grok analysis for {player_name}")
-
-                        # Generate full analysis with Grok
-                        full_analysis = _analyze_player_with_data(
+        # Phase 2: Start background analysis with managed thread pool
+        def generate_ai_analyses_async():
+            """Background task to generate AI analyses with proper error handling"""
+            max_workers = 2  # Limit concurrent AI calls to avoid overwhelming the service
+            
+            with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix='ai_analysis') as executor:
+                try:
+                    logger.info(f"Starting background AI analysis for matchup {matchup_id} with {len(analysis_data)} players")
+                    
+                    # Submit all analysis tasks to thread pool
+                    future_to_player = {
+                        executor.submit(
+                            _analyze_player_with_timeout,
                             player_data,
-                            is_user_player=True,
-                            week=week,
-                            season=season
-                        )
-
-                        # Update database with completed analysis
-                        _update_matchup_analysis_reasoning(
                             matchup_id,
-                            player.get('player_id'),
-                            player_name,
-                            full_analysis.get('reasoning'),
-                            status='completed'
-                        )
+                            week,
+                            season
+                        ): player_data.get('player')
+                        for player_data in analysis_data
+                    }
+                    
+                    # Process completed analyses as they finish
+                    completed = 0
+                    failed = 0
+                    for future in as_completed(future_to_player, timeout=300):  # 5 min total timeout
+                        player = future_to_player[future]
+                        player_name = player.get('player_name', 'Unknown')
+                        
+                        try:
+                            result = future.result(timeout=60)  # 60s per player
+                            if result:
+                                completed += 1
+                                logger.info(f"[{completed}/{len(analysis_data)}] Completed AI analysis for {player_name}")
+                            else:
+                                failed += 1
+                                logger.warning(f"AI analysis returned None for {player_name}")
+                        except TimeoutError:
+                            failed += 1
+                            logger.error(f"Timeout analyzing {player_name}")
+                            _update_analysis_status(matchup_id, player.get('player_id'), player_name, 'timeout')
+                        except Exception as e:
+                            failed += 1
+                            logger.error(f"Error analyzing {player_name}: {str(e)}", exc_info=True)
+                            _update_analysis_status(matchup_id, player.get('player_id'), player_name, 'failed')
+                    
+                    logger.info(f"Background AI analysis completed for matchup {matchup_id}: {completed} succeeded, {failed} failed")
+                    
+                except Exception as e:
+                    logger.error(f"Fatal error in background AI analysis: {str(e)}", exc_info=True)
 
-                        logger.info(f"Completed Grok analysis for {player_name}")
-
-                    except Exception as e:
-                        logger.error(f"Error in Grok analysis for {player.get('player_name')}: {str(e)}")
-                        # Mark as failed but continue with others
-                        _update_analysis_status(matchup_id, player.get('player_id'), player.get('player_name'), 'failed')
-
-                logger.info(f"Background Grok analysis completed for matchup {matchup_id}")
-            except Exception as e:
-                logger.error(f"Fatal error in background Grok analysis: {str(e)}")
-
-        # Start background thread
-        thread = threading.Thread(target=generate_grok_analyses_async)
-        thread.daemon = True
-        thread.start()
+        # Start background analysis in separate thread (non-daemon for graceful completion)
+        import threading
+        analysis_thread = threading.Thread(
+            target=generate_ai_analyses_async,
+            name=f'matchup_analysis_{matchup_id}',
+            daemon=False  # Allow thread to complete even during shutdown
+        )
+        analysis_thread.start()
 
         # Return immediately with basic analysis
         return jsonify({
@@ -1122,6 +1137,41 @@ def _generate_recommendations(user_players, analysis_results):
         'avg_projected_points': round(sum(a['projected_points'] for a in user_analysis) / len(user_analysis), 2) if user_analysis else 0,
         'high_confidence_starts': [a['player_name'] for a in start_players if a['confidence_score'] >= 80]
     }
+
+
+def _analyze_player_with_timeout(player_data, matchup_id, week, season):
+    """
+    Analyze a single player with timeout protection.
+    Returns True on success, False on failure.
+    """
+    player = player_data.get('player')
+    player_id = player.get('player_id')
+    player_name = player.get('player_name')
+    
+    try:
+        # Generate full analysis with AI
+        full_analysis = _analyze_player_with_data(
+            player_data,
+            is_user_player=True,
+            week=week,
+            season=season
+        )
+        
+        # Update database with completed analysis
+        _update_matchup_analysis_reasoning(
+            matchup_id,
+            player_id,
+            player_name,
+            full_analysis.get('reasoning'),
+            status='completed'
+        )
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in AI analysis for {player_name}: {str(e)}", exc_info=True)
+        _update_analysis_status(matchup_id, player_id, player_name, 'failed')
+        return False
 
 
 @bp.route('', methods=['GET'])
