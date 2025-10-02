@@ -3,6 +3,7 @@ import { PlayerSearch } from './components/PlayerSearch';
 import { PlayerAnalysis } from './components/PlayerAnalysis';
 import { RosterManagement } from './components/RosterManagement';
 import { Auth } from './components/Auth';
+import { LandingPage } from './components/LandingPage';
 import { analyzePlayer, isAuthenticated, logout, getStoredUser } from './lib/api';
 import { Player, Analysis } from './types';
 import { Input } from './components/ui/input';
@@ -11,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [currentView, setCurrentView] = useState<'player-analysis' | 'roster-management'>('player-analysis');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -34,16 +36,51 @@ function App() {
   const handleAuthSuccess = () => {
     setAuthenticated(true);
     setUser(getStoredUser());
+    setShowAuth(false);
   };
 
   const handleLogout = () => {
     logout();
     setAuthenticated(false);
     setUser(null);
+    setShowAuth(false);
   };
 
-  if (!authenticated) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  const handleGetStarted = () => {
+    setShowAuth(true);
+  };
+
+  const handleSignIn = () => {
+    setShowAuth(true);
+  };
+
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+  };
+
+  // Show landing page if not authenticated and not on auth page
+  if (!authenticated && !showAuth) {
+    return <LandingPage onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
+  }
+
+  // Show auth modal/page if triggered
+  if (!authenticated && showAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+        {/* Back button */}
+        <div className="p-4">
+          <Button variant="outline" onClick={handleBackToLanding} className="gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Home
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Auth onAuthSuccess={handleAuthSuccess} />
+        </div>
+      </div>
+    );
   }
 
   const handleAnalyze = async () => {
