@@ -9,6 +9,75 @@ const api = axios.create({
   },
 });
 
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      // Optionally redirect to login
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Authentication API
+export const register = async (data: {
+  email: string;
+  username: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+}) => {
+  const response = await api.post('/auth/register', data);
+  if (response.data.data?.token) {
+    localStorage.setItem('auth_token', response.data.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.data.user));
+  }
+  return response.data;
+};
+
+export const login = async (email_or_username: string, password: string) => {
+  const response = await api.post('/auth/login', { email_or_username, password });
+  if (response.data.data?.token) {
+    localStorage.setItem('auth_token', response.data.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.data.user));
+  }
+  return response.data;
+};
+
+export const logout = () => {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user');
+};
+
+export const getCurrentUser = async () => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
+export const isAuthenticated = () => {
+  return !!localStorage.getItem('auth_token');
+};
+
+export const getStoredUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+// Player API
 export const searchPlayers = async (query: string, position?: string) => {
   const response = await api.get('/players/search', {
     params: { q: query, position },
@@ -33,8 +102,8 @@ export const comparePlayers = async (playerIds: string[]) => {
 };
 
 // Roster API
-export const getRosters = async (userId = 'default_user') => {
-  const response = await api.get('/rosters', { params: { user_id: userId } });
+export const getRosters = async () => {
+  const response = await api.get('/rosters');
   return response.data;
 };
 
@@ -42,7 +111,6 @@ export const createRoster = async (data: {
   name: string;
   league_name?: string;
   scoring_type?: string;
-  user_id?: string;
 }) => {
   const response = await api.post('/rosters', data);
   return response.data;

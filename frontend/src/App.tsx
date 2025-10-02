@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlayerSearch } from './components/PlayerSearch';
 import { PlayerAnalysis } from './components/PlayerAnalysis';
 import { RosterManagement } from './components/RosterManagement';
-import { analyzePlayer } from './lib/api';
+import { Auth } from './components/Auth';
+import { analyzePlayer, isAuthenticated, logout, getStoredUser } from './lib/api';
 import { Player, Analysis } from './types';
 import { Input } from './components/ui/input';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [currentView, setCurrentView] = useState<'player-analysis' | 'roster-management'>('player-analysis');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -16,6 +19,32 @@ function App() {
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authed = isAuthenticated();
+      setAuthenticated(authed);
+      if (authed) {
+        setUser(getStoredUser());
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleAuthSuccess = () => {
+    setAuthenticated(true);
+    setUser(getStoredUser());
+  };
+
+  const handleLogout = () => {
+    logout();
+    setAuthenticated(false);
+    setUser(null);
+  };
+
+  if (!authenticated) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
 
   const handleAnalyze = async () => {
     if (!selectedPlayer || !opponent) return;
@@ -45,10 +74,25 @@ function App() {
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            AI-powered fantasy football player analysis and recommendations
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                AI-powered fantasy football player analysis and recommendations
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              {user && (
+                <div className="text-right">
+                  <p className="text-sm font-medium">{user.username}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              )}
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Navigation */}
