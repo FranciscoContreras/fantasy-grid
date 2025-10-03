@@ -98,7 +98,7 @@ class FantasyAPIClient:
 
         try:
             # First request to get total count
-            params = {'limit': limit, 'offset': offset}
+            params = {'limit': limit, 'offset': offset, 'status': 'active'}
             if query:
                 params['search'] = query
             if position:
