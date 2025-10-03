@@ -113,8 +113,9 @@ class FantasyAPIClient:
             all_players.extend(data.get('data', []))
             total = data.get('meta', {}).get('total', 0)
 
-            # Fetch remaining pages (when searching by query, fetch all for accurate results)
-            max_fetch = total if query else min(total, 1000 if not position else total)
+            # Fetch remaining pages (fetch more when searching to find all current players)
+            # Limit to 3000 players max to avoid timeout (covers all active NFL players)
+            max_fetch = min(total, 3000 if query else 1000) if not position else total
             while offset + limit < max_fetch:
                 offset += limit
                 params['offset'] = offset
