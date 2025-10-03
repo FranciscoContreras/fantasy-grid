@@ -1,3 +1,18 @@
+-- Users table for authentication
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    is_active BOOLEAN DEFAULT true,
+    is_verified BOOLEAN DEFAULT false,
+    last_login_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE players (
     player_id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -107,6 +122,8 @@ CREATE TABLE matchup_analysis (
     analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_player_stats_player ON player_stats(player_id);
 CREATE INDEX idx_player_stats_week ON player_stats(week, season);
 CREATE INDEX idx_analysis_history_player ON analysis_history(player_id);

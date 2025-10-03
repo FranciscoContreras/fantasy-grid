@@ -4,6 +4,10 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def create_app():
     app = Flask(__name__, static_folder='static', static_url_path='')
