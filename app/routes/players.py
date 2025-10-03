@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
+from app.services.player_cache import search_cached_players
 from app.database import execute_query
 from app.utils.cache import cached_route, get_cached_or_fetch
 from app.validation.decorators import validate_query_params
@@ -33,8 +34,9 @@ def search_players(data):
     position = data.get('position')
 
     try:
-        players = api_client.search_players(query, position)
-        logger.info(f"Player search: query='{query}', position={position}, results={len(players)}")
+        # Use cached search for better performance and to work around API search limitations
+        players = search_cached_players(query, position, limit=50)
+        logger.info(f"Player search (cached): query='{query}', position={position}, results={len(players)}")
         return jsonify({
             'data': players,
             'meta': {
@@ -243,3 +245,20 @@ def _generate_recommendation(matchup, weather, ai_grade):
             'confidence': 'MEDIUM',
             'reason': f'Difficult matchup (score: {matchup}/100) or low projected points'
         }
+
+
+@bp.route('/cache/refresh', methods=['POST'])
+def refresh_cache():
+    """Refresh the player cache (fetch all active players)"""
+    from app.services.player_cache import refresh_player_cache
+    
+    try:
+        logger.info("Player cache refresh requested")
+        players = refresh_player_cache()
+        return jsonify({
+            'message': 'Player cache refreshed successfully',
+            'count': len(players)
+        })
+    except Exception as e:
+        logger.error(f"Cache refresh failed: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500

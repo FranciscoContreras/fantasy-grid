@@ -200,6 +200,25 @@ def create_app():
     app.register_blueprint(trades.bp)  # Trade analyzer
     app.register_blueprint(league.bp)  # League intelligence
 
+    # Warm up player cache on startup (async, non-blocking)
+    @app.before_first_request
+    def warmup_cache():
+        """Warm up the player cache on first request"""
+        import threading
+        from app.services.player_cache import cache_all_players
+        
+        def warmup():
+            try:
+                app.logger.info("Starting player cache warmup...")
+                players = cache_all_players()
+                app.logger.info(f"Player cache warmed up with {len(players)} players")
+            except Exception as e:
+                app.logger.error(f"Cache warmup failed: {e}")
+        
+        # Run in background thread to not block startup
+        thread = threading.Thread(target=warmup, daemon=True)
+        thread.start()
+
     # Serve frontend static files
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
