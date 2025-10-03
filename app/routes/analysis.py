@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
+from app.services.matchup_exploiter import MatchupExploiter
 import csv
 import io
 import logging
@@ -11,6 +12,7 @@ bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 
 api_client = FantasyAPIClient()
 analyzer = PlayerAnalyzer()
+matchup_exploiter = MatchupExploiter()
 
 
 @bp.route('/compare', methods=['POST'])
@@ -283,4 +285,122 @@ def export_comparison_csv():
 
     except Exception as e:
         logger.error(f"CSV export failed: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/favorable-matchups', methods=['GET'])
+def get_favorable_matchups():
+    """
+    Find players with favorable matchups (facing weak defenses)
+    Query params:
+        - position: Filter by position (QB, RB, WR, TE)
+        - week: Week number for matchup analysis
+        - season: NFL season year (default: 2024)
+        - min_ownership: Minimum ownership % (default: 0.0)
+        - max_ownership: Maximum ownership % (default: 50.0)
+    """
+    try:
+        position = request.args.get('position')
+        week = request.args.get('week', type=int)
+        season = request.args.get('season', default=2024, type=int)
+        min_ownership = request.args.get('min_ownership', default=0.0, type=float)
+        max_ownership = request.args.get('max_ownership', default=50.0, type=float)
+
+        result = matchup_exploiter.find_favorable_matchups(
+            position=position,
+            week=week,
+            season=season,
+            min_ownership=min_ownership,
+            max_ownership=max_ownership
+        )
+
+        if 'error' in result:
+            return jsonify(result), 500
+
+        return jsonify({
+            'data': result,
+            'meta': {
+                'count': len(result.get('players', [])),
+                'filters': {
+                    'position': position,
+                    'week': week,
+                    'season': season,
+                    'ownership_range': [min_ownership, max_ownership]
+                }
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error finding favorable matchups: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/schedule-lookahead/<player_id>', methods=['GET'])
+def get_schedule_lookahead(player_id):
+    """
+    Get schedule lookahead for a player (next 3-4 weeks)
+    Path params:
+        - player_id: Player ID
+    Query params:
+        - weeks_ahead: Number of weeks to look ahead (default: 4)
+        - season: NFL season year (default: 2024)
+    """
+    try:
+        weeks_ahead = request.args.get('weeks_ahead', default=4, type=int)
+        season = request.args.get('season', default=2024, type=int)
+
+        result = matchup_exploiter.get_schedule_lookahead(
+            player_id=player_id,
+            weeks_ahead=weeks_ahead,
+            season=season
+        )
+
+        if 'error' in result:
+            return jsonify(result), 404 if result['error'] == 'Player not found' else 500
+
+        return jsonify({
+            'data': result,
+            'meta': {
+                'player_id': player_id,
+                'weeks_ahead': weeks_ahead,
+                'season': season
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting schedule lookahead for player {player_id}: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/defense-heatmap', methods=['GET'])
+def get_defense_heatmap():
+    """
+    Get defensive weakness heatmap for all NFL teams
+    Query params:
+        - position: Filter by position (QB, RB, WR, TE)
+        - season: NFL season year (default: 2024)
+    """
+    try:
+        position = request.args.get('position')
+        season = request.args.get('season', default=2024, type=int)
+
+        result = matchup_exploiter.get_defense_heatmap(
+            position=position,
+            season=season
+        )
+
+        if 'error' in result:
+            return jsonify(result), 500
+
+        return jsonify({
+            'data': result,
+            'meta': {
+                'position': position,
+                'season': season,
+                'team_count': len(result.get('heatmap', []))
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting defense heatmap: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
