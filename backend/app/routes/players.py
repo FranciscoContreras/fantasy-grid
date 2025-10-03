@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
+from app.schemas import validate_query_params
+from app.schemas.player_schemas import PlayerSearchSchema, PlayerAnalysisSchema
 
 bp = Blueprint('players', __name__, url_prefix='/api/players')
 
@@ -11,18 +13,16 @@ grader = AIGrader()
 
 
 @bp.route('/search', methods=['GET'])
-def search_players():
+@validate_query_params(PlayerSearchSchema)
+def search_players(validated_params):
     """
     Search for players by name/position
     Query params:
-        - q: search query
-        - position: optional position filter (QB, RB, WR, TE, etc.)
+        - q: search query (required, 1-100 chars)
+        - position: optional position filter (QB, RB, WR, TE, K, DEF)
     """
-    query = request.args.get('q', '')
-    position = request.args.get('position', None)
-
-    if not query:
-        return jsonify({'error': 'Query parameter "q" is required'}), 400
+    query = validated_params['q']
+    position = validated_params.get('position')
 
     try:
         players = api_client.search_players(query, position)
@@ -49,18 +49,16 @@ def get_player(player_id):
 
 
 @bp.route('/<player_id>/analysis', methods=['GET'])
-def analyze_player(player_id):
+@validate_query_params(PlayerAnalysisSchema)
+def analyze_player(validated_params, player_id):
     """
     Analyze a player's matchup and provide recommendations
     Query params:
-        - opponent: opponent team ID or abbreviation
+        - opponent: opponent team ID or abbreviation (required)
         - location: optional game location for weather data
     """
-    opponent = request.args.get('opponent')
-    location = request.args.get('location')
-
-    if not opponent:
-        return jsonify({'error': 'Query parameter "opponent" is required'}), 400
+    opponent = validated_params['opponent']
+    location = validated_params.get('location')
 
     try:
         # Get player data

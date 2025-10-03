@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
+from app.schemas import validate_json, validate_query_params
+from app.schemas.player_schemas import PlayerComparisonSchema
+from app.schemas.analysis_schemas import PercentageCalculatorSchema, MatchupStrengthSchema
 
 bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 
@@ -9,21 +12,18 @@ analyzer = PlayerAnalyzer()
 
 
 @bp.route('/compare', methods=['POST'])
-def compare_players():
+@validate_json(PlayerComparisonSchema)
+def compare_players(validated_data):
     """
     Compare multiple players side-by-side
     Request body:
         {
-            "player_ids": ["id1", "id2", "id3"],
+            "player_ids": ["id1", "id2", "id3"],  // 2-10 player IDs required
             "opponent_ids": ["opp1", "opp2", "opp3"]  // optional, same length as player_ids
         }
     """
-    data = request.json
-    player_ids = data.get('player_ids', [])
-    opponent_ids = data.get('opponent_ids', [])
-
-    if not player_ids or len(player_ids) < 2:
-        return jsonify({'error': 'At least 2 player IDs required for comparison'}), 400
+    player_ids = validated_data['player_ids']
+    opponent_ids = validated_data.get('opponent_ids', [])
 
     try:
         comparisons = []
@@ -66,7 +66,8 @@ def compare_players():
 
 
 @bp.route('/percentage-calculator', methods=['POST'])
-def calculate_percentages():
+@validate_json(PercentageCalculatorSchema)
+def calculate_percentages(validated_data):
     """
     Calculate success probability for various scenarios
     Request body:
@@ -79,8 +80,7 @@ def calculate_percentages():
             }
         }
     """
-    data = request.json
-    factors = data.get('factors', {})
+    factors = validated_data['factors']
 
     try:
         probability = _calculate_probability(factors)
@@ -98,18 +98,16 @@ def calculate_percentages():
 
 
 @bp.route('/matchup-strength', methods=['GET'])
-def matchup_strength():
+@validate_query_params(MatchupStrengthSchema)
+def matchup_strength(validated_params):
     """
     Analyze matchup strength between player position and defense
     Query params:
-        - position: Player position (QB, RB, WR, TE)
-        - defense_team: Defense team ID
+        - position: Player position (QB, RB, WR, TE, K, DEF) - required
+        - defense_team: Defense team ID - required
     """
-    position = request.args.get('position')
-    defense_team = request.args.get('defense_team')
-
-    if not position or not defense_team:
-        return jsonify({'error': 'Both position and defense_team parameters required'}), 400
+    position = validated_params['position']
+    defense_team = validated_params['defense_team']
 
     try:
         # Get defense stats

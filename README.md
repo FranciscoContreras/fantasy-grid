@@ -38,7 +38,7 @@ AI-powered fantasy football player recommendation app with matchup analysis, wea
 
 ### Installation
 
-See [BUILD.md](./BUILD.md) for complete step-by-step setup instructions.
+See [Complete Build Guide](docs/guides/getting-started/BUILD.md) for complete step-by-step setup instructions.
 
 **Quick Start:**
 
@@ -74,10 +74,17 @@ See [BUILD.md](./BUILD.md) for complete step-by-step setup instructions.
 
 ## Documentation
 
-- **[BUILD.md](./BUILD.md)** - Complete build and deployment guide
-- **[instructions.md](./instructions.md)** - Grid Iron Mind API documentation
-- **[AGENTS.md](./AGENTS.md)** - Multi-agent development approach
-- **[CLAUDE.md](./CLAUDE.md)** - Guidance for Claude Code
+**📚 [Complete Documentation Hub](docs/README.md)** - Organized documentation index with 27 guides and references
+
+### Quick Links
+- **[Getting Started](docs/guides/getting-started/START_HERE.md)** - First-time setup
+- **[Quick Start Guide](docs/guides/getting-started/QUICKSTART.md)** - Get running in minutes
+- **[Complete Build Guide](docs/guides/getting-started/BUILD.md)** - Step-by-step build (36 phases)
+- **[Grid Iron Mind API](docs/api/grid-iron-mind-api.md)** - External NFL API documentation
+- **[Fantasy Grid API](docs/api/fantasy-grid-api.md)** - Internal API reference
+- **[Testing Guide](docs/guides/development/TESTING.md)** - Test procedures
+- **[Product Roadmap](docs/planning/product-roadmap.md)** - Product vision and phases
+- **[CLAUDE.md](./CLAUDE.md)** - Guidance for Claude Code (stays in root)
 
 ## API Integration
 
@@ -108,7 +115,7 @@ npm run build
 
 ## Deployment
 
-Configured for Heroku deployment. See BUILD.md Phase 5 for deployment instructions.
+Configured for Heroku deployment. See [Build Guide - Phase 5](docs/guides/getting-started/BUILD.md) for deployment instructions.
 
 ## License
 
