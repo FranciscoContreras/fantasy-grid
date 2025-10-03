@@ -26,6 +26,31 @@ CREATE TABLE user_preferences (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- User rosters for roster management
+CREATE TABLE user_rosters (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    league_name VARCHAR(100),
+    scoring_type VARCHAR(20) DEFAULT 'PPR',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Players in user rosters
+CREATE TABLE roster_players (
+    id SERIAL PRIMARY KEY,
+    roster_id INTEGER NOT NULL REFERENCES user_rosters(id) ON DELETE CASCADE,
+    player_id VARCHAR(50),
+    player_name VARCHAR(100),
+    position VARCHAR(10),
+    team VARCHAR(10),
+    roster_slot VARCHAR(20),  -- QB, RB, WR, TE, FLEX, K, DEF, BENCH
+    is_starter BOOLEAN DEFAULT FALSE,
+    injury_status VARCHAR(20) DEFAULT 'HEALTHY',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Subscription management
 CREATE TABLE subscriptions (
     id SERIAL PRIMARY KEY,
@@ -60,3 +85,5 @@ CREATE INDEX idx_player_stats_composite ON player_stats(player_id, week, season)
 CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);  -- For user lookups
 CREATE INDEX idx_subscriptions_user ON subscriptions(user_id);  -- For subscription lookups
 CREATE INDEX idx_feature_usage_user_feature ON feature_usage(user_id, feature);  -- For usage tracking
+CREATE INDEX idx_user_rosters_user ON user_rosters(user_id);  -- For roster lookups
+CREATE INDEX idx_roster_players_roster ON roster_players(roster_id);  -- For roster player queries
