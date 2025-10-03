@@ -6,7 +6,7 @@ Caches all active NFL players for fast client-side search
 import json
 import logging
 from app.services.api_client import FantasyAPIClient
-from app.utils.cache import get_redis_client
+from app.utils.cache import cache, CACHE_ENABLED
 from app.database import execute_query
 
 logger = logging.getLogger(__name__)
@@ -17,10 +17,9 @@ CACHE_EXPIRY = 86400  # 24 hours
 def get_cached_players():
     """Get all cached players (from Redis or PostgreSQL)"""
     # Try Redis first
-    redis_client = get_redis_client()
-    if redis_client:
+    if CACHE_ENABLED and cache:
         try:
-            cached = redis_client.get(CACHE_KEY)
+            cached = cache.get(CACHE_KEY)
             if cached:
                 logger.info("Retrieved players from Redis cache")
                 return json.loads(cached)
@@ -84,10 +83,9 @@ def cache_all_players(force=False):
     logger.info(f"Total unique players: {len(all_players)}")
 
     # Cache in Redis
-    redis_client = get_redis_client()
-    if redis_client:
+    if CACHE_ENABLED and cache:
         try:
-            redis_client.setex(CACHE_KEY, CACHE_EXPIRY, json.dumps(all_players))
+            cache.setex(CACHE_KEY, CACHE_EXPIRY, json.dumps(all_players))
             logger.info("Cached players in Redis")
         except Exception as e:
             logger.warning(f"Redis cache write failed: {e}")
