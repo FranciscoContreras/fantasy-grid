@@ -18,7 +18,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [useNewSearch, setUseNewSearch] = useState(true); // Toggle for new search engine
+  const [useNewSearch, setUseNewSearch] = useState(false); // Toggle for new search engine (disabled until index is populated)
 
   // Autocomplete handler
   const handleAutocomplete = useCallback(async (searchQuery: string) => {
@@ -95,8 +95,10 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.length >= 2) {
-        // Trigger autocomplete for fast suggestions
-        handleAutocomplete(query);
+        // Only trigger autocomplete if new search is enabled
+        if (useNewSearch) {
+          handleAutocomplete(query);
+        }
         // Trigger full search
         handleSearch(query, position);
       } else {
@@ -107,7 +109,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
     }, 150); // 150ms debounce - faster response
 
     return () => clearTimeout(timer);
-  }, [query, position, handleSearch, handleAutocomplete]);
+  }, [query, position, useNewSearch, handleSearch, handleAutocomplete]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && query.length >= 2) {
