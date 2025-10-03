@@ -41,11 +41,15 @@ def create_app():
         return {'status': 'healthy', 'service': 'Fantasy Grid API', 'version': '1.1.0'}
 
     # Register blueprints
-    from app.routes import players, analysis, predictions, security, tasks
+    from app.routes import players, analysis, predictions, security, tasks, billing
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
     app.register_blueprint(security.bp)
     app.register_blueprint(tasks.bp)
+    app.register_blueprint(billing.bp)
+
+    # Exempt Stripe webhook from CSRF (Stripe signs requests)
+    csrf.exempt(billing.bp)
 
     return app

@@ -1,15 +1,27 @@
-import { useState, useEffect } from 'react';
-import { PlayerSearch } from './components/PlayerSearch';
-import { PlayerAnalysis } from './components/PlayerAnalysis';
-import { RosterManagement } from './components/RosterManagement';
-import { Auth } from './components/Auth';
-import { LandingPage } from './components/LandingPage';
-import { OnboardingWizard } from './components/OnboardingWizard';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { analyzePlayer, isAuthenticated, logout, getStoredUser } from './lib/api';
 import { Player, Analysis } from './types';
 import { Input } from './components/ui/input';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+
+// Code splitting: Lazy load heavy components
+const PlayerSearch = lazy(() => import('./components/PlayerSearch').then(m => ({ default: m.PlayerSearch })));
+const PlayerAnalysis = lazy(() => import('./components/PlayerAnalysis').then(m => ({ default: m.PlayerAnalysis })));
+const RosterManagement = lazy(() => import('./components/RosterManagement').then(m => ({ default: m.RosterManagement })));
+const Auth = lazy(() => import('./components/Auth').then(m => ({ default: m.Auth })));
+const LandingPage = lazy(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
+const OnboardingWizard = lazy(() => import('./components/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -73,32 +85,42 @@ function App() {
 
   // Show landing page if not authenticated and not on auth page
   if (!authenticated && !showAuth) {
-    return <LandingPage onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LandingPage onGetStarted={handleGetStarted} onSignIn={handleSignIn} />
+      </Suspense>
+    );
   }
 
   // Show auth modal/page if triggered
   if (!authenticated && showAuth) {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
-        {/* Back button */}
-        <div className="p-4">
-          <Button variant="outline" onClick={handleBackToLanding} className="gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Home
-          </Button>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="min-h-screen bg-white flex flex-col">
+          {/* Back button */}
+          <div className="p-4">
+            <Button variant="outline" onClick={handleBackToLanding} className="gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to Home
+            </Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <Auth onAuthSuccess={handleAuthSuccess} />
+          </div>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Auth onAuthSuccess={handleAuthSuccess} />
-        </div>
-      </div>
+      </Suspense>
     );
   }
 
   // Show onboarding wizard for new users
   if (authenticated && showOnboarding) {
-    return <OnboardingWizard onComplete={handleOnboardingComplete} />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <OnboardingWizard onComplete={handleOnboardingComplete} />
+      </Suspense>
+    );
   }
 
   const handleAnalyze = async () => {
@@ -125,25 +147,25 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-background safe-top safe-bottom">
+      <div className="container mx-auto py-4 md:py-8 px-4 md:px-6">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
-              <p className="text-sm md:text-base text-muted-foreground">
+        <div className="mb-4 md:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
+              <p className="text-xs md:text-base text-muted-foreground">
                 AI-powered fantasy football player analysis and recommendations
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto">
               {user && (
-                <div className="text-right">
-                  <p className="text-sm font-medium">{user.username}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                <div className="text-left sm:text-right flex-1 sm:flex-none">
+                  <p className="text-sm font-medium truncate max-w-[150px]">{user.username}</p>
+                  <p className="text-xs text-muted-foreground truncate max-w-[150px] hidden sm:block">{user.email}</p>
                 </div>
               )}
-              <Button variant="outline" size="sm" onClick={handleLogout}>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="shrink-0">
                 Logout
               </Button>
             </div>
@@ -151,23 +173,27 @@ function App() {
         </div>
 
         {/* Navigation */}
-        <div className="mb-6 flex gap-2">
+        <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto mobile-scroll pb-2">
           <Button
             variant={currentView === 'player-analysis' ? 'default' : 'outline'}
             onClick={() => setCurrentView('player-analysis')}
+            className="whitespace-nowrap flex-1 sm:flex-none"
           >
             Player Analysis
           </Button>
           <Button
             variant={currentView === 'roster-management' ? 'default' : 'outline'}
             onClick={() => setCurrentView('roster-management')}
+            className="whitespace-nowrap flex-1 sm:flex-none"
           >
             Roster & Matchups
           </Button>
         </div>
 
         {currentView === 'roster-management' ? (
-          <RosterManagement />
+          <Suspense fallback={<LoadingFallback />}>
+            <RosterManagement />
+          </Suspense>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             {/* Left Column - Search & Input */}
@@ -178,7 +204,9 @@ function App() {
                 <CardTitle>Search Player</CardTitle>
               </CardHeader>
               <CardContent>
-                <PlayerSearch onSelectPlayer={handleSelectPlayer} />
+                <Suspense fallback={<div className="text-center py-4 text-muted-foreground">Loading search...</div>}>
+                  <PlayerSearch onSelectPlayer={handleSelectPlayer} />
+                </Suspense>
               </CardContent>
             </Card>
 
@@ -250,7 +278,9 @@ function App() {
           {/* Right Column - Analysis Results */}
           <div>
             {analysis ? (
-              <PlayerAnalysis analysis={analysis} />
+              <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Loading analysis...</div>}>
+                <PlayerAnalysis analysis={analysis} />
+              </Suspense>
             ) : (
               <Card>
                 <CardContent className="py-12">

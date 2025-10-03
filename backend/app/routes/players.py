@@ -4,6 +4,8 @@ from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
 from app.schemas import validate_query_params
 from app.schemas.player_schemas import PlayerSearchSchema, PlayerAnalysisSchema
+from app.middleware.auth import login_required
+from app.middleware.feature_gate import require_feature
 
 bp = Blueprint('players', __name__, url_prefix='/api/players')
 
@@ -50,7 +52,9 @@ def get_player(player_id):
 
 @bp.route('/<player_id>/analysis', methods=['GET'])
 @validate_query_params(PlayerAnalysisSchema)
-def analyze_player(validated_params, player_id):
+@login_required
+@require_feature('player_analysis')
+def analyze_player(current_user, validated_params, player_id):
     """
     Analyze a player's matchup and provide recommendations
     Query params:

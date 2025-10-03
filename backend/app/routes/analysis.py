@@ -5,6 +5,8 @@ from app.services.analyzer import PlayerAnalyzer
 from app.schemas import validate_json, validate_query_params
 from app.schemas.player_schemas import PlayerComparisonSchema
 from app.schemas.analysis_schemas import PercentageCalculatorSchema, MatchupStrengthSchema
+from app.middleware.auth import login_required
+from app.middleware.feature_gate import require_feature
 
 bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 
@@ -15,7 +17,9 @@ analyzer = PlayerAnalyzer()
 
 @bp.route('/compare', methods=['POST'])
 @validate_json(PlayerComparisonSchema)
-def compare_players(validated_data):
+@login_required
+@require_feature('matchup_comparison')
+def compare_players(current_user, validated_data):
     """
     Compare multiple players side-by-side
     Request body:
