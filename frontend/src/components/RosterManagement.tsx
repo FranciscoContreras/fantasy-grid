@@ -397,8 +397,8 @@ export function RosterManagement() {
                     className="w-full mt-1 px-3 py-2 border rounded-md"
                   >
                     <option value="PPR">PPR (Point Per Reception)</option>
-                    <option value="Half-PPR">Half PPR</option>
-                    <option value="Standard">Standard</option>
+                    <option value="HALF_PPR">Half PPR</option>
+                    <option value="STANDARD">Standard</option>
                   </select>
                 </div>
                 <div className="flex gap-2">
