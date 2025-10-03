@@ -1,8 +1,10 @@
 # Search Engine Status
 
-## Current Status: ⚠️ Partially Working (v168)
+## Current Status: ⚠️ Partially Working (v172)
 
 The search functionality works **ONLY with position filter**. Searches without position filter return incorrect results due to Grid Iron Mind API limitations.
+
+**Update v172**: Fixed ImportError crash from v169/v170. App now runs, but player cache implementation is incomplete - only caches ~120 players instead of thousands due to API limitations.
 
 ## What Works ✅
 
@@ -169,6 +171,10 @@ def cache_all_players():
 - **v166**: Attempted to fetch all players (timeout issue)
 - **v167**: Limited to 3000 players (still slow)
 - **v168**: ✅ Added `search` parameter to API (but API ignores it!)
+- **v169**: ❌ Added player cache service - crashed due to ImportError
+- **v170**: ❌ Removed warmup decorator - still crashed (ImportError persisted)
+- **v171**: ✅ Rollback to v168 - working state restored
+- **v172**: ✅ Fixed ImportError (use `cache` instead of `get_redis_client()`), app runs but cache incomplete
 
 ## Recommended Next Steps
 
@@ -236,6 +242,9 @@ For questions:
 ---
 
 **Last Updated**: October 3, 2025
-**Current Version**: v168
+**Current Version**: v172
 **Search Status**: ⚠️ Works ONLY with position filter
-**Recommended Action**: Require position selection in UI
+**Recommended Action**:
+1. **Immediate**: Keep position filter requirement (works perfectly)
+2. **Short-term**: Implement Option 2 (populate search index with all players via pagination)
+3. **OR**: Filter cache to `status='active'` only (~2000 players instead of 14K)
