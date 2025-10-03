@@ -101,14 +101,17 @@ class SearchIndexer:
         try:
             self.logger.info("Fetching players from API...")
 
-            # Fetch players from API
-            players_response = self.api_client.get_players(limit=limit or 1000)
+            # Fetch players using search (gets all players with empty query)
+            players = self.api_client.search_players('', position=None)
 
-            if not players_response or 'data' not in players_response:
+            if not players:
                 self.logger.error("No player data received from API")
                 return 0
 
-            players = players_response['data']
+            # Apply limit if specified
+            if limit:
+                players = players[:limit]
+
             self.logger.info(f"Fetched {len(players)} players from API")
 
             # Index each player
@@ -195,14 +198,22 @@ class SearchIndexer:
         try:
             self.logger.info("Fetching teams from API...")
 
-            # Fetch teams from API
-            teams_response = self.api_client.get_teams()
+            # Fetch teams directly from API endpoint
+            import requests
+            response = requests.get(
+                f'{self.api_client.base_url}/teams',
+                params={'limit': 100},
+                headers=self.api_client._get_headers(),
+                timeout=10
+            )
+            response.raise_for_status()
+            teams_data = response.json()
 
-            if not teams_response or 'data' not in teams_response:
+            if not teams_data or 'data' not in teams_data:
                 self.logger.error("No team data received from API")
                 return 0
 
-            teams = teams_response['data']
+            teams = teams_data['data']
             self.logger.info(f"Fetched {len(teams)} teams from API")
 
             # Index each team
