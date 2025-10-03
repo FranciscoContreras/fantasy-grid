@@ -98,11 +98,12 @@ class FantasyAPIClient:
 
         try:
             # First request to get total count
+            # NOTE: Don't use API's 'search' param - it's broken (matches random fields)
+            # Instead, fetch by position/status and filter client-side with our scoring algorithm
             params = {'limit': limit, 'offset': offset, 'status': 'active'}
-            if query:
-                params['search'] = query
             if position:
                 params['position'] = position
+            # Don't pass query to API - do client-side filtering instead
 
             response = requests.get(
                 f'{self.base_url}/players',
@@ -116,8 +117,9 @@ class FantasyAPIClient:
             total = data.get('meta', {}).get('total', 0)
 
             # Fetch remaining pages (fetch more when searching to find all current players)
-            # Limit to 3000 players max to avoid timeout (covers all active NFL players)
-            max_fetch = min(total, 3000 if query else 1000) if not position else total
+            # Limit to 500 players max to avoid timeout when no position filter
+            # With position filter, can fetch all (usually <100 per position)
+            max_fetch = min(total, 500) if not position else min(total, 1000)
             while offset + limit < max_fetch:
                 offset += limit
                 params['offset'] = offset
@@ -134,10 +136,11 @@ class FantasyAPIClient:
             all_players = [self._enrich_player_with_team(player) for player in all_players]
 
             # Advanced search with relevance scoring
-            # This will further filter and rank results from the API
+            # ALWAYS score and filter when there's a query (API search is broken)
             if query and all_players:
                 scored_players = self._score_and_filter_players(all_players, query)
-                return scored_players[:20]  # Return top 20 most relevant
+                # Return top 20 most relevant, or all if fewer results
+                return scored_players[:20] if scored_players else []
 
             return all_players[:20]
         except requests.Timeout:
