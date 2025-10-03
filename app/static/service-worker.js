@@ -1,7 +1,7 @@
 // Fantasy Grid Service Worker
 // Provides offline support and caching for PWA
 
-const CACHE_NAME = 'fantasy-grid-v1';
+const CACHE_NAME = 'fantasy-grid-v2';
 const urlsToCache = [
   '/',
   '/index.html',
