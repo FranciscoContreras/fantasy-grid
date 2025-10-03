@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { getPlayerImageUrl, getTeamLogoUrl } from '../lib/images';
 import { PlayerSearch } from './PlayerSearch';
+import { WeeklyLineup } from './WeeklyLineup';
 import {
   TrendingUp,
   TrendingDown,
@@ -64,6 +65,7 @@ export function RosterDashboard({ rosterId, onRosterUpdate }: RosterDashboardPro
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [addingToSlot, setAddingToSlot] = useState<string | null>(null);
+  const [view, setView] = useState<'weekly' | 'classic'>('weekly');
 
   useEffect(() => {
     loadRoster();
@@ -193,24 +195,45 @@ export function RosterDashboard({ rosterId, onRosterUpdate }: RosterDashboardPro
                 </p>
               )}
             </div>
-            <Button
-              onClick={handleAnalyzeRoster}
-              disabled={analyzing}
-              size="lg"
-              className="min-w-40"
-            >
-              {analyzing ? (
-                <>
-                  <Clock className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Zap className="mr-2 h-4 w-4" />
-                  Analyze Roster
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-3">
+              {/* View Switcher */}
+              <div className="flex gap-2 border rounded-lg p-1">
+                <Button
+                  variant={view === 'weekly' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setView('weekly')}
+                  className="px-4 font-bold"
+                >
+                  WEEKLY
+                </Button>
+                <Button
+                  variant={view === 'classic' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setView('classic')}
+                  className="px-4 font-bold"
+                >
+                  CLASSIC
+                </Button>
+              </div>
+              <Button
+                onClick={handleAnalyzeRoster}
+                disabled={analyzing}
+                size="lg"
+                className="min-w-40"
+              >
+                {analyzing ? (
+                  <>
+                    <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Analyze Roster
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -287,6 +310,11 @@ export function RosterDashboard({ rosterId, onRosterUpdate }: RosterDashboardPro
         </div>
       )}
 
+      {/* Weekly Lineup View */}
+      {view === 'weekly' ? (
+        <WeeklyLineup rosterId={rosterId} />
+      ) : (
+        <>
       {/* Starting Lineup */}
       <Card>
         <CardHeader>
@@ -502,6 +530,8 @@ export function RosterDashboard({ rosterId, onRosterUpdate }: RosterDashboardPro
             />
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
