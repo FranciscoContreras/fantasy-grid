@@ -53,3 +53,6 @@ def create_app():
     csrf.exempt(billing.bp)
 
     return app
+
+# Create app instance for gunicorn
+app = create_app()
