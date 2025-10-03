@@ -139,8 +139,9 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2 relative">
-        <div className="text-sm text-muted-foreground mb-2">
-          💡 Tip: Select a position first for faster, more accurate results
+        <div className="text-sm mb-2">
+          <span className="text-orange-600 dark:text-orange-400 font-medium">⚠️ REQUIRED:</span>
+          <span className="text-muted-foreground ml-1">Select a position first for accurate search results</span>
           {useNewSearch && <span className="ml-2 text-xs text-green-600 dark:text-green-400">(⚡ New Search Engine)</span>}
         </div>
         <div className="flex gap-2">
@@ -150,7 +151,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             className="px-3 py-2 border rounded-md bg-background min-w-[120px]"
             disabled={loading}
           >
-            <option value="">All Positions</option>
+            <option value="">Select Position</option>
             <option value="QB">QB</option>
             <option value="RB">RB</option>
             <option value="WR">WR</option>
@@ -159,11 +160,11 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             <option value="DEF">DEF</option>
           </select>
           <Input
-            placeholder="Search players by name (min 2 characters)..."
+            placeholder={position ? "Search players by name (min 2 characters)..." : "Select a position first..."}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={loading}
+            disabled={!position || loading}
             className="flex-1"
           />
         </div>
@@ -284,7 +285,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
       {!loading && results.length === 0 && query.length >= 2 && (
         <div className="text-center py-8">
           <p className="text-sm text-muted-foreground mb-2">
-            No players found for "{query}"
+            No {position} players found for "{query}"
           </p>
           <p className="text-xs text-muted-foreground">
             Try:
@@ -293,7 +294,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             <li>• Checking your spelling</li>
             <li>• Using a different name variation</li>
             <li>• Searching by first or last name only</li>
-            <li>• Removing the position filter</li>
+            <li>• Selecting a different position</li>
           </ul>
         </div>
       )}
