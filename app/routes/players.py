@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
-from app.services.player_cache import search_cached_players
+# from app.services.player_cache import search_cached_players  # Disabled - incomplete cache
 from app.database import execute_query
 from app.utils.cache import cached_route, get_cached_or_fetch
 from app.validation.decorators import validate_query_params
@@ -34,9 +34,9 @@ def search_players(data):
     position = data.get('position')
 
     try:
-        # Use cached search for better performance and to work around API search limitations
-        players = search_cached_players(query, position, limit=50)
-        logger.info(f"Player search (cached): query='{query}', position={position}, results={len(players)}")
+        # Use API client directly - position filter ensures accurate results
+        players = api_client.search_players(query, position)
+        logger.info(f"Player search (API): query='{query}', position={position}, results={len(players)}")
         return jsonify({
             'data': players,
             'meta': {
@@ -249,15 +249,14 @@ def _generate_recommendation(matchup, weather, ai_grade):
 
 @bp.route('/cache/refresh', methods=['POST'])
 def refresh_cache():
-    """Refresh the player cache (fetch all active players)"""
-    from app.services.player_cache import refresh_player_cache
-    
+    """Refresh the player cache (currently disabled - using direct API calls)"""
+    # from app.services.player_cache import refresh_player_cache
+
     try:
-        logger.info("Player cache refresh requested")
-        players = refresh_player_cache()
+        logger.info("Player cache refresh requested (feature disabled)")
         return jsonify({
-            'message': 'Player cache refreshed successfully',
-            'count': len(players)
+            'message': 'Player cache feature is disabled. Search uses direct API calls with position filter.',
+            'count': 0
         })
     except Exception as e:
         logger.error(f"Cache refresh failed: {str(e)}", exc_info=True)
