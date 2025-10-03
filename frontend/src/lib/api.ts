@@ -80,7 +80,7 @@ export const getStoredUser = () => {
 // Player API
 export const searchPlayers = async (query: string, position?: string) => {
   const response = await api.get('/players/search', {
-    params: { q: query, position },
+    params: { query, position },
   });
   return response.data;
 };
