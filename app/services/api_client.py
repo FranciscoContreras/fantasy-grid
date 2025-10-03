@@ -113,8 +113,8 @@ class FantasyAPIClient:
             all_players.extend(data.get('data', []))
             total = data.get('meta', {}).get('total', 0)
 
-            # Fetch remaining pages (limit to 1000 total for performance)
-            max_fetch = min(total, 1000 if not position else total)
+            # Fetch remaining pages (when searching by query, fetch all for accurate results)
+            max_fetch = total if query else min(total, 1000 if not position else total)
             while offset + limit < max_fetch:
                 offset += limit
                 params['offset'] = offset
