@@ -25,11 +25,16 @@ def create_app():
          allow_headers=['Content-Type', 'Authorization', 'X-CSRF-Token'])
 
     # Rate Limiting
+    redis_url = os.getenv('REDIS_URL', 'memory://')
+    # Add SSL cert verification skip for Heroku Redis (rediss://)
+    if redis_url.startswith('rediss://'):
+        redis_url += '?ssl_cert_reqs=none'
+
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
         default_limits=["200 per day", "50 per hour"],
-        storage_uri=os.getenv('REDIS_URL', 'memory://'),
+        storage_uri=redis_url,
         strategy="fixed-window"
     )
 
@@ -41,16 +46,12 @@ def create_app():
         return {'status': 'healthy', 'service': 'Fantasy Grid API', 'version': '1.1.0'}
 
     # Register blueprints
-    from app.routes import players, analysis, predictions, security, tasks, billing
+    from app.routes import players, analysis, predictions, security, tasks
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
     app.register_blueprint(security.bp)
     app.register_blueprint(tasks.bp)
-    app.register_blueprint(billing.bp)
-
-    # Exempt Stripe webhook from CSRF (Stripe signs requests)
-    csrf.exempt(billing.bp)
 
     return app
 
