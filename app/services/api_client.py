@@ -98,12 +98,13 @@ class FantasyAPIClient:
 
         try:
             # First request to get total count
-            # NOTE: Don't use API's 'search' param - it's broken (matches random fields)
-            # Instead, fetch by position/status and filter client-side with our scoring algorithm
+            # Use API's 'search' param to get candidates (even though it's fuzzy/broken)
+            # Then use our scoring algorithm to properly rank and filter results
             params = {'limit': limit, 'offset': offset, 'status': 'active'}
+            if query:
+                params['search'] = query  # Get candidates from API
             if position:
                 params['position'] = position
-            # Don't pass query to API - do client-side filtering instead
 
             response = requests.get(
                 f'{self.base_url}/players',
@@ -116,10 +117,16 @@ class FantasyAPIClient:
             all_players.extend(data.get('data', []))
             total = data.get('meta', {}).get('total', 0)
 
-            # Fetch remaining pages (fetch more when searching to find all current players)
-            # Limit to 500 players max to avoid timeout when no position filter
-            # With position filter, can fetch all (usually <100 per position)
-            max_fetch = min(total, 500) if not position else min(total, 1000)
+            # Fetch remaining pages
+            # When using search, API returns many fuzzy matches - limit to 200 to avoid timeout
+            # Our scoring will filter these down to the best matches
+            # With position filter, can fetch more (usually <100 per position)
+            if query and not position:
+                max_fetch = min(total, 200)  # Limit fuzzy search results
+            elif position:
+                max_fetch = min(total, 500)  # Position-filtered is more targeted
+            else:
+                max_fetch = min(total, 100)  # No query or position = just first 100
             while offset + limit < max_fetch:
                 offset += limit
                 params['offset'] = offset
