@@ -41,10 +41,11 @@ def create_app():
         return {'status': 'healthy', 'service': 'Fantasy Grid API', 'version': '1.1.0'}
 
     # Register blueprints
-    from app.routes import players, analysis, predictions, security
+    from app.routes import players, analysis, predictions, security, tasks
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
     app.register_blueprint(predictions.bp)
     app.register_blueprint(security.bp)
+    app.register_blueprint(tasks.bp)
 
     return app
