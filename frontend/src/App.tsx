@@ -4,6 +4,7 @@ import { PlayerAnalysis } from './components/PlayerAnalysis';
 import { RosterManagement } from './components/RosterManagement';
 import { Auth } from './components/Auth';
 import { LandingPage } from './components/LandingPage';
+import { OnboardingWizard } from './components/OnboardingWizard';
 import { analyzePlayer, isAuthenticated, logout, getStoredUser } from './lib/api';
 import { Player, Analysis } from './types';
 import { Input } from './components/ui/input';
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [currentView, setCurrentView] = useState<'player-analysis' | 'roster-management'>('player-analysis');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -33,10 +35,21 @@ function App() {
     checkAuth();
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (isNewUser = false) => {
     setAuthenticated(true);
     setUser(getStoredUser());
     setShowAuth(false);
+
+    // Show onboarding for new users
+    if (isNewUser) {
+      setShowOnboarding(true);
+    }
+  };
+
+  const handleOnboardingComplete = (rosterId: number) => {
+    setShowOnboarding(false);
+    // Switch to roster management view with the new roster
+    setCurrentView('roster-management');
   };
 
   const handleLogout = () => {
@@ -81,6 +94,11 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // Show onboarding wizard for new users
+  if (authenticated && showOnboarding) {
+    return <OnboardingWizard onComplete={handleOnboardingComplete} />;
   }
 
   const handleAnalyze = async () => {

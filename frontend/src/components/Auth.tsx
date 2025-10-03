@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { login, register } from '../lib/api';
 
 interface AuthProps {
-  onAuthSuccess: () => void;
+  onAuthSuccess: (isNewUser?: boolean) => void;
 }
 
 export function Auth({ onAuthSuccess }: AuthProps) {
@@ -29,6 +29,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
     try {
       if (isLogin) {
         await login(formData.email || formData.username, formData.password);
+        onAuthSuccess(false);
       } else {
         await register({
           email: formData.email,
@@ -37,8 +38,8 @@ export function Auth({ onAuthSuccess }: AuthProps) {
           first_name: formData.first_name,
           last_name: formData.last_name,
         });
+        onAuthSuccess(true); // New user, trigger onboarding
       }
-      onAuthSuccess();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Authentication failed');
     } finally {
