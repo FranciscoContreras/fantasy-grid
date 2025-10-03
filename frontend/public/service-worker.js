@@ -1,7 +1,7 @@
 // Fantasy Grid Service Worker
 // Provides offline support and caching for PWA
 
-const CACHE_NAME = 'fantasy-grid-v2';
+const CACHE_NAME = 'fantasy-grid-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -43,13 +43,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for POST, PUT, DELETE requests (only cache GET requests)
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Clone the response
         const responseClone = response.clone();
 
-        // Cache the fetched response
+        // Cache the fetched response (only GET requests reach here)
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseClone);
         });
