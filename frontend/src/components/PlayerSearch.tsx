@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { searchPlayers } from '@/lib/api';
+import { searchPlayers, searchPlayersV2, autocompleteSearch } from '@/lib/api';
 import { Player } from '@/types';
 import { getPlayerImageUrl, getTeamLogoUrl } from '@/lib/images';
 
@@ -14,8 +14,29 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState<string>('');
   const [results, setResults] = useState<Player[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [useNewSearch, setUseNewSearch] = useState(true); // Toggle for new search engine
+
+  // Autocomplete handler
+  const handleAutocomplete = useCallback(async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await autocompleteSearch(searchQuery, { type: 'player', limit: 5 });
+      setSuggestions(response.suggestions || []);
+      setShowSuggestions(true);
+    } catch (err) {
+      console.error('Autocomplete failed:', err);
+      setSuggestions([]);
+    }
+  }, []);
 
   // Debounced search
   const handleSearch = useCallback(async (searchQuery: string, searchPosition?: string) => {
@@ -26,30 +47,67 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
 
     setLoading(true);
     setError('');
+    setShowSuggestions(false);
 
     try {
-      const response = await searchPlayers(searchQuery, searchPosition);
-      setResults(response.data || []);
+      let response;
+      if (useNewSearch) {
+        // Try new search engine first
+        try {
+          response = await searchPlayersV2(searchQuery, {
+            type: 'player',
+            position: searchPosition,
+            limit: 50
+          });
+
+          // Transform search results to Player format
+          const transformedResults = response.results?.map((result: any) => ({
+            id: result.entity_id,
+            player_id: result.entity_id,
+            name: result.title,
+            position: result.metadata?.position || '',
+            team: result.metadata?.team || '',
+            status: result.metadata?.status || 'active',
+            jersey_number: result.metadata?.number || null,
+          })) || [];
+
+          setResults(transformedResults);
+        } catch (newSearchErr) {
+          console.warn('New search failed, falling back to old search:', newSearchErr);
+          // Fallback to old search
+          response = await searchPlayers(searchQuery, searchPosition);
+          setResults(response.data || []);
+        }
+      } else {
+        // Use old search directly
+        response = await searchPlayers(searchQuery, searchPosition);
+        setResults(response.data || []);
+      }
     } catch (err) {
       setError('Failed to search players. Please try again.');
       console.error('Search failed:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [useNewSearch]);
 
-  // Auto-search with minimal debounce
+  // Auto-search and autocomplete with minimal debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.length >= 2) {
+        // Trigger autocomplete for fast suggestions
+        handleAutocomplete(query);
+        // Trigger full search
         handleSearch(query, position);
       } else {
         setResults([]);
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
     }, 150); // 150ms debounce - faster response
 
     return () => clearTimeout(timer);
-  }, [query, position, handleSearch]);
+  }, [query, position, handleSearch, handleAutocomplete]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && query.length >= 2) {
@@ -78,9 +136,10 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
         <div className="text-sm text-muted-foreground mb-2">
           💡 Tip: Select a position first for faster, more accurate results
+          {useNewSearch && <span className="ml-2 text-xs text-green-600 dark:text-green-400">(⚡ New Search Engine)</span>}
         </div>
         <div className="flex gap-2">
           <select
@@ -117,6 +176,33 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
           <p className="text-xs text-muted-foreground flex items-center gap-2">
             <span className="animate-spin">⏳</span> Searching...
           </p>
+        )}
+
+        {/* Autocomplete Suggestions */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg">
+            <div className="p-2">
+              <p className="text-xs text-muted-foreground mb-2">💡 Quick suggestions:</p>
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer text-sm"
+                  onClick={() => {
+                    setQuery(suggestion.suggestion);
+                    setShowSuggestions(false);
+                    handleSearch(suggestion.suggestion, position);
+                  }}
+                >
+                  {suggestion.suggestion}
+                  {suggestion.metadata?.position && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({suggestion.metadata.position})
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

@@ -85,6 +85,39 @@ export const searchPlayers = async (query: string, position?: string) => {
   return response.data;
 };
 
+// New Search Engine API
+export const searchPlayersV2 = async (query: string, options?: {
+  type?: 'player' | 'team';
+  position?: string;
+  team?: string;
+  limit?: number;
+}) => {
+  const response = await api.get('/search/query', {
+    params: {
+      q: query,
+      type: options?.type,
+      position: options?.position,
+      team: options?.team,
+      limit: options?.limit
+    },
+  });
+  return response.data;
+};
+
+export const autocompleteSearch = async (query: string, options?: {
+  type?: 'player' | 'team';
+  limit?: number;
+}) => {
+  const response = await api.get('/search/autocomplete', {
+    params: {
+      q: query,
+      type: options?.type,
+      limit: options?.limit
+    },
+  });
+  return response.data;
+};
+
 export const analyzePlayer = async (
   playerId: string,
   opponent: string,
