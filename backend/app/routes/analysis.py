@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app.services.api_client import FantasyAPIClient
+from app.services.async_api_client import AsyncFantasyAPIClient, run_async
 from app.services.analyzer import PlayerAnalyzer
 from app.schemas import validate_json, validate_query_params
 from app.schemas.player_schemas import PlayerComparisonSchema
@@ -8,6 +9,7 @@ from app.schemas.analysis_schemas import PercentageCalculatorSchema, MatchupStre
 bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 
 api_client = FantasyAPIClient()
+async_client = AsyncFantasyAPIClient()
 analyzer = PlayerAnalyzer()
 
 
@@ -26,26 +28,25 @@ def compare_players(validated_data):
     opponent_ids = validated_data.get('opponent_ids', [])
 
     try:
+        # PERFORMANCE FIX: Batch fetch all players and defenses concurrently (solves N+1)
+        results = run_async(async_client.batch_player_analysis(player_ids, opponent_ids))
+
         comparisons = []
-
-        for i, player_id in enumerate(player_ids):
-            # Get player data
-            player = api_client.get_player_data(player_id)
-
+        for result in results:
             comparison_data = {
-                'player': player.get('data', player) if isinstance(player, dict) and 'data' in player else player,
-                'player_id': player_id
+                'player': result['player'],
+                'player_id': result['player_id']
             }
 
-            # If opponent provided, add matchup analysis
-            if opponent_ids and i < len(opponent_ids):
-                opponent_id = opponent_ids[i]
+            # If defense data available, calculate matchup score
+            if 'defense' in result:
                 try:
-                    defense_stats = api_client.get_defense_stats(opponent_id)
-                    matchup_score = analyzer.calculate_matchup_score(player, defense_stats)
+                    # Create player dict for analyzer
+                    player_dict = {'data': result['player']} if 'data' not in result['player'] else result['player']
+                    matchup_score = analyzer.calculate_matchup_score(player_dict, result['defense'])
                     comparison_data['matchup_score'] = matchup_score
-                    comparison_data['opponent'] = opponent_id
-                except:
+                    comparison_data['opponent'] = result['opponent_id']
+                except Exception as e:
                     pass
 
             comparisons.append(comparison_data)
