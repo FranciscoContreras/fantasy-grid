@@ -233,6 +233,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
                 className="p-3 cursor-pointer hover:bg-accent transition-colors hover:shadow-md"
                 onClick={() => {
                   try {
+                    console.error('🔍 DEBUGGING onSelectPlayer:', typeof onSelectPlayer, onSelectPlayer.toString());
                     console.log('PLAYER CLICKED:', player);
                     alert(`Adding ${player.name} to roster`);
                     console.log('About to call onSelectPlayer');
