@@ -39,7 +39,7 @@ def search_players(data):
 
         # Transform players to ensure player_id field for roster compatibility
         for player in players:
-            if 'nfl_id' in player and 'player_id' not in player:
+            if 'nfl_id' in player and not player.get('player_id'):
                 player['player_id'] = player['nfl_id']
 
         logger.info(f"Player search (API): query='{query}', position={position}, results={len(players)}")
