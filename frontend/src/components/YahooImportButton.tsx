@@ -10,9 +10,16 @@ interface YahooImportButtonProps {
 
 export const YahooImportButton = ({ className = '' }: YahooImportButtonProps) => {
   const handleYahooImport = () => {
-    // Redirect to Yahoo OAuth endpoint
-    // Backend will handle OAuth flow and redirect back
-    window.location.href = '/api/yahoo/auth';
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert('Please log in first to import from Yahoo');
+      return;
+    }
+
+    // Redirect to Yahoo OAuth endpoint with token as query parameter
+    window.location.href = `/api/yahoo/auth?token=${token}`;
   };
 
   return (

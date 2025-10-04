@@ -32,22 +32,42 @@ import_service = YahooRosterImportService()
 # ============================================================================
 
 @bp.route('/auth', methods=['GET'])
-@require_auth
-def start_oauth(current_user):
+def start_oauth():
     """
     Initiate Yahoo OAuth flow
 
     Redirects user to Yahoo login page
+    Accepts token via query parameter or Authorization header
     """
     try:
+        # Try to get token from query parameter first (for browser redirects)
+        token = request.args.get('token')
+
+        # If not in query param, try Authorization header
+        if not token:
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+
+        if not token:
+            return jsonify({'error': 'Missing or invalid authorization'}), 401
+
+        # Validate token and get user
+        from app.services.auth_service import decode_token
+        payload = decode_token(token)
+        if not payload:
+            return jsonify({'error': 'Invalid token'}), 401
+
+        user_id = payload['user_id']
+
         # Generate OAuth URL with state for CSRF protection
         auth_url, state = oauth_service.get_authorization_url()
 
         # Store state in session for validation
         session['yahoo_oauth_state'] = state
-        session['yahoo_oauth_user_id'] = current_user['id']
+        session['yahoo_oauth_user_id'] = user_id
 
-        logger.info(f"Starting Yahoo OAuth for user {current_user['id']}")
+        logger.info(f"Starting Yahoo OAuth for user {user_id}")
 
         # Redirect to Yahoo OAuth page
         return redirect(auth_url)
