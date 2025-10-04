@@ -62,7 +62,7 @@ class YahooOAuthService:
             'client_id': self.client_id,
             'redirect_uri': self.redirect_uri,
             'response_type': 'code',
-            'scope': 'fspt-r',  # Fantasy Sports Read permission
+            'scope': 'fspt-w',  # Fantasy Sports Read/Write permission (may include read)
             'state': state,
             'language': 'en-us'
         }
