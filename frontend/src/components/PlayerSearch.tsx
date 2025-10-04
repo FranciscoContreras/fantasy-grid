@@ -140,8 +140,8 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
     <div className="space-y-4">
       <div className="space-y-2 relative">
         <div className="text-sm mb-2">
-          <span className="text-orange-600 dark:text-orange-400 font-medium">⚠️ IMPORTANT:</span>
-          <span className="text-muted-foreground ml-1">Select a position for best results (search without position may be incomplete)</span>
+          <span className="text-green-600 dark:text-green-400 font-medium">✨ Search Fixed:</span>
+          <span className="text-muted-foreground ml-1">Now find any player by name! Position filter optional for faster results</span>
           {useNewSearch && <span className="ml-2 text-xs text-green-600 dark:text-green-400">(⚡ New Search Engine)</span>}
         </div>
         <div className="flex gap-2">
