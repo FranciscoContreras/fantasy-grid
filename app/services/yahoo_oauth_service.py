@@ -62,6 +62,7 @@ class YahooOAuthService:
             'client_id': self.client_id,
             'redirect_uri': self.redirect_uri,
             'response_type': 'code',
+            'scope': 'openid profile email fspt-r',  # Fantasy Sports Read permission
             'state': state,
             'language': 'en-us'
         }
@@ -83,16 +84,21 @@ class YahooOAuthService:
             raise ValueError("Yahoo OAuth credentials not configured")
 
         try:
+            # Use Basic Auth (recommended by Yahoo)
+            credentials = f"{self.client_id}:{self.client_secret}"
+            basic_auth = base64.b64encode(credentials.encode()).decode()
+
             response = requests.post(
                 YAHOO_TOKEN_URL,
                 data={
-                    'client_id': self.client_id,
-                    'client_secret': self.client_secret,
                     'redirect_uri': self.redirect_uri,
                     'code': code,
                     'grant_type': 'authorization_code'
                 },
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                headers={
+                    'Authorization': f'Basic {basic_auth}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
                 timeout=10  # Required: 10 second timeout per CLAUDE.md
             )
 
@@ -129,15 +135,20 @@ class YahooOAuthService:
             Dict with new token data or None on failure
         """
         try:
+            # Use Basic Auth (recommended by Yahoo)
+            credentials = f"{self.client_id}:{self.client_secret}"
+            basic_auth = base64.b64encode(credentials.encode()).decode()
+
             response = requests.post(
                 YAHOO_TOKEN_URL,
                 data={
-                    'client_id': self.client_id,
-                    'client_secret': self.client_secret,
                     'refresh_token': refresh_token,
                     'grant_type': 'refresh_token'
                 },
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                headers={
+                    'Authorization': f'Basic {basic_auth}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
                 timeout=10
             )
 
