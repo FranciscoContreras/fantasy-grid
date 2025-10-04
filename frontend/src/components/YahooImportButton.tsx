@@ -10,8 +10,8 @@ interface YahooImportButtonProps {
 
 export const YahooImportButton = ({ className = '' }: YahooImportButtonProps) => {
   const handleYahooImport = () => {
-    // Get JWT token from localStorage
-    const token = localStorage.getItem('token');
+    // Get JWT token from localStorage (stored as 'auth_token')
+    const token = localStorage.getItem('auth_token');
 
     if (!token) {
       alert('Please log in first to import from Yahoo');
