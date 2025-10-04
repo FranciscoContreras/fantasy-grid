@@ -94,12 +94,12 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
   // Auto-search and autocomplete with minimal debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (query.length >= 2) {
+      if (query.length >= 2 && position) {
         // Only trigger autocomplete if new search is enabled
         if (useNewSearch) {
           handleAutocomplete(query);
         }
-        // Trigger full search
+        // Trigger full search (position is now required)
         handleSearch(query, position);
       } else {
         setResults([]);
@@ -140,8 +140,8 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
     <div className="space-y-4">
       <div className="space-y-2 relative">
         <div className="text-sm mb-2">
-          <span className="text-green-600 dark:text-green-400 font-medium">✨ Search Fixed:</span>
-          <span className="text-muted-foreground ml-1">Now find any player by name! Position filter optional for faster results</span>
+          <span className="text-blue-600 dark:text-blue-400 font-medium">🔍 Search Players:</span>
+          <span className="text-muted-foreground ml-1">Select position and search by name</span>
           {useNewSearch && <span className="ml-2 text-xs text-green-600 dark:text-green-400">(⚡ New Search Engine)</span>}
         </div>
         <div className="flex gap-2">
@@ -151,7 +151,7 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             className="px-3 py-2 border rounded-md bg-background min-w-[120px]"
             disabled={loading}
           >
-            <option value="">All Positions</option>
+            <option value="">Select Position</option>
             <option value="QB">QB</option>
             <option value="RB">RB</option>
             <option value="WR">WR</option>
@@ -168,6 +168,12 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
             className="flex-1"
           />
         </div>
+
+        {!position && query.length >= 2 && (
+          <p className="text-xs text-orange-600 dark:text-orange-400">
+            ⚠️ Please select a position first
+          </p>
+        )}
 
         {query.length > 0 && query.length < 2 && (
           <p className="text-xs text-muted-foreground">

@@ -36,6 +36,12 @@ def search_players(data):
     try:
         # Use API client directly - position filter ensures accurate results
         players = api_client.search_players(query, position)
+
+        # Transform players to ensure player_id field for roster compatibility
+        for player in players:
+            if 'nfl_id' in player and 'player_id' not in player:
+                player['player_id'] = player['nfl_id']
+
         logger.info(f"Player search (API): query='{query}', position={position}, results={len(players)}")
         return jsonify({
             'data': players,
