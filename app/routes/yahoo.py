@@ -53,8 +53,8 @@ def start_oauth():
             return jsonify({'error': 'Missing or invalid authorization'}), 401
 
         # Validate token and get user
-        from app.services.auth_service import decode_token
-        payload = decode_token(token)
+        from app.services.auth_service import AuthService
+        payload = AuthService.verify_token(token)
         if not payload:
             return jsonify({'error': 'Invalid token'}), 401
 
