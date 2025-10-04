@@ -232,11 +232,18 @@ export function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
                 key={player.id || index}
                 className="p-3 cursor-pointer hover:bg-accent transition-colors hover:shadow-md"
                 onClick={() => {
-                  console.log('PLAYER CLICKED:', player);
-                  alert(`Adding ${player.name} to roster`);
-                  onSelectPlayer(player);
-                  setQuery('');
-                  setResults([]);
+                  try {
+                    console.log('PLAYER CLICKED:', player);
+                    alert(`Adding ${player.name} to roster`);
+                    console.log('About to call onSelectPlayer');
+                    onSelectPlayer(player);
+                    console.log('onSelectPlayer returned successfully');
+                    setQuery('');
+                    setResults([]);
+                  } catch (error) {
+                    console.error('ERROR in click handler:', error);
+                    alert(`ERROR: ${error}`);
+                  }
                 }}
               >
                 <div className="flex justify-between items-center">
