@@ -361,7 +361,11 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
                 </Button>
               </div>
               <PlayerSearch
-                onSelectPlayer={(player) => handleAddPlayer(player, addingToSlot)}
+                onSelectPlayer={(player) => {
+                  console.error('🎯 Arrow function executing in RosterBuilder!', { player, addingToSlot });
+                  window.alert?.(`Arrow function called! About to call handleAddPlayer with slot: ${addingToSlot}`);
+                  handleAddPlayer(player, addingToSlot);
+                }}
               />
             </div>
           </div>
