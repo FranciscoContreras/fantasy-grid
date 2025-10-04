@@ -59,6 +59,9 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
 
   const handleAddPlayer = async (player: Player, slot: string) => {
     try {
+      // Log full player object for debugging
+      console.log('handleAddPlayer called with:', { player, slot });
+
       // Validate player has required fields
       if (!player.name || !player.position || !player.team) {
         console.error('Player missing required fields:', player);
@@ -66,23 +69,19 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
         return;
       }
 
-      console.log('Adding player to roster:', {
-        player_id: player.id || player.player_id,
-        player_name: player.name,
-        position: player.position,
-        team: player.team,
-        roster_slot: slot,
-      });
-
-      await addPlayerToRoster(rosterId, {
-        player_id: player.id || player.player_id,
+      const playerData = {
+        player_id: player.id || player.player_id || player.nfl_id,
         player_name: player.name,
         position: player.position,
         team: player.team,
         roster_slot: slot,
         is_starter: true,
         injury_status: 'HEALTHY',
-      });
+      };
+
+      console.log('Sending player data to API:', playerData);
+
+      await addPlayerToRoster(rosterId, playerData);
 
       await loadRoster();
       setAddingToSlot(null);
