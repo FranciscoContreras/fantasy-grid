@@ -59,12 +59,14 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
 
   const handleAddPlayer = async (player: Player, slot: string) => {
     try {
-      // Log full player object for debugging
+      // CRITICAL DEBUG - Alert to verify function is called
+      alert(`handleAddPlayer called! Player: ${player.name}, Slot: ${slot}`);
       console.log('handleAddPlayer called with:', { player, slot });
 
       // Validate player has required fields
       if (!player.name || !player.position || !player.team) {
         console.error('Player missing required fields:', player);
+        alert(`ERROR: Player missing fields - ${!player.name ? 'name ' : ''}${!player.position ? 'position ' : ''}${!player.team ? 'team' : ''}`);
         setError(`Invalid player data. Missing: ${!player.name ? 'name ' : ''}${!player.position ? 'position ' : ''}${!player.team ? 'team' : ''}`);
         return;
       }
