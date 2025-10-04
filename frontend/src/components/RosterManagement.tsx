@@ -8,6 +8,8 @@ import {
   getMatchups,
   getCurrentWeek,
   getAvailableWeeks,
+  getYahooLeagues,
+  importYahooRoster,
 } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -27,6 +29,10 @@ export function RosterManagement() {
   const [view, setView] = useState<'rosters' | 'matchup' | 'season'>('rosters');
   const [showNewRosterForm, setShowNewRosterForm] = useState(false);
   const [showNewMatchupForm, setShowNewMatchupForm] = useState(false);
+  const [showYahooLeagues, setShowYahooLeagues] = useState(false);
+  const [yahooLeagues, setYahooLeagues] = useState<any[]>([]);
+  const [loadingLeagues, setLoadingLeagues] = useState(false);
+  const [importingTeam, setImportingTeam] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -162,6 +168,44 @@ export function RosterManagement() {
     }
   };
 
+  const handleShowYahooLeagues = async () => {
+    setLoadingLeagues(true);
+    setShowYahooLeagues(true);
+    try {
+      const response = await getYahooLeagues();
+      setYahooLeagues(response.data?.leagues || []);
+    } catch (err: any) {
+      if (err.response?.data?.needs_auth) {
+        // Need to authorize first
+        const token = localStorage.getItem('auth_token');
+        window.location.href = `/api/yahoo/auth?token=${token}`;
+      } else {
+        setError('Failed to load Yahoo leagues');
+        setShowYahooLeagues(false);
+      }
+    } finally {
+      setLoadingLeagues(false);
+    }
+  };
+
+  const handleImportYahooTeam = async (teamKey: string, teamName: string) => {
+    setImportingTeam(teamKey);
+    try {
+      const response = await importYahooRoster({
+        team_key: teamKey,
+        roster_name: teamName,
+      });
+      setShowYahooLeagues(false);
+      await loadRosters();
+      alert(`Successfully imported ${response.data.matched_players} players!`);
+    } catch (err) {
+      setError('Failed to import roster');
+      console.error(err);
+    } finally {
+      setImportingTeam(null);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Header */}
@@ -216,7 +260,10 @@ export function RosterManagement() {
                 <div className="flex justify-between items-center">
                   <CardTitle>My Rosters</CardTitle>
                   <div className="flex gap-2">
-                    <YahooImportButton className="text-xs" />
+                    <YahooImportButton
+                      className="text-xs"
+                      onShowLeagues={handleShowYahooLeagues}
+                    />
                     <Button
                       size="sm"
                       onClick={() => setShowNewRosterForm(true)}
@@ -505,6 +552,71 @@ export function RosterManagement() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Yahoo Leagues Modal */}
+      {showYahooLeagues && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto">
+            <CardHeader>
+              <CardTitle>Select Yahoo Fantasy League</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingLeagues ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Loading your leagues...</p>
+                </div>
+              ) : yahooLeagues.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No leagues found</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowYahooLeagues(false)}
+                    className="mt-4"
+                  >
+                    Close
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {yahooLeagues.map((league: any) => (
+                    <div
+                      key={league.team_key}
+                      className="p-4 border rounded-lg hover:bg-accent cursor-pointer"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-semibold">{league.team_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {league.league_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {league.num_teams} teams
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleImportYahooTeam(league.team_key, league.team_name)}
+                          disabled={importingTeam === league.team_key}
+                        >
+                          {importingTeam === league.team_key ? 'Importing...' : 'Import'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowYahooLeagues(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

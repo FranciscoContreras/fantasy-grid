@@ -247,4 +247,20 @@ export const getPlayerDetails = async (playerId: string) => {
   return response.data;
 };
 
+// Yahoo Fantasy API
+export const getYahooLeagues = async () => {
+  const response = await api.get('/yahoo/leagues');
+  return response.data;
+};
+
+export const importYahooRoster = async (data: { team_key: string; roster_name?: string }) => {
+  const response = await api.post('/yahoo/import', data);
+  return response.data;
+};
+
+export const getYahooStatus = async () => {
+  const response = await api.get('/yahoo/status');
+  return response.data;
+};
+
 export default api;

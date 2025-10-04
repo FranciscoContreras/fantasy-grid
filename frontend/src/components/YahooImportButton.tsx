@@ -6,9 +6,10 @@
 
 interface YahooImportButtonProps {
   className?: string;
+  onShowLeagues?: () => void;
 }
 
-export const YahooImportButton = ({ className = '' }: YahooImportButtonProps) => {
+export const YahooImportButton = ({ className = '', onShowLeagues }: YahooImportButtonProps) => {
   const handleYahooImport = () => {
     // Get JWT token from localStorage (stored as 'auth_token')
     const token = localStorage.getItem('auth_token');
@@ -18,7 +19,13 @@ export const YahooImportButton = ({ className = '' }: YahooImportButtonProps) =>
       return;
     }
 
-    // Redirect to Yahoo OAuth endpoint with token as query parameter
+    // If onShowLeagues provided, try to show leagues first (user already authed)
+    if (onShowLeagues) {
+      onShowLeagues();
+      return;
+    }
+
+    // Otherwise, redirect to Yahoo OAuth endpoint with token as query parameter
     window.location.href = `/api/yahoo/auth?token=${token}`;
   };
 
