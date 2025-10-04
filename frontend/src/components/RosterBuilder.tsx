@@ -59,8 +59,9 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
 
   const handleAddPlayer = async (player: Player, slot: string) => {
     try {
-      // CRITICAL DEBUG - Alert to verify function is called
-      alert(`handleAddPlayer called! Player: ${player.name}, Slot: ${slot}`);
+      // CRITICAL DEBUG - Multiple logging methods
+      console.error('🔥 handleAddPlayer CALLED!', { player, slot });
+      window.alert?.(`handleAddPlayer called! Player: ${player.name}, Slot: ${slot}`);
       console.log('handleAddPlayer called with:', { player, slot });
 
       // Validate player has required fields
