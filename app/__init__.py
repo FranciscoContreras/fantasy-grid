@@ -188,7 +188,7 @@ def create_app():
     bcrypt.init_app(app)
     
     # Register blueprints
-    from app.routes import players, analysis, predictions, rosters, matchups, auth, advanced_stats, trades, league, search
+    from app.routes import players, analysis, predictions, rosters, matchups, auth, advanced_stats, trades, league, search, yahoo
     app.register_blueprint(auth.bp)
     app.register_blueprint(players.bp)
     app.register_blueprint(analysis.bp)
@@ -199,6 +199,7 @@ def create_app():
     app.register_blueprint(search.bp)  # Full-text search engine
     app.register_blueprint(trades.bp)  # Trade analyzer
     app.register_blueprint(league.bp)  # League intelligence
+    app.register_blueprint(yahoo.bp)  # Yahoo Fantasy OAuth and import
 
     # Note: Cache warmup removed to prevent startup crashes
     # Users can manually warm cache via: POST /api/players/cache/refresh
