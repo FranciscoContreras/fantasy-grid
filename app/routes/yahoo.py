@@ -132,9 +132,9 @@ def oauth_callback():
 
         logger.info(f"Yahoo OAuth successful for user {user_id}")
 
-        # Redirect to frontend leagues page
+        # Redirect to frontend with success indicator
         frontend_url = os.getenv('FRONTEND_URL', '')
-        return redirect(f"{frontend_url}/yahoo-import?oauth_success=true")
+        return redirect(f"{frontend_url}/?yahoo_auth=success")
 
     except Exception as e:
         logger.error(f"Error in Yahoo OAuth callback: {e}", exc_info=True)
