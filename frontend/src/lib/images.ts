@@ -146,14 +146,22 @@ export function getPlayerImageUrlSmart(
     return getPlayerPlaceholderUrl(playerName, currentTeam);
   }
 
-  // Use verified ESPN ID if available
+  // Use verified ESPN ID if available (priority 1)
   const verifiedId = VERIFIED_ESPN_PLAYER_IDS[playerName];
   if (verifiedId) {
+    console.log(`Using verified ESPN ID for ${playerName}: ${verifiedId}`);
     return getPlayerImageUrl(verifiedId);
   }
 
-  // Fallback to provided ESPN ID or default
-  return getPlayerImageUrl(espnPlayerId);
+  // Use provided ESPN ID if it looks valid (priority 2)
+  if (espnPlayerId && espnPlayerId.toString().length >= 4) {
+    console.log(`Using API ESPN ID for ${playerName}: ${espnPlayerId}`);
+    return getPlayerImageUrl(espnPlayerId);
+  }
+
+  // Fallback to placeholder if no valid ESPN ID (priority 3)
+  console.log(`No valid ESPN ID for ${playerName}, using placeholder`);
+  return getPlayerPlaceholderUrl(playerName, currentTeam);
 }
 
 /**
