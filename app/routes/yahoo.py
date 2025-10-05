@@ -128,10 +128,18 @@ def get_yahoo_leagues(current_user):
         })
 
     except Exception as e:
+        error_str = str(e).lower()
         logger.error(f"Failed to get user leagues: {e}")
+        logger.debug(f"Error string for token check: '{error_str}'")
 
         # If it's a token issue, indicate user needs to authenticate
-        if 'token' in str(e).lower() or 'access' in str(e).lower():
+        token_keywords = ['token', 'access', 'auth', 'valid']
+        is_auth_error = any(keyword in error_str for keyword in token_keywords)
+
+        logger.debug(f"Is auth error? {is_auth_error} (checking keywords: {token_keywords})")
+
+        if is_auth_error:
+            logger.info("Returning needs_auth=True for authentication error")
             return jsonify({
                 'data': {
                     'leagues': [],
