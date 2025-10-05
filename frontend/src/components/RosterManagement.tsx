@@ -18,7 +18,6 @@ import { RosterBuilder } from './RosterBuilder';
 import { RosterDashboard } from './RosterDashboard';
 import { MatchupAnalysis } from './MatchupAnalysis';
 import { SeasonMatchups } from './SeasonMatchups';
-import { YahooImportButton } from './YahooImportButton';
 import { Badge } from './ui/badge';
 
 export function RosterManagement() {
@@ -259,18 +258,12 @@ export function RosterManagement() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>My Rosters</CardTitle>
-                  <div className="flex gap-2">
-                    <YahooImportButton
-                      className="text-xs"
-                      onShowLeagues={handleShowYahooLeagues}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => setShowNewRosterForm(true)}
-                    >
-                      + New
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowNewRosterForm(true)}
+                  >
+                    + New
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
