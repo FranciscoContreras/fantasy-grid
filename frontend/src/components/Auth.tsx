@@ -52,19 +52,19 @@ export function Auth({ onAuthSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 font-system">
-      {/* Monochromatic Background Elements */}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 font-system">
+      {/* Subtle Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-white/3 to-white/8 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-white/2 to-white/6 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-gray-100/30 to-gray-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-gray-100/20 to-gray-200/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative w-full max-w-md glass-card p-8">
+      <div className="relative w-full max-w-md bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-logo text-white mb-3">
+          <h1 className="text-3xl font-logo text-gray-900 mb-3">
             Pilon
           </h1>
-          <p className="text-white/60 font-medium text-sm">
+          <p className="text-gray-600 font-medium text-sm">
             {isLogin ? 'Welcome back' : 'Join the platform'}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
           {!isLogin && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   First Name
                 </label>
                 <Input
@@ -81,11 +81,11 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                   value={formData.first_name}
                   onChange={(e) => handleChange('first_name', e.target.value)}
                   placeholder="John"
-                  className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+                  className="border-gray-300 text-gray-900 font-medium p-3 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 placeholder:text-gray-400 rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name
                 </label>
                 <Input
@@ -93,14 +93,14 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                   value={formData.last_name}
                   onChange={(e) => handleChange('last_name', e.target.value)}
                   placeholder="Doe"
-                  className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+                  className="border-gray-300 text-gray-900 font-medium p-3 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 placeholder:text-gray-400 rounded-lg"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               {isLogin ? 'Email or Username' : 'Email'}
             </label>
             <Input
@@ -109,13 +109,13 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               placeholder={isLogin ? 'email@example.com or username' : 'email@example.com'}
-              className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+              className="border-gray-300 text-gray-900 font-medium p-3 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 placeholder:text-gray-400 rounded-lg"
             />
           </div>
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Username
               </label>
               <Input
@@ -125,13 +125,13 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                 onChange={(e) => handleChange('username', e.target.value)}
                 placeholder="username"
                 minLength={3}
-                className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+                className="border-gray-300 text-gray-900 font-medium p-3 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 placeholder:text-gray-400 rounded-lg"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
             <Input
@@ -141,19 +141,19 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               onChange={(e) => handleChange('password', e.target.value)}
               placeholder="••••••••"
               minLength={8}
-              className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/50"
+              className="border-gray-300 text-gray-900 font-medium p-3 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 placeholder:text-gray-400 rounded-lg"
             />
           </div>
 
           {error && (
-            <div className="glass-dark p-4 rounded-xl text-center">
-              <p className="text-sm text-red-300 font-medium">{error}</p>
+            <div className="bg-red-50 border border-red-200 p-4 rounded-lg text-center">
+              <p className="text-sm text-red-600 font-medium">{error}</p>
             </div>
           )}
 
           <Button
             type="submit"
-            className="w-full glass bg-white/20 text-white hover:bg-white/30 font-semibold py-3 rounded-xl border-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-gray-900 text-white hover:bg-gray-800 font-semibold py-3 rounded-lg border-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             disabled={loading}
           >
             {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
@@ -167,7 +167,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm text-white/60 hover:text-white font-medium transition-colors"
+            className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
           >
             {isLogin
               ? "Don't have an account? Sign up"

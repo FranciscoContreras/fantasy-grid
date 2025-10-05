@@ -96,10 +96,10 @@ function App() {
   if (!authenticated && showAuth) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col font-system">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-system">
           {/* Back button */}
           <div className="p-6">
-            <Button variant="outline" onClick={handleBackToLanding} className="glass border-white/20 text-white hover:bg-white/10 gap-2">
+            <Button variant="outline" onClick={handleBackToLanding} className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 gap-2 rounded-lg">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
