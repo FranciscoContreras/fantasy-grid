@@ -397,6 +397,12 @@ AI_PROVIDER=groq                         # groq|anthropic|gemini
 GROQ_API_KEY=<groq-key>                 # For AI analysis
 ANTHROPIC_API_KEY=<anthropic-key>       # Alternative AI provider
 GEMINI_API_KEY=<gemini-key>             # Alternative AI provider
+
+# Yahoo OAuth Integration (optional)
+YAHOO_CLIENT_ID=<yahoo-client-id>       # Yahoo Developer App Client ID
+YAHOO_CLIENT_SECRET=<yahoo-client-secret> # Yahoo Developer App Client Secret
+YAHOO_REDIRECT_URI=<callback-url>       # OAuth callback URL
+FRONTEND_URL=<frontend-url>             # Frontend URL for OAuth redirects
 ```
 
 ### Frontend (.env)
@@ -476,6 +482,90 @@ No formal migration system (Alembic) is used. To update schema:
    ```
 
 For fresh installs, use `init_db()` to apply full schema.
+
+## Yahoo OAuth Setup
+
+The application includes Yahoo Fantasy Sports integration for importing user rosters. This requires setting up a Yahoo Developer Application and configuring OAuth 2.0.
+
+### Prerequisites
+
+1. **Yahoo Developer Account**: Sign up at https://developer.yahoo.com/
+2. **Fantasy Sports App**: Create a new app with Fantasy Sports API access
+
+### Step-by-Step Setup
+
+**1. Create Yahoo Developer App:**
+```bash
+# Go to: https://developer.yahoo.com/apps/create/
+# Fill in:
+# - Application Name: "Fantasy Grid"
+# - Application Type: "Web Application"
+# - Description: "Fantasy football player analysis and roster management"
+# - Home Page URL: "https://fantasy-grid-8e65f9ca9754.herokuapp.com"
+# - Redirect URI: "https://fantasy-grid-8e65f9ca9754.herokuapp.com/api/yahoo/callback"
+# - API Permissions: Select "Fantasy Sports" -> "Read"
+```
+
+**2. Configure Environment Variables:**
+```bash
+# Add to Heroku config or .env file
+heroku config:set YAHOO_CLIENT_ID=your_client_id_here
+heroku config:set YAHOO_CLIENT_SECRET=your_client_secret_here
+heroku config:set YAHOO_REDIRECT_URI=https://fantasy-grid-8e65f9ca9754.herokuapp.com/api/yahoo/callback
+heroku config:set FRONTEND_URL=https://fantasy-grid-8e65f9ca9754.herokuapp.com
+```
+
+**3. Apply Database Schema:**
+```bash
+# Apply Yahoo OAuth schema
+psql $DATABASE_URL < yahoo_oauth_schema.sql
+```
+
+**4. Test OAuth Flow:**
+```bash
+# 1. Check configuration
+curl https://fantasy-grid-8e65f9ca9754.herokuapp.com/api/yahoo/status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# 2. Initiate OAuth (will redirect to Yahoo)
+curl https://fantasy-grid-8e65f9ca9754.herokuapp.com/api/yahoo/auth?token=YOUR_JWT_TOKEN
+
+# 3. After OAuth completion, check leagues
+curl https://fantasy-grid-8e65f9ca9754.herokuapp.com/api/yahoo/leagues \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Yahoo OAuth Flow
+
+1. **User clicks "Import from Yahoo"** → Frontend calls `/api/yahoo/auth?token=JWT`
+2. **Backend redirects to Yahoo** → User logs into Yahoo and authorizes app
+3. **Yahoo redirects back** → `/api/yahoo/callback` with authorization code
+4. **Backend exchanges code for tokens** → Stores access/refresh tokens in database
+5. **User can now import leagues** → `/api/yahoo/leagues` returns user's fantasy leagues
+6. **User imports roster** → `/api/yahoo/import` creates roster with Yahoo players
+
+### API Endpoints
+
+- **`GET /api/yahoo/auth?token=JWT`** - Initiate OAuth flow
+- **`GET /api/yahoo/callback`** - Handle OAuth callback (Yahoo redirects here)
+- **`GET /api/yahoo/leagues`** - Get user's fantasy leagues (requires auth)
+- **`POST /api/yahoo/import`** - Import roster from Yahoo team (requires auth)
+- **`GET /api/yahoo/status`** - Check user's Yahoo authentication status
+
+### Error Handling
+
+The Yahoo integration gracefully handles:
+- **Missing credentials** → Returns 503 with helpful error message
+- **Expired tokens** → Automatically refreshes using refresh token
+- **OAuth errors** → Redirects to frontend with error parameters
+- **API failures** → Returns structured error responses
+
+### Security Features
+
+- **CSRF Protection** → State parameter validation in OAuth flow
+- **Token Refresh** → Automatic refresh of expired access tokens
+- **Per-User Isolation** → Each user has separate OAuth tokens
+- **Secure Storage** → Tokens encrypted and stored in PostgreSQL
 
 ## Testing
 
