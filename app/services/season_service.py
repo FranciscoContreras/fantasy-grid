@@ -19,61 +19,21 @@ class SeasonService:
 
     def get_current_season_and_week(self):
         """
-        Detect the current NFL season and week by checking recent games.
+        Get the current NFL season and week for fantasy purposes.
         Returns: (season, week) tuple
+
+        Note: Hardcoded to Week 5 of 2025 season for demo/development purposes
         """
-        if self._current_season_cache and self._current_week_cache:
-            return (self._current_season_cache, self._current_week_cache)
+        # For demo purposes, always return current fantasy football week
+        season = 2025
+        week = 5
 
-        try:
-            # Get recent games to determine current week
-            response = requests.get(
-                f'{self.base_url}/games',
-                params={'limit': 50},
-                timeout=10
-            )
-            response.raise_for_status()
-            games = response.json().get('data', [])
+        logger.info(f"Using hardcoded current NFL season/week: {season} Week {week}")
 
-            if not games:
-                # Fallback to current date logic
-                current_year = datetime.now().year
-                return (current_year, 1)
+        self._current_season_cache = season
+        self._current_week_cache = week
 
-            # Find the most recent completed game and the first upcoming game
-            completed_games = [g for g in games if g.get('status') == 'completed']
-            upcoming_games = [g for g in games if g.get('status') in ['scheduled', 'upcoming']]
-
-            if upcoming_games:
-                # Current week is the week with upcoming games
-                season = upcoming_games[0].get('season_year')
-                week = upcoming_games[0].get('week')
-                logger.info(f"Current NFL season/week: {season} Week {week} (upcoming games found)")
-            elif completed_games:
-                # If no upcoming games, use the last completed week
-                # (Don't increment to next week if schedule data doesn't exist yet)
-                latest_game = completed_games[0]
-                season = latest_game.get('season_year')
-                week = latest_game.get('week', 1)
-
-                logger.info(f"Current NFL season/week: {season} Week {week} (latest completed week)")
-            else:
-                # Fallback
-                current_year = datetime.now().year
-                season = current_year
-                week = 1
-                logger.warning(f"Could not determine current week, using fallback: {season} Week {week}")
-
-            self._current_season_cache = season
-            self._current_week_cache = week
-
-            return (season, week)
-
-        except Exception as e:
-            logger.error(f"Error detecting current season/week: {e}")
-            # Fallback to current year, week 1
-            current_year = datetime.now().year
-            return (current_year, 1)
+        return (season, week)
 
     def get_remaining_weeks(self, season, current_week):
         """
