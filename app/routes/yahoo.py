@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
-from app.services.auth_service import login_required
+from app.routes.auth import require_auth
 import os
 import logging
 
@@ -27,7 +27,7 @@ def yahoo_auth():
     }), 501
 
 @bp.route('/leagues')
-@login_required
+@require_auth
 def get_yahoo_leagues():
     """
     Get user's Yahoo Fantasy leagues
@@ -44,7 +44,7 @@ def get_yahoo_leagues():
     })
 
 @bp.route('/import', methods=['POST'])
-@login_required
+@require_auth
 def import_yahoo_roster():
     """
     Import roster from Yahoo Fantasy
@@ -71,7 +71,7 @@ def import_yahoo_roster():
     }), 501
 
 @bp.route('/status')
-@login_required
+@require_auth
 def yahoo_status():
     """
     Get Yahoo integration status for current user
