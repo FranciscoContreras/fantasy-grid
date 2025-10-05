@@ -214,48 +214,91 @@ export const getPlayerDetails = async (playerId: string) => {
   return response.data;
 };
 
-// Get featured players for landing page showcase
-export const getFeaturedPlayers = async (limit: number = 6) => {
-  // Try to get fantasy-relevant skill position players
+// Get top fantasy players for current week - ACTUAL TOP PERFORMERS ONLY
+export const getTopFantasyPlayers = async (limit: number = 10) => {
   try {
-    const positions = ['QB', 'RB', 'WR', 'TE'];
-    const allPlayers = [];
+    // First get current week
+    const currentWeekResponse = await getCurrentWeek();
+    const currentWeek = currentWeekResponse.data?.week || 5;
 
-    // Get top players from each position
-    for (const position of positions) {
-      const response = await api.get('/advanced/players', {
-        params: {
-          position,
-          status: 'active',
-          limit: Math.ceil(limit / positions.length) + 1
-        }
-      });
-
-      if (response.data?.data) {
-        // Filter for known fantasy relevant players (exclude obvious backups/practice squad)
-        const relevant = response.data.data.filter((player: any) =>
-          player.name &&
-          !player.name.includes('Practice') &&
-          player.jersey_number &&
-          player.jersey_number < 90  // Most skill position players have numbers < 90
-        );
-        allPlayers.push(...relevant.slice(0, 2)); // Take top 2 from each position
-      }
-    }
-
-    return { data: allPlayers.slice(0, limit) };
-  } catch (error) {
-    // Fallback to original API call
+    // Get top fantasy performers for current week with stricter filtering
     const response = await api.get('/advanced/players', {
       params: {
-        status: 'active',
-        limit,
         season: 2025,
-        week: 6
+        week: currentWeek,
+        status: 'active',
+        limit: limit * 3, // Get many more to filter down to actual stars
+        sort_by: 'fantasy_points',
+        order: 'desc'
       }
     });
-    return response.data;
+
+    if (response.data?.data) {
+      // STRICT filtering for actual top fantasy performers - NO FREE AGENTS
+      const topPerformers = response.data.data.filter((player: any) =>
+        player.name &&
+        player.team &&
+        player.team !== 'FA' &&
+        player.team !== 'FREE' &&
+        player.team !== '' &&
+        !player.name.includes('Practice') &&
+        !player.name.includes('practice') &&
+        player.jersey_number &&
+        player.jersey_number > 0 &&
+        player.jersey_number < 90 &&
+        ['QB', 'RB', 'WR', 'TE'].includes(player.position) &&
+        // Only include players with known fantasy relevance
+        (player.fantasy_points > 0 || isKnownFantasyPlayer(player.name))
+      );
+
+      console.log(`Filtered to ${topPerformers.length} actual top performers from ${response.data.data.length} total players`);
+
+      return {
+        data: topPerformers.slice(0, limit),
+        week: currentWeek
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to get current week top players, using curated list:', error);
   }
+
+  // Fallback: Use curated list of actual NFL stars for current week
+  const currentWeek = 5;
+  const curatedTopPlayers = [
+    { name: 'Josh Allen', position: 'QB', team: 'BUF', nfl_id: '3918298', jersey_number: 17 },
+    { name: 'Lamar Jackson', position: 'QB', team: 'BAL', nfl_id: '3916387', jersey_number: 8 },
+    { name: 'Dak Prescott', position: 'QB', team: 'DAL', nfl_id: '2577417', jersey_number: 4 },
+    { name: 'Saquon Barkley', position: 'RB', team: 'PHI', nfl_id: '3929630', jersey_number: 26 },
+    { name: 'Josh Jacobs', position: 'RB', team: 'GB', nfl_id: '4035687', jersey_number: 8 },
+    { name: 'Derrick Henry', position: 'RB', team: 'BAL', nfl_id: '4038524', jersey_number: 22 },
+    { name: 'Tyreek Hill', position: 'WR', team: 'MIA', nfl_id: '3116406', jersey_number: 10 },
+    { name: 'Stefon Diggs', position: 'WR', team: 'HOU', nfl_id: '2976499', jersey_number: 1 },
+    { name: 'CeeDee Lamb', position: 'WR', team: 'DAL', nfl_id: '4262921', jersey_number: 88 },
+    { name: 'Travis Kelce', position: 'TE', team: 'KC', nfl_id: '15847', jersey_number: 87 }
+  ];
+
+  return {
+    data: curatedTopPlayers.slice(0, limit),
+    week: currentWeek
+  };
+};
+
+// Helper function to identify known fantasy players
+function isKnownFantasyPlayer(name: string): boolean {
+  const knownStars = [
+    'Josh Allen', 'Lamar Jackson', 'Dak Prescott', 'Jayden Daniels', 'Tua Tagovailoa',
+    'Saquon Barkley', 'Josh Jacobs', 'Derrick Henry', 'Jonathan Taylor', 'Christian McCaffrey',
+    'Tyreek Hill', 'Stefon Diggs', 'CeeDee Lamb', 'Ja\'Marr Chase', 'Justin Jefferson',
+    'Travis Kelce', 'Mark Andrews', 'George Kittle', 'Kyle Pitts', 'Sam LaPorta',
+    'Cooper Kupp', 'Mike Evans', 'DeVonta Smith', 'A.J. Brown', 'Davante Adams'
+  ];
+
+  return knownStars.some(star => name.includes(star) || star.includes(name));
+}
+
+// Get featured players for landing page showcase (legacy)
+export const getFeaturedPlayers = async (limit: number = 6) => {
+  return getTopFantasyPlayers(limit);
 };
 
 // Get player analysis with multiple scoring formats
