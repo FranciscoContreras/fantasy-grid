@@ -115,6 +115,20 @@ export const VERIFIED_ESPN_PLAYER_IDS: Record<string, string> = {
 };
 
 /**
+ * Generate a placeholder image URL using a service like DiceBear or UI Avatars
+ * @param playerName - Full player name
+ * @param currentTeam - Player's current team abbreviation
+ */
+export function getPlayerPlaceholderUrl(playerName: string, currentTeam: string): string {
+  const initials = getPlayerInitials(playerName);
+  const teamColor = teamColors[currentTeam]?.primary || '#333333';
+  const encodedColor = encodeURIComponent(teamColor.replace('#', ''));
+
+  // Use UI Avatars service with team colors
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${encodedColor}&color=fff&size=200&font-size=0.6&format=png`;
+}
+
+/**
  * Get appropriate player image URL, with fallback for outdated ESPN images
  * @param playerName - Full player name
  * @param currentTeam - Player's current team abbreviation
@@ -127,9 +141,9 @@ export function getPlayerImageUrlSmart(
 ): string {
   // Check if this player has known outdated ESPN image
   if (OUTDATED_ESPN_IMAGES.has(playerName)) {
-    console.log(`Using team logo fallback for ${playerName} (outdated ESPN uniform)`);
+    console.log(`Using placeholder for ${playerName} (outdated ESPN uniform: ${currentTeam})`);
     // Return a team-colored placeholder instead of wrong uniform
-    return getTeamLogoUrl(currentTeam, 200);
+    return getPlayerPlaceholderUrl(playerName, currentTeam);
   }
 
   // Use verified ESPN ID if available
