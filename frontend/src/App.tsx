@@ -15,10 +15,10 @@ const OnboardingWizard = lazy(() => import('./components/OnboardingWizard').then
 
 // Loading fallback component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
+  <div className="flex items-center justify-center min-h-screen bg-black text-white">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p className="text-muted-foreground">Loading...</p>
+      <div className="animate-spin h-16 w-16 border-4 border-gray-600 border-t-white mx-auto mb-6"></div>
+      <p className="text-gray-300 font-display uppercase tracking-[0.3em] text-lg">Loading Championship...</p>
     </div>
   </div>
 );

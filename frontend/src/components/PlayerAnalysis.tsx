@@ -39,123 +39,134 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
   const getRecommendationColor = (status: string) => {
     switch (status) {
       case 'START':
-        return 'bg-green-600 hover:bg-green-700';
+        return 'bg-white text-black border-2 border-white font-display uppercase tracking-[0.2em] text-sm font-bold';
       case 'CONSIDER':
-        return 'bg-yellow-600 hover:bg-yellow-700';
+        return 'bg-gray-600 text-white border-2 border-gray-600 font-display uppercase tracking-[0.2em] text-sm font-bold';
       case 'BENCH':
-        return 'bg-red-600 hover:bg-red-700';
+        return 'bg-gray-800 text-gray-300 border-2 border-gray-600 font-display uppercase tracking-[0.2em] text-sm font-bold';
       default:
-        return 'bg-gray-600 hover:bg-gray-700';
+        return 'bg-gray-700 text-white border-2 border-gray-600 font-display uppercase tracking-[0.2em] text-sm font-bold';
     }
   };
 
   const getGradeColor = (grade: string) => {
-    if (grade.startsWith('A')) return 'text-green-600 dark:text-green-400';
-    if (grade.startsWith('B')) return 'text-blue-600 dark:text-blue-400';
-    if (grade.startsWith('C')) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (grade.startsWith('A')) return 'text-white';
+    if (grade.startsWith('B')) return 'text-gray-300';
+    if (grade.startsWith('C')) return 'text-gray-400';
+    return 'text-gray-500';
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600 dark:text-green-400';
-    if (score >= 50) return 'text-blue-600 dark:text-blue-400';
-    if (score >= 30) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 70) return 'text-white';
+    if (score >= 50) return 'text-gray-300';
+    if (score >= 30) return 'text-gray-400';
+    return 'text-gray-500';
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            <span>{analysis.player.name}</span>
-            <Badge className={getRecommendationColor(analysis.recommendation.status)}>
+    <div className="space-y-8">
+      {/* Main Analysis Card */}
+      <Card className="bg-gray-900 text-white border-4 border-gray-700">
+        <CardHeader className="border-b-2 border-gray-600 pb-6">
+          <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <span className="font-display text-2xl uppercase tracking-[0.1em] text-white">{analysis.player.name}</span>
+              <p className="text-sm text-gray-400 uppercase tracking-[0.3em] mt-1 font-display">
+                {analysis.player.position} · {analysis.player.team}
+              </p>
+            </div>
+            <div className={`inline-flex items-center gap-2 px-6 py-3 ${getRecommendationColor(analysis.recommendation.status)}`}>
               {analysis.recommendation.status}
-            </Badge>
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Matchup & Weather Scores */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Matchup Score</p>
-              <p className={`text-3xl font-bold ${getScoreColor(analysis.matchup_score)}`}>
+        <CardContent className="space-y-8 pt-6">
+          {/* Performance Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4 p-6 bg-black border-2 border-gray-600">
+              <p className="text-sm text-gray-400 font-display uppercase tracking-[0.2em]">Matchup Score</p>
+              <p className={`text-4xl font-display ${getScoreColor(analysis.matchup_score)}`}>
                 {analysis.matchup_score}/100
               </p>
-              <div className="w-full bg-muted rounded-full h-2">
+              <div className="w-full bg-gray-700 h-3 border border-gray-600">
                 <div
-                  className="bg-primary h-2 rounded-full transition-all"
+                  className="bg-white h-full transition-all"
                   style={{ width: `${analysis.matchup_score}%` }}
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Weather Impact</p>
-              <p className={`text-3xl font-bold ${getScoreColor(analysis.weather_impact)}`}>
+            <div className="space-y-4 p-6 bg-black border-2 border-gray-600">
+              <p className="text-sm text-gray-400 font-display uppercase tracking-[0.2em]">Weather Impact</p>
+              <p className={`text-4xl font-display ${getScoreColor(analysis.weather_impact)}`}>
                 {analysis.weather_impact}/100
               </p>
-              <div className="w-full bg-muted rounded-full h-2">
+              <div className="w-full bg-gray-700 h-3 border border-gray-600">
                 <div
-                  className="bg-primary h-2 rounded-full transition-all"
+                  className="bg-white h-full transition-all"
                   style={{ width: `${analysis.weather_impact}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {/* AI Grade */}
-          <div className="border-t pt-4">
-            <p className="text-sm text-muted-foreground mb-2">AI Grade</p>
-            <div className="flex items-baseline gap-4">
-              <p className={`text-5xl font-bold ${getGradeColor(analysis.ai_grade.grade)}`}>
-                {analysis.ai_grade.grade}
-              </p>
-              <div className="flex-1">
-                <p className="text-2xl font-semibold">
-                  {analysis.ai_grade.predicted_points} pts
+          {/* AI Grade & Projection */}
+          <div className="border-t-2 border-gray-600 pt-6">
+            <p className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-4">AI Championship Grade</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 bg-black border-2 border-gray-600">
+              <div className="text-center">
+                <p className={`text-6xl font-script ${getGradeColor(analysis.ai_grade.grade)}`}>
+                  {analysis.ai_grade.grade}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Projected fantasy points
-                </p>
+                <p className="text-xs text-gray-500 uppercase tracking-[0.3em] font-display mt-2">Grade</p>
               </div>
-            </div>
-            <div className="mt-2">
-              <p className="text-sm">
-                <span className="text-muted-foreground">Confidence: </span>
-                <span className="font-semibold">{analysis.ai_grade.confidence}%</span>
-              </p>
+              <div className="flex-1 space-y-2">
+                <p className="text-3xl font-display text-white">
+                  {analysis.ai_grade.predicted_points} <span className="text-lg text-gray-400">PTS</span>
+                </p>
+                <p className="text-sm text-gray-400 uppercase tracking-[0.2em] font-display">
+                  Projected Fantasy Points
+                </p>
+                <div className="mt-3">
+                  <p className="text-sm font-body">
+                    <span className="text-gray-400 uppercase tracking-wider">Confidence: </span>
+                    <span className="font-display text-white uppercase tracking-wider">{analysis.ai_grade.confidence}%</span>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Recommendation Reasoning */}
+          {/* Championship Analysis */}
           {analysis.recommendation.reason && (
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground mb-1">Analysis</p>
-              <p className="text-sm">{analysis.recommendation.reason}</p>
+            <div className="border-t-2 border-gray-600 pt-6">
+              <p className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-4">Championship Analysis</p>
+              <div className="p-6 bg-gray-800 border-2 border-gray-600">
+                <p className="text-sm font-body leading-relaxed text-gray-100">{analysis.recommendation.reason}</p>
+              </div>
             </div>
           )}
 
-          {/* Weather Data Details */}
+          {/* Weather Conditions */}
           {analysis.weather_data && (
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground mb-2">Weather Conditions</p>
-              <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="border-t-2 border-gray-600 pt-6">
+              <p className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-4">Field Conditions</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {analysis.weather_data.temperature && (
-                  <div>
-                    <p className="text-muted-foreground">Temp</p>
-                    <p className="font-semibold">{analysis.weather_data.temperature}°F</p>
+                  <div className="p-4 bg-black border-2 border-gray-600 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-[0.3em] font-display">Temperature</p>
+                    <p className="text-2xl font-display text-white mt-2">{analysis.weather_data.temperature}°F</p>
                   </div>
                 )}
                 {analysis.weather_data.wind_speed && (
-                  <div>
-                    <p className="text-muted-foreground">Wind</p>
-                    <p className="font-semibold">{analysis.weather_data.wind_speed} mph</p>
+                  <div className="p-4 bg-black border-2 border-gray-600 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-[0.3em] font-display">Wind Speed</p>
+                    <p className="text-2xl font-display text-white mt-2">{analysis.weather_data.wind_speed} MPH</p>
                   </div>
                 )}
                 {analysis.weather_data.conditions && (
-                  <div>
-                    <p className="text-muted-foreground">Conditions</p>
-                    <p className="font-semibold">{analysis.weather_data.conditions}</p>
+                  <div className="p-4 bg-black border-2 border-gray-600 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-[0.3em] font-display">Conditions</p>
+                    <p className="text-lg font-display text-white mt-2 uppercase tracking-wider">{analysis.weather_data.conditions}</p>
                   </div>
                 )}
               </div>

@@ -52,47 +52,49 @@ export function Auth({ onAuthSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 font-body">
+      <Card className="w-full max-w-md p-8 bg-gray-900 text-white border-4 border-gray-700">
+        <div className="text-center mb-8 border-b-2 border-gray-600 pb-6">
+          <h1 className="text-4xl font-script text-white mb-4">
             Pilon
           </h1>
-          <p className="text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Create a new account'}
+          <p className="text-gray-300 font-display uppercase tracking-[0.2em] text-sm">
+            {isLogin ? 'Championship Login' : 'Join The Champions'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
                   First Name
                 </label>
                 <Input
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => handleChange('first_name', e.target.value)}
-                  placeholder="John"
+                  placeholder="JOHN"
+                  className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
                   Last Name
                 </label>
                 <Input
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => handleChange('last_name', e.target.value)}
-                  placeholder="Doe"
+                  placeholder="DOE"
+                  className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
                 />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
               {isLogin ? 'Email or Username' : 'Email'}
             </label>
             <Input
@@ -100,13 +102,14 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               required
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              placeholder={isLogin ? 'email@example.com or username' : 'email@example.com'}
+              placeholder={isLogin ? 'EMAIL@CHAMPION.COM OR USERNAME' : 'EMAIL@CHAMPION.COM'}
+              className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
             />
           </div>
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
                 Username
               </label>
               <Input
@@ -114,14 +117,15 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                 required
                 value={formData.username}
                 onChange={(e) => handleChange('username', e.target.value)}
-                placeholder="username"
+                placeholder="CHAMPION"
                 minLength={3}
+                className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
               Password
             </label>
             <Input
@@ -131,36 +135,37 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               onChange={(e) => handleChange('password', e.target.value)}
               placeholder="••••••••"
               minLength={8}
+              className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500"
             />
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="p-4 bg-red-900 border-2 border-red-700 text-center">
+              <p className="text-sm text-red-300 font-display uppercase tracking-wider">{error}</p>
             </div>
           )}
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-white text-black hover:bg-gray-100 font-display uppercase tracking-[0.2em] text-lg py-6 border-2 border-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             disabled={loading}
           >
-            {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
+            {loading ? 'PROCESSING...' : isLogin ? 'ENTER CHAMPIONSHIP' : 'JOIN CHAMPIONS'}
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center border-t-2 border-gray-600 pt-6">
           <button
             type="button"
             onClick={() => {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm text-indigo-600 hover:text-indigo-500"
+            className="text-sm text-gray-300 hover:text-white font-display uppercase tracking-[0.2em] transition-colors"
           >
             {isLogin
-              ? "Don't have an account? Sign up"
-              : 'Already have an account? Sign in'}
+              ? "NEW CHAMPION? JOIN HERE"
+              : 'CHAMPION RETURNING? SIGN IN'}
           </button>
         </div>
       </Card>
