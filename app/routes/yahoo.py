@@ -28,7 +28,7 @@ def yahoo_auth():
 
 @bp.route('/leagues')
 @require_auth
-def get_yahoo_leagues():
+def get_yahoo_leagues(current_user):
     """
     Get user's Yahoo Fantasy leagues
 
@@ -45,7 +45,7 @@ def get_yahoo_leagues():
 
 @bp.route('/import', methods=['POST'])
 @require_auth
-def import_yahoo_roster():
+def import_yahoo_roster(current_user):
     """
     Import roster from Yahoo Fantasy
 
@@ -72,7 +72,7 @@ def import_yahoo_roster():
 
 @bp.route('/status')
 @require_auth
-def yahoo_status():
+def yahoo_status(current_user):
     """
     Get Yahoo integration status for current user
     """
