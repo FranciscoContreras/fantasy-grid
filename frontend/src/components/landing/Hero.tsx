@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { getTeamLogoUrl, getPlayerImageUrl, getPlayerInitials, handleImageError, teamColors } from '../../lib/images';
+import { getTeamLogoUrl, getPlayerImageUrl, getPlayerInitials, handleImageError, teamColors, VERIFIED_ESPN_PLAYER_IDS } from '../../lib/images';
 import { getTopFantasyPlayers, getPlayerAnalysisWithScoring } from '../../lib/api';
 import PilonLogo from '../../assets/logo.svg';
 
@@ -453,7 +453,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
                   <img
-                    src={getPlayerImageUrl(player.id)}
+                    src={getPlayerImageUrl(VERIFIED_ESPN_PLAYER_IDS[player.name] || player.id)}
                     alt={player.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
                     onError={(e) => handleImageError(e)}

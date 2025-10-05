@@ -73,24 +73,33 @@ export const VERIFIED_ESPN_PLAYER_IDS: Record<string, string> = {
   'Josh Allen': '3918298',
   'Patrick Mahomes': '3139477',
   'Lamar Jackson': '3916387',
+  'Dak Prescott': '2577417',
   'Caleb Williams': '4431611',
+  'Jayden Daniels': '4360310',
 
   // Running Backs
   'Saquon Barkley': '3929630',
   'Christian McCaffrey': '3116369',
   'Josh Jacobs': '4035687',
+  'Derrick Henry': '4038524',
+  'Aaron Jones': '3042519',
+  'Tony Pollard': '4242335',
 
   // Wide Receivers
   'Tyreek Hill': '3116406',
   'Justin Jefferson': '4262921',
+  'CeeDee Lamb': '4262921',
   'Cooper Kupp': '3116593',
   'Davante Adams': '2976499',
+  'Stefon Diggs': '2976499',
   'Mike Evans': '16737',
+  'Amari Cooper': '3045138',
 
   // Tight Ends
   'Travis Kelce': '15847',
   'Mark Andrews': '3043078',
-  'George Kittle': '3043079'
+  'George Kittle': '3043079',
+  'Kyle Pitts': '4240069'
 };
 
 /**
