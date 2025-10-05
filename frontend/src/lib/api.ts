@@ -216,14 +216,46 @@ export const getPlayerDetails = async (playerId: string) => {
 
 // Get featured players for landing page showcase
 export const getFeaturedPlayers = async (limit: number = 6) => {
-  const response = await api.get('/advanced/players', {
-    params: {
-      limit,
-      season: 2025,
-      week: 6
+  // Try to get fantasy-relevant skill position players
+  try {
+    const positions = ['QB', 'RB', 'WR', 'TE'];
+    const allPlayers = [];
+
+    // Get top players from each position
+    for (const position of positions) {
+      const response = await api.get('/advanced/players', {
+        params: {
+          position,
+          status: 'active',
+          limit: Math.ceil(limit / positions.length) + 1
+        }
+      });
+
+      if (response.data?.data) {
+        // Filter for known fantasy relevant players (exclude obvious backups/practice squad)
+        const relevant = response.data.data.filter((player: any) =>
+          player.name &&
+          !player.name.includes('Practice') &&
+          player.jersey_number &&
+          player.jersey_number < 90  // Most skill position players have numbers < 90
+        );
+        allPlayers.push(...relevant.slice(0, 2)); // Take top 2 from each position
+      }
     }
-  });
-  return response.data;
+
+    return { data: allPlayers.slice(0, limit) };
+  } catch (error) {
+    // Fallback to original API call
+    const response = await api.get('/advanced/players', {
+      params: {
+        status: 'active',
+        limit,
+        season: 2025,
+        week: 6
+      }
+    });
+    return response.data;
+  }
 };
 
 // Get player analysis with multiple scoring formats
