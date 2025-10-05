@@ -67,7 +67,7 @@ export function HowItWorks() {
                 </p>
 
                 {/* Time indicator */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -89,17 +89,17 @@ export function HowItWorks() {
 
         {/* Bottom stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-black text-white rounded-2xl p-8 text-center">
+          <div className="bg-gray-900 text-white rounded-2xl p-8 text-center shadow-sm">
             <div className="text-4xl font-black mb-2">&lt; 3 min</div>
-            <div className="text-gray-400 uppercase tracking-wider text-xs font-semibold">Setup Time</div>
+            <div className="text-gray-300 uppercase tracking-wider text-xs font-semibold">Setup Time</div>
           </div>
-          <div className="bg-black text-white rounded-2xl p-8 text-center">
+          <div className="bg-gray-900 text-white rounded-2xl p-8 text-center shadow-sm">
             <div className="text-4xl font-black mb-2">Instant</div>
-            <div className="text-gray-400 uppercase tracking-wider text-xs font-semibold">Recommendations</div>
+            <div className="text-gray-300 uppercase tracking-wider text-xs font-semibold">Recommendations</div>
           </div>
-          <div className="bg-black text-white rounded-2xl p-8 text-center">
+          <div className="bg-gray-900 text-white rounded-2xl p-8 text-center shadow-sm">
             <div className="text-4xl font-black mb-2">Weekly</div>
-            <div className="text-gray-400 uppercase tracking-wider text-xs font-semibold">Auto Updates</div>
+            <div className="text-gray-300 uppercase tracking-wider text-xs font-semibold">Auto Updates</div>
           </div>
         </div>
       </div>

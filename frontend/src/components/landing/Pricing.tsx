@@ -76,15 +76,15 @@ export function Pricing({ onGetStarted }: PricingProps) {
               {/* Popular Badge */}
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                  <div className="bg-black text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-wider">
+                  <div className="bg-gray-900 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-wider shadow-sm">
                     Most Popular
                   </div>
                 </div>
               )}
 
-              <div className={`relative bg-gray-50 border ${
-                plan.popular ? 'border-black' : 'border-gray-200'
-              } rounded-3xl p-8 sm:p-10 hover:bg-gray-100 transition-all`}>
+              <div className={`relative bg-white border ${
+                plan.popular ? 'border-gray-900' : 'border-gray-200'
+              } rounded-3xl p-8 sm:p-10 hover:shadow-md transition-all shadow-sm`}>
                 {/* Plan Name & Description */}
                 <div className="mb-8">
                   <h3 className="text-4xl font-black mb-2 tracking-tight">{plan.name}</h3>
@@ -94,7 +94,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                 {/* Price */}
                 <div className="mb-8">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-6xl sm:text-7xl font-black text-black">
+                    <span className="text-6xl sm:text-7xl font-black text-gray-900">
                       {plan.price}
                     </span>
                     <span className="text-xl text-gray-600 font-semibold">/SEASON</span>
@@ -110,9 +110,9 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   onClick={onGetStarted}
                   className={`w-full mb-10 text-lg py-7 font-black tracking-tight ${
                     plan.popular
-                      ? 'bg-black text-white hover:bg-gray-900'
-                      : 'bg-white border-2 border-black text-black hover:bg-gray-50'
-                  } transform hover:scale-105 transition-all`}
+                      ? 'bg-gray-900 text-white hover:bg-gray-800'
+                      : 'bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-50'
+                  } transform hover:scale-105 transition-all rounded-xl shadow-sm`}
                 >
                   {plan.cta}
                   <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +128,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                   {plan.features.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <svg
-                        className="w-6 h-6 flex-shrink-0 text-black"
+                        className="w-6 h-6 flex-shrink-0 text-green-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -142,7 +142,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
                       </svg>
                       <span
                         className={`text-gray-700 text-sm ${
-                          feature.includes('Everything in') ? 'font-bold text-black' : ''
+                          feature.includes('Everything in') ? 'font-bold text-gray-900' : ''
                         }`}
                       >
                         {feature}
@@ -163,8 +163,8 @@ export function Pricing({ onGetStarted }: PricingProps) {
           </div>
 
           <div className="space-y-4">
-            <details className="bg-gray-50 border border-gray-200 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 transition-all group">
-              <summary className="font-black text-black text-lg tracking-tight">
+            <details className="bg-white border border-gray-200 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group shadow-sm">
+              <summary className="font-black text-gray-900 text-lg tracking-tight">
                 Is the Free plan really free?
               </summary>
               <p className="mt-4 text-gray-600 leading-relaxed">
@@ -174,8 +174,8 @@ export function Pricing({ onGetStarted }: PricingProps) {
               </p>
             </details>
 
-            <details className="bg-gray-50 border border-gray-200 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 transition-all group">
-              <summary className="font-black text-black text-lg tracking-tight">
+            <details className="bg-white border border-gray-200 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group shadow-sm">
+              <summary className="font-black text-gray-900 text-lg tracking-tight">
                 Can I cancel anytime?
               </summary>
               <p className="mt-4 text-gray-600 leading-relaxed">
@@ -184,8 +184,8 @@ export function Pricing({ onGetStarted }: PricingProps) {
               </p>
             </details>
 
-            <details className="bg-gray-50 border border-gray-200 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 transition-all group">
-              <summary className="font-black text-black text-lg tracking-tight">
+            <details className="bg-white border border-gray-200 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group shadow-sm">
+              <summary className="font-black text-gray-900 text-lg tracking-tight">
                 How accurate are the recommendations?
               </summary>
               <p className="mt-4 text-gray-600 leading-relaxed">
@@ -195,8 +195,8 @@ export function Pricing({ onGetStarted }: PricingProps) {
               </p>
             </details>
 
-            <details className="bg-gray-50 border border-gray-200 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 transition-all group">
-              <summary className="font-black text-black text-lg tracking-tight">
+            <details className="bg-white border border-gray-200 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group shadow-sm">
+              <summary className="font-black text-gray-900 text-lg tracking-tight">
                 What league formats do you support?
               </summary>
               <p className="mt-4 text-gray-600 leading-relaxed">
@@ -210,7 +210,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
 
         {/* Final CTA */}
         <div className="relative">
-          <div className="relative bg-black text-white rounded-3xl p-12 sm:p-16 text-center">
+          <div className="relative bg-gray-900 text-white rounded-3xl p-12 sm:p-16 text-center shadow-sm">
             <h3 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight">
               READY TO
               <br />
@@ -223,7 +223,7 @@ export function Pricing({ onGetStarted }: PricingProps) {
             <Button
               size="lg"
               onClick={onGetStarted}
-              className="bg-white text-black hover:bg-gray-100 text-lg font-black px-12 py-7 hover:scale-105 transition-all tracking-tight"
+              className="bg-white text-gray-900 hover:bg-gray-100 text-lg font-black px-12 py-7 hover:scale-105 transition-all tracking-tight rounded-xl"
             >
               START WINNING NOW
               <svg className="ml-2 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
