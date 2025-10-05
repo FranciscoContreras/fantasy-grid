@@ -67,8 +67,18 @@ export function getPlayerInitials(playerName: string): string {
 }
 
 /**
+ * Players with known outdated ESPN images (will use current team uniform-based fallback)
+ * These players have correct ESPN IDs but the photos show old team uniforms
+ */
+export const OUTDATED_ESPN_IMAGES: Set<string> = new Set([
+  'Josh Jacobs',   // ESPN shows old Colts uniform, now plays for Packers
+  'Derrick Henry'  // ESPN shows old Titans uniform, now plays for Ravens
+]);
+
+/**
  * VERIFIED ESPN Player IDs for popular players (2025 season)
  * Use these IDs to ensure correct player images are displayed
+ * Note: Some players may have outdated uniform photos on ESPN
  */
 export const VERIFIED_ESPN_PLAYER_IDS: Record<string, string> = {
   // Quarterbacks
@@ -82,8 +92,8 @@ export const VERIFIED_ESPN_PLAYER_IDS: Record<string, string> = {
   // Running Backs
   'Saquon Barkley': '3929630',
   'Christian McCaffrey': '3116369',
-  'Josh Jacobs': '4035687',
-  'Derrick Henry': '4038524',
+  'Josh Jacobs': '4035687',    // ⚠️ Outdated uniform (Colts -> Packers)
+  'Derrick Henry': '4038524',  // ⚠️ Outdated uniform (Titans -> Ravens)
   'Aaron Jones': '3042519',
   'Tony Pollard': '4242335',
 
@@ -103,6 +113,34 @@ export const VERIFIED_ESPN_PLAYER_IDS: Record<string, string> = {
   'George Kittle': '3043079',
   'Kyle Pitts': '4240069'
 };
+
+/**
+ * Get appropriate player image URL, with fallback for outdated ESPN images
+ * @param playerName - Full player name
+ * @param currentTeam - Player's current team abbreviation
+ * @param espnPlayerId - ESPN player ID
+ */
+export function getPlayerImageUrlSmart(
+  playerName: string,
+  currentTeam: string,
+  espnPlayerId?: string | number
+): string {
+  // Check if this player has known outdated ESPN image
+  if (OUTDATED_ESPN_IMAGES.has(playerName)) {
+    console.log(`Using team logo fallback for ${playerName} (outdated ESPN uniform)`);
+    // Return a team-colored placeholder instead of wrong uniform
+    return getTeamLogoUrl(currentTeam, 200);
+  }
+
+  // Use verified ESPN ID if available
+  const verifiedId = VERIFIED_ESPN_PLAYER_IDS[playerName];
+  if (verifiedId) {
+    return getPlayerImageUrl(verifiedId);
+  }
+
+  // Fallback to provided ESPN ID or default
+  return getPlayerImageUrl(espnPlayerId);
+}
 
 /**
  * Handle image loading errors with fallback

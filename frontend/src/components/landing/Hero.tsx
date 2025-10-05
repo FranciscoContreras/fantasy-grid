@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { getTeamLogoUrl, getPlayerImageUrl, getPlayerInitials, handleImageError, teamColors, VERIFIED_ESPN_PLAYER_IDS } from '../../lib/images';
+import { getTeamLogoUrl, getPlayerImageUrl, getPlayerImageUrlSmart, getPlayerInitials, handleImageError, teamColors, VERIFIED_ESPN_PLAYER_IDS } from '../../lib/images';
 import { getTopFantasyPlayers, getPlayerAnalysisWithScoring } from '../../lib/api';
 import PilonLogo from '../../assets/logo.svg';
 
@@ -454,10 +454,9 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
                 <div className="relative">
                   <img
                     src={(() => {
-                      const verifiedId = VERIFIED_ESPN_PLAYER_IDS[player.name];
-                      const finalId = verifiedId || player.id;
-                      console.log(`Player: ${player.name}, Verified ID: ${verifiedId}, Final ID: ${finalId}`);
-                      return getPlayerImageUrl(finalId);
+                      const imageUrl = getPlayerImageUrlSmart(player.name, player.team, player.id);
+                      console.log(`Player: ${player.name} (${player.team}), Image URL: ${imageUrl}`);
+                      return imageUrl;
                     })()}
                     alt={player.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
