@@ -8,151 +8,174 @@ interface HeroProps {
 
 export function Hero({ onGetStarted, onSignIn }: HeroProps) {
   return (
-    <div className="relative min-h-screen bg-black text-white overflow-hidden font-body">
-      {/* Geometric Background Pattern */}
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden font-system">
+      {/* Subtle Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-gray-900 to-transparent opacity-50"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 border-l-4 border-b-4 border-white opacity-10"></div>
-        <div className="absolute top-20 right-20 w-32 h-32 border-2 border-white opacity-5 rotate-45"></div>
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-teal-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/20 rounded-full"></div>
       </div>
 
-      {/* Navigation */}
-      <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <img src={PilonLogo} alt="Pilon" className="w-20 h-14 object-contain invert" />
+      {/* Glass Navigation */}
+      <nav className="relative z-10 max-w-6xl mx-auto px-6 py-4">
+        <div className="glass-card compact-padding">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src={PilonLogo} alt="Pilon" className="w-16 h-12 object-contain brightness-0 invert" />
+            </div>
+            <Button
+              variant="outline"
+              onClick={onSignIn}
+              className="glass border-white/30 text-white hover:bg-white/10 font-medium text-sm px-6 py-2 rounded-xl transition-all"
+            >
+              Sign In
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={onSignIn}
-            className="border-white text-white hover:bg-white hover:text-black font-semibold tracking-wider uppercase text-sm px-8 py-3"
-          >
-            Sign In
-          </Button>
         </div>
       </nav>
 
       {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-        <div className="max-w-5xl">
-          {/* Vintage Athletic Badge */}
-          <div className="inline-flex items-center gap-2 px-6 py-3 border-2 border-white bg-transparent mb-12">
-            <div className="w-3 h-3 bg-white"></div>
-            <span className="text-sm font-bold text-white uppercase tracking-[0.2em] font-display">
-              Est. 2024 • NFL Analytics
-            </span>
-            <div className="w-3 h-3 bg-white"></div>
-          </div>
-
-          {/* Main Script Headline */}
-          <h1 className="font-script text-7xl sm:text-8xl md:text-9xl lg:text-[12rem] leading-none mb-6 text-white">
-            Dominate
-          </h1>
-
-          {/* Secondary Bold Text */}
-          <div className="mb-12">
-            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-tighter text-white mb-4">
-              YOUR LEAGUE
-            </h2>
-            <div className="w-32 h-1 bg-white mb-8"></div>
-          </div>
-
-          {/* Subheadline */}
-          <p className="text-xl sm:text-2xl md:text-3xl text-gray-300 font-light mb-16 max-w-3xl leading-relaxed">
-            AI-powered start/sit decisions.
-            <br />
-            Real-time analytics.
-            <br />
-            <span className="text-white font-semibold">Zero guesswork.</span>
-          </p>
-
-          {/* Neo-Vintage CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 mb-20">
-            <Button
-              size="lg"
-              onClick={onGetStarted}
-              className="px-12 py-6 bg-white text-black hover:bg-gray-100 text-lg font-display uppercase tracking-wider border-4 border-white transition-all hover:scale-105"
-            >
-              START WINNING
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={onSignIn}
-              className="px-12 py-6 border-4 border-white text-white hover:bg-white hover:text-black text-lg font-display uppercase tracking-wider transition-all hover:scale-105"
-            >
-              WATCH DEMO
-            </Button>
-          </div>
-
-          {/* Vintage Athletic Stats */}
-          <div className="flex flex-wrap gap-16 text-sm border-t-4 border-white pt-12">
-            <div className="text-center">
-              <div className="text-5xl font-display text-white mb-2">10K+</div>
-              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Champions</div>
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+          {/* Left Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Badge */}
+            <div className="glass-card inline-flex items-center gap-3 px-4 py-2 text-xs font-medium text-white/80">
+              <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+              <span>EST. 2024 • NFL ANALYTICS</span>
+              <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
             </div>
-            <div className="text-center">
-              <div className="text-5xl font-display text-white mb-2">73%</div>
-              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Win Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-display text-white mb-2">4.9★</div>
-              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Rating</div>
-            </div>
-          </div>
-        </div>
 
-        {/* Neo-Vintage Preview Cards */}
-        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl">
-          {/* START Card - Championship Gold */}
-          <div className="group relative bg-white text-black border-4 border-black p-8 hover:scale-105 transition-all hover:shadow-2xl">
-            <div className="absolute top-4 right-4 w-12 h-12 bg-black text-white flex items-center justify-center font-display text-xl font-bold">
-              A+
+            {/* Main Headline */}
+            <div className="space-y-4">
+              <h1 className="font-logo text-6xl sm:text-7xl md:text-8xl leading-none text-white">
+                Pilon
+              </h1>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-white/90 leading-tight">
+                Intelligent Fantasy Football
+                <br />
+                <span className="font-semibold">Analytics Platform</span>
+              </h2>
             </div>
-            <div className="w-20 h-20 bg-black mb-6"></div>
-            <div className="text-3xl font-display mb-2 uppercase tracking-tight">P. MAHOMES</div>
-            <div className="text-sm text-gray-600 mb-6 uppercase tracking-[0.3em] font-bold">QB · KANSAS CITY</div>
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-black">
-              START
+
+            {/* Value Proposition */}
+            <p className="text-lg text-white/70 font-light max-w-lg leading-relaxed">
+              AI-powered start/sit decisions with real-time analytics.
+              Make championship-winning moves with zero guesswork.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Button
+                size="lg"
+                onClick={onGetStarted}
+                className="glass bg-white/20 text-white hover:bg-white/30 font-medium px-8 py-3 rounded-xl border-0 transition-all"
+              >
+                Get Started
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={onSignIn}
+                className="glass border-white/20 text-white hover:bg-white/10 font-medium px-8 py-3 rounded-xl transition-all"
+              >
+                View Demo
+              </Button>
             </div>
           </div>
 
-          {/* CONSIDER Card - Silver */}
-          <div className="group relative bg-gray-800 text-white border-4 border-gray-600 p-8 hover:scale-105 transition-all hover:shadow-2xl">
-            <div className="absolute top-4 right-4 w-12 h-12 bg-gray-600 text-white flex items-center justify-center font-display text-xl font-bold">
-              B+
+          {/* Right Stats Grid */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            <div className="glass-card compact-padding text-center">
+              <div className="text-3xl font-bold text-white mb-1">10K+</div>
+              <div className="text-xs text-white/60 font-medium">Users</div>
             </div>
-            <div className="w-20 h-20 bg-gray-600 mb-6"></div>
-            <div className="text-3xl font-display mb-2 uppercase tracking-tight">S. BARKLEY</div>
-            <div className="text-sm text-gray-400 mb-6 uppercase tracking-[0.3em] font-bold">RB · NEW YORK</div>
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-gray-600">
-              CONSIDER
+            <div className="glass-card compact-padding text-center">
+              <div className="text-3xl font-bold text-amber-400 mb-1">73%</div>
+              <div className="text-xs text-white/60 font-medium">Win Rate</div>
             </div>
-          </div>
-
-          {/* BENCH Card - Bronze */}
-          <div className="group relative bg-gray-200 text-gray-700 border-4 border-gray-400 p-8 hover:scale-105 transition-all hover:shadow-2xl opacity-80">
-            <div className="absolute top-4 right-4 w-12 h-12 bg-gray-400 text-white flex items-center justify-center font-display text-xl font-bold">
-              C
+            <div className="glass-card compact-padding text-center">
+              <div className="text-3xl font-bold text-emerald-400 mb-1">4.9★</div>
+              <div className="text-xs text-white/60 font-medium">Rating</div>
             </div>
-            <div className="w-20 h-20 bg-gray-400 mb-6"></div>
-            <div className="text-3xl font-display mb-2 uppercase tracking-tight">D. HOPKINS</div>
-            <div className="text-sm text-gray-500 mb-6 uppercase tracking-[0.3em] font-bold">WR · TENNESSEE</div>
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-400 text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-gray-400">
-              BENCH
+            <div className="glass-card compact-padding text-center">
+              <div className="text-3xl font-bold text-white mb-1">24/7</div>
+              <div className="text-xs text-white/60 font-medium">Analysis</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Neo-Vintage Scroll Indicator */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10">
-        <div className="flex flex-col items-center gap-4 text-white">
-          <div className="w-px h-16 bg-white opacity-50"></div>
-          <span className="text-sm uppercase tracking-[0.3em] font-bold font-display">EXPLORE</span>
-          <svg className="w-8 h-8 animate-bounce" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2L12 20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-          </svg>
+      {/* Preview Cards */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h3 className="text-2xl font-semibold text-white mb-2">Live Player Analysis</h3>
+          <p className="text-white/60">See how our AI grades your players in real-time</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* START Card */}
+          <div className="glass-card p-6 hover:scale-105 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A+</span>
+              </div>
+              <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">
+                START
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold text-white">P. Mahomes</h4>
+              <p className="text-sm text-white/60">QB • Kansas City</p>
+              <div className="text-2xl font-bold text-emerald-400">24.8 pts</div>
+            </div>
+          </div>
+
+          {/* CONSIDER Card */}
+          <div className="glass-card p-6 hover:scale-105 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">B+</span>
+              </div>
+              <div className="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">
+                CONSIDER
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold text-white">S. Barkley</h4>
+              <p className="text-sm text-white/60">RB • New York</p>
+              <div className="text-2xl font-bold text-amber-400">18.3 pts</div>
+            </div>
+          </div>
+
+          {/* BENCH Card */}
+          <div className="glass-card p-6 hover:scale-105 transition-all group opacity-80">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">C</span>
+              </div>
+              <div className="px-3 py-1 bg-gray-500/20 text-gray-400 text-xs font-medium rounded-full">
+                BENCH
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold text-white">D. Hopkins</h4>
+              <p className="text-sm text-white/60">WR • Tennessee</p>
+              <div className="text-2xl font-bold text-gray-400">12.1 pts</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+        <div className="glass-card compact-padding">
+          <div className="flex flex-col items-center gap-2 text-white/60">
+            <span className="text-xs font-medium">Explore</span>
+            <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </div>
         </div>
       </div>
     </div>

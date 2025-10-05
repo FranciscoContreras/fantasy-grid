@@ -52,49 +52,55 @@ export function Auth({ onAuthSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4 font-body">
-      <Card className="w-full max-w-md p-8 bg-gray-900 text-white border-4 border-gray-700">
-        <div className="text-center mb-8 border-b-2 border-gray-600 pb-6">
-          <h1 className="text-4xl font-script text-white mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 font-system">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/5 to-orange-600/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-emerald-500/5 to-teal-600/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative w-full max-w-md glass-card p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-logo text-white mb-3">
             Pilon
           </h1>
-          <p className="text-gray-300 font-display uppercase tracking-[0.2em] text-sm">
-            {isLogin ? 'Championship Login' : 'Join The Champions'}
+          <p className="text-white/60 font-medium text-sm">
+            {isLogin ? 'Welcome back' : 'Join the platform'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
+                <label className="block text-sm font-medium text-white/80 mb-2">
                   First Name
                 </label>
                 <Input
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => handleChange('first_name', e.target.value)}
-                  placeholder="JOHN"
-                  className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
+                  placeholder="John"
+                  className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
                 />
               </div>
               <div>
-                <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
+                <label className="block text-sm font-medium text-white/80 mb-2">
                   Last Name
                 </label>
                 <Input
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => handleChange('last_name', e.target.value)}
-                  placeholder="DOE"
-                  className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
+                  placeholder="Doe"
+                  className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
                 />
               </div>
-            </>
+            </div>
           )}
 
           <div>
-            <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
+            <label className="block text-sm font-medium text-white/80 mb-2">
               {isLogin ? 'Email or Username' : 'Email'}
             </label>
             <Input
@@ -102,14 +108,14 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               required
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              placeholder={isLogin ? 'EMAIL@CHAMPION.COM OR USERNAME' : 'EMAIL@CHAMPION.COM'}
-              className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
+              placeholder={isLogin ? 'email@example.com or username' : 'email@example.com'}
+              className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
             />
           </div>
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
+              <label className="block text-sm font-medium text-white/80 mb-2">
                 Username
               </label>
               <Input
@@ -117,15 +123,15 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                 required
                 value={formData.username}
                 onChange={(e) => handleChange('username', e.target.value)}
-                placeholder="CHAMPION"
+                placeholder="username"
                 minLength={3}
-                className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500 placeholder:uppercase placeholder:tracking-wider"
+                className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-display uppercase tracking-[0.2em] text-gray-400 mb-3">
+            <label className="block text-sm font-medium text-white/80 mb-2">
               Password
             </label>
             <Input
@@ -135,40 +141,40 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               onChange={(e) => handleChange('password', e.target.value)}
               placeholder="••••••••"
               minLength={8}
-              className="bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white placeholder:text-gray-500"
+              className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/50"
             />
           </div>
 
           {error && (
-            <div className="p-4 bg-red-900 border-2 border-red-700 text-center">
-              <p className="text-sm text-red-300 font-display uppercase tracking-wider">{error}</p>
+            <div className="glass-dark p-4 rounded-xl text-center">
+              <p className="text-sm text-red-300 font-medium">{error}</p>
             </div>
           )}
 
           <Button
             type="submit"
-            className="w-full bg-white text-black hover:bg-gray-100 font-display uppercase tracking-[0.2em] text-lg py-6 border-2 border-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full glass bg-white/20 text-white hover:bg-white/30 font-semibold py-3 rounded-xl border-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             disabled={loading}
           >
-            {loading ? 'PROCESSING...' : isLogin ? 'ENTER CHAMPIONSHIP' : 'JOIN CHAMPIONS'}
+            {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
           </Button>
         </form>
 
-        <div className="mt-8 text-center border-t-2 border-gray-600 pt-6">
+        <div className="mt-6 text-center">
           <button
             type="button"
             onClick={() => {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm text-gray-300 hover:text-white font-display uppercase tracking-[0.2em] transition-colors"
+            className="text-sm text-white/60 hover:text-white font-medium transition-colors"
           >
             {isLogin
-              ? "NEW CHAMPION? JOIN HERE"
-              : 'CHAMPION RETURNING? SIGN IN'}
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'}
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

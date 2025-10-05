@@ -15,10 +15,10 @@ const OnboardingWizard = lazy(() => import('./components/OnboardingWizard').then
 
 // Loading fallback component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-black text-white">
-    <div className="text-center">
-      <div className="animate-spin h-16 w-16 border-4 border-gray-600 border-t-white mx-auto mb-6"></div>
-      <p className="text-gray-300 font-display uppercase tracking-[0.3em] text-lg">Loading Championship...</p>
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white font-system">
+    <div className="glass-card compact-padding text-center">
+      <div className="animate-spin h-12 w-12 border-2 border-white/20 border-t-white mx-auto mb-4"></div>
+      <p className="text-white/80 font-medium">Loading...</p>
     </div>
   </div>
 );
@@ -96,10 +96,10 @@ function App() {
   if (!authenticated && showAuth) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <div className="min-h-screen bg-white flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col font-system">
           {/* Back button */}
-          <div className="p-4">
-            <Button variant="outline" onClick={handleBackToLanding} className="gap-2">
+          <div className="p-6">
+            <Button variant="outline" onClick={handleBackToLanding} className="glass border-white/20 text-white hover:bg-white/10 gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -147,29 +147,34 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white safe-top safe-bottom font-body">
-      <div className="container mx-auto py-6 md:py-12 px-4 md:px-6">
-        {/* Neo-Vintage Header */}
-        <div className="mb-8 md:mb-12 border-b-4 border-white pb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white safe-top safe-bottom font-system">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-teal-600/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative container mx-auto py-6 px-6 max-w-7xl">
+        {/* Header */}
+        <div className="glass-card compact-padding mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex-1">
-              <h1 className="text-4xl md:text-6xl font-script mb-4 text-white">Pilon</h1>
-              <p className="text-sm md:text-lg text-gray-300 font-body max-w-2xl uppercase tracking-[0.2em]">
-                AI-Powered Fantasy Football Analytics • Championship Performance
+              <h1 className="text-3xl font-logo mb-2 text-white">Pilon</h1>
+              <p className="text-sm text-white/70 font-medium">
+                AI-Powered Fantasy Football Analytics
               </p>
             </div>
-            <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
+            <div className="flex items-center gap-4">
               {user && (
-                <div className="text-left sm:text-right flex-1 sm:flex-none">
-                  <p className="text-lg font-display uppercase tracking-wider text-white truncate max-w-[150px]">{user.username}</p>
-                  <p className="text-xs text-gray-400 uppercase tracking-[0.2em] truncate max-w-[150px] hidden sm:block">{user.email}</p>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-white">{user.username}</p>
+                  <p className="text-xs text-white/60">{user.email}</p>
                 </div>
               )}
               <Button
                 variant="outline"
-                size="lg"
                 onClick={handleLogout}
-                className="shrink-0 border-2 border-white text-white hover:bg-white hover:text-black font-display uppercase tracking-wider px-6 py-3"
+                className="glass border-white/20 text-white hover:bg-white/10 font-medium px-4 py-2 rounded-xl"
               >
                 Logout
               </Button>
@@ -177,27 +182,27 @@ function App() {
           </div>
         </div>
 
-        {/* Neo-Vintage Navigation */}
-        <div className="mb-8 md:mb-12 flex gap-4 overflow-x-auto mobile-scroll pb-4">
+        {/* Navigation */}
+        <div className="flex gap-3 mb-8">
           <Button
             variant={currentView === 'player-analysis' ? 'default' : 'outline'}
             onClick={() => setCurrentView('player-analysis')}
-            className={`whitespace-nowrap flex-1 sm:flex-none font-display uppercase tracking-[0.2em] text-lg px-8 py-4 border-2 ${
+            className={`flex-1 sm:flex-none font-medium px-6 py-3 rounded-xl transition-all ${
               currentView === 'player-analysis'
-                ? 'bg-white text-black border-white'
-                : 'border-white text-white hover:bg-white hover:text-black'
-            } transition-all`}
+                ? 'glass bg-white/20 text-white border-0'
+                : 'glass border-white/20 text-white hover:bg-white/10'
+            }`}
           >
             Player Analysis
           </Button>
           <Button
             variant={currentView === 'roster-management' ? 'default' : 'outline'}
             onClick={() => setCurrentView('roster-management')}
-            className={`whitespace-nowrap flex-1 sm:flex-none font-display uppercase tracking-[0.2em] text-lg px-8 py-4 border-2 ${
+            className={`flex-1 sm:flex-none font-medium px-6 py-3 rounded-xl transition-all ${
               currentView === 'roster-management'
-                ? 'bg-white text-black border-white'
-                : 'border-white text-white hover:bg-white hover:text-black'
-            } transition-all`}
+                ? 'glass bg-white/20 text-white border-0'
+                : 'glass border-white/20 text-white hover:bg-white/10'
+            }`}
           >
             Roster & Matchups
           </Button>
@@ -208,115 +213,107 @@ function App() {
             <RosterManagement />
           </Suspense>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column - Search & Input */}
-            <div className="space-y-8">
-            {/* Neo-Vintage Player Search */}
-            <Card className="bg-white text-black border-4 border-white">
-              <CardHeader className="border-b-2 border-black pb-4">
-                <CardTitle className="font-display text-2xl uppercase tracking-[0.1em] text-black">Search Player</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <Suspense fallback={<div className="text-center py-6 text-gray-600 font-display uppercase tracking-wider">Loading search...</div>}>
+            <div className="space-y-6">
+              {/* Player Search */}
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Search Player</h2>
+                <Suspense fallback={<div className="text-center py-6 text-white/60 font-medium">Loading search...</div>}>
                   <PlayerSearch onSelectPlayer={handleSelectPlayer} />
                 </Suspense>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Neo-Vintage Analysis Inputs */}
-            {selectedPlayer && (
-              <Card className="bg-gray-900 text-white border-4 border-gray-700">
-                <CardHeader className="border-b-2 border-gray-600 pb-4">
-                  <CardTitle className="font-display text-2xl uppercase tracking-[0.1em] text-white">Analyze Matchup</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-3 font-display uppercase tracking-[0.2em]">Selected Player</p>
-                    <div className="p-4 bg-black border-2 border-gray-600">
-                      <p className="font-display text-xl uppercase tracking-wider text-white">{selectedPlayer.name}</p>
-                      <p className="text-sm text-gray-400 uppercase tracking-[0.3em] mt-1">
-                        {selectedPlayer.position} · {selectedPlayer.team}
+              {/* Analysis Inputs */}
+              {selectedPlayer && (
+                <div className="glass-card p-6">
+                  <h2 className="text-xl font-semibold text-white mb-4">Analyze Matchup</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-white/60 font-medium mb-3">Selected Player</p>
+                      <div className="glass compact-padding">
+                        <p className="text-lg font-semibold text-white">{selectedPlayer.name}</p>
+                        <p className="text-sm text-white/60">
+                          {selectedPlayer.position} • {selectedPlayer.team}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-white/80 mb-2 block">
+                        Opponent Team ID <span className="text-red-400">*</span>
+                      </label>
+                      <Input
+                        placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
+                        value={opponent}
+                        onChange={(e) => setOpponent(e.target.value)}
+                        className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+                      />
+                      <p className="text-xs text-white/50 mt-2">
+                        Enter the opponent team's UUID
                       </p>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-2 block">
-                      Opponent Team ID <span className="text-red-400">*</span>
-                    </label>
-                    <Input
-                      placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
-                      value={opponent}
-                      onChange={(e) => setOpponent(e.target.value)}
-                      className="mt-1 bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white"
-                    />
-                    <p className="text-xs text-gray-500 mt-2 uppercase tracking-wider">
-                      Enter the opponent team's UUID
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-2 block">
-                      Game Location (Optional)
-                    </label>
-                    <Input
-                      placeholder="e.g., Buffalo,NY"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="mt-1 bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white"
-                    />
-                    <p className="text-xs text-gray-500 mt-2 uppercase tracking-wider">
-                      Add location for weather impact analysis
-                    </p>
-                  </div>
-
-                  {error && (
-                    <div className="text-sm text-red-400 p-4 bg-red-900 border-2 border-red-700 font-display uppercase tracking-wider">
-                      {error}
+                    <div>
+                      <label className="text-sm font-medium text-white/80 mb-2 block">
+                        Game Location (Optional)
+                      </label>
+                      <Input
+                        placeholder="e.g., Buffalo,NY"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="glass border-white/20 text-white font-medium p-3 focus:border-white/40 placeholder:text-white/40"
+                      />
+                      <p className="text-xs text-white/50 mt-2">
+                        Add location for weather impact analysis
+                      </p>
                     </div>
-                  )}
 
-                  <Button
-                    onClick={handleAnalyze}
-                    disabled={loading || !opponent}
-                    className="w-full bg-white text-black hover:bg-gray-100 font-display uppercase tracking-[0.2em] text-lg py-6 border-2 border-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    {loading ? 'ANALYZING...' : 'ANALYZE MATCHUP'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                    {error && (
+                      <div className="glass-dark p-4 rounded-xl text-center">
+                        <p className="text-sm text-red-300 font-medium">{error}</p>
+                      </div>
+                    )}
 
-          {/* Right Column - Neo-Vintage Analysis Results */}
-          <div>
-            {analysis ? (
-              <Suspense fallback={<div className="text-center py-12 text-gray-400 font-display uppercase tracking-[0.2em]">Loading analysis...</div>}>
-                <PlayerAnalysis analysis={analysis} />
-              </Suspense>
-            ) : (
-              <Card className="bg-gray-800 text-white border-4 border-gray-600">
-                <CardContent className="py-16">
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={loading || !opponent}
+                      className="w-full glass bg-white/20 text-white hover:bg-white/30 font-semibold py-3 rounded-xl border-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {loading ? 'Analyzing...' : 'Analyze Matchup'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Analysis Results */}
+            <div>
+              {analysis ? (
+                <Suspense fallback={<div className="glass-card compact-padding text-center"><p className="text-white/60 font-medium">Loading analysis...</p></div>}>
+                  <PlayerAnalysis analysis={analysis} />
+                </Suspense>
+              ) : (
+                <div className="glass-card p-12">
                   <div className="text-center">
-                    <div className="w-24 h-24 mx-auto mb-8 border-4 border-gray-600 flex items-center justify-center">
-                      <div className="w-12 h-12 bg-gray-600"></div>
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full glass flex items-center justify-center">
+                      <div className="w-8 h-8 bg-white/20 rounded-full"></div>
                     </div>
-                    <p className="text-2xl mb-4 font-display uppercase tracking-[0.1em] text-white">No Analysis Yet</p>
-                    <p className="text-sm text-gray-400 uppercase tracking-[0.2em] font-body max-w-md mx-auto">
+                    <p className="text-xl font-semibold text-white mb-2">No Analysis Yet</p>
+                    <p className="text-sm text-white/60 max-w-md mx-auto">
                       Search for a player and enter opponent details to get started
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Neo-Vintage Footer */}
-        <div className="mt-20 text-center border-t-4 border-white pt-12">
-          <p className="text-sm text-gray-400 uppercase tracking-[0.3em] font-display">
-            Powered by Grid Iron Mind NFL API • Championship Analytics Since 2024
+        {/* Footer */}
+        <div className="mt-16 text-center">
+          <p className="text-sm text-white/50 font-medium">
+            Powered by Grid Iron Mind NFL API • Analytics Since 2024
           </p>
         </div>
       </div>
