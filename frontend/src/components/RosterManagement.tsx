@@ -418,54 +418,82 @@ export function RosterManagement() {
               <CardTitle>Create New Roster</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCreateRoster} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">
-                    Roster Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    value={newRosterName}
-                    onChange={(e) => setNewRosterName(e.target.value)}
-                    placeholder="e.g., My Fantasy Team"
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">League Name (Optional)</label>
-                  <Input
-                    value={newRosterLeague}
-                    onChange={(e) => setNewRosterLeague(e.target.value)}
-                    placeholder="e.g., Friends League"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Scoring Type</label>
-                  <select
-                    value={newRosterScoring}
-                    onChange={(e) => setNewRosterScoring(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-md"
-                  >
-                    <option value="PPR">PPR (Point Per Reception)</option>
-                    <option value="HALF_PPR">Half PPR</option>
-                    <option value="STANDARD">Standard</option>
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">
-                    Create
-                  </Button>
+              {/* Import Options */}
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">
+                  Quick Setup Options
+                </h4>
+                <div className="space-y-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowNewRosterForm(false)}
-                    className="flex-1"
+                    className="w-full justify-start bg-white dark:bg-gray-900"
+                    onClick={() => {
+                      setShowNewRosterForm(false);
+                      handleShowYahooLeagues();
+                    }}
                   >
-                    Cancel
+                    <span className="text-purple-600 mr-2">📱</span>
+                    Import from Yahoo Fantasy
                   </Button>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 ml-6">
+                    Instantly import your existing Yahoo roster with all players
+                  </p>
                 </div>
-              </form>
+              </div>
+
+              {/* Manual Creation Form */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-4">Or create manually:</h4>
+                <form onSubmit={handleCreateRoster} className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">
+                      Roster Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      value={newRosterName}
+                      onChange={(e) => setNewRosterName(e.target.value)}
+                      placeholder="e.g., My Fantasy Team"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">League Name (Optional)</label>
+                    <Input
+                      value={newRosterLeague}
+                      onChange={(e) => setNewRosterLeague(e.target.value)}
+                      placeholder="e.g., Friends League"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Scoring Type</label>
+                    <select
+                      value={newRosterScoring}
+                      onChange={(e) => setNewRosterScoring(e.target.value)}
+                      className="w-full mt-1 px-3 py-2 border rounded-md"
+                    >
+                      <option value="PPR">PPR (Point Per Reception)</option>
+                      <option value="HALF_PPR">Half PPR</option>
+                      <option value="STANDARD">Standard</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">
+                      Create Empty Roster
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowNewRosterForm(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </CardContent>
           </Card>
         </div>
