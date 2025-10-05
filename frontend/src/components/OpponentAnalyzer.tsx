@@ -66,7 +66,7 @@ export function OpponentAnalyzer() {
           opponent_roster: opponentRoster,
           your_roster: yourRoster,
           week: 10,
-          season: 2024,
+          season: 2025,
         }),
       });
 

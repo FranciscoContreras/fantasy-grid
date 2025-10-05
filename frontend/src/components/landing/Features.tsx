@@ -45,36 +45,34 @@ const features = [
 
 export function Features() {
   return (
-    <div className="relative py-24 sm:py-32 bg-gray-50 text-gray-900 overflow-hidden">
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative py-12 bg-gray-50 text-gray-900 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4">
         {/* Section Header */}
-        <div className="max-w-3xl mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 border border-gray-300 rounded-full mb-6">
+        <div className="max-w-2xl mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-200 border border-gray-300 rounded-full mb-3">
             <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
               Built for Winners
             </span>
           </div>
-          <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-none text-gray-900">
-            EVERY
-            <br />
-            ADVANTAGE
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-3 leading-tight text-gray-900">
+            Every advantage
           </h2>
-          <p className="text-xl sm:text-2xl text-gray-600 font-light max-w-2xl">
+          <p className="text-base text-gray-600 font-light max-w-xl">
             Professional-grade analytics. Real-time insights. Zero compromise.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group relative bg-white border border-gray-200 rounded-xl p-8 hover:shadow-md transition-all hover:-translate-y-1 shadow-sm"
+              className="group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all shadow-sm"
             >
               <div className="relative">
                 {/* Stat */}
-                <div className="mb-6">
-                  <div className="text-5xl font-black text-gray-900 mb-1">
+                <div className="mb-3">
+                  <div className="text-2xl font-bold text-gray-900 mb-0.5">
                     {feature.stat}
                   </div>
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
@@ -83,12 +81,12 @@ export function Features() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-black mb-3 tracking-tight text-gray-900">
+                <h3 className="text-sm font-bold mb-2 tracking-tight text-gray-900">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-600 leading-relaxed text-sm">
+                <p className="text-gray-600 leading-snug text-xs">
                   {feature.description}
                 </p>
               </div>
@@ -97,36 +95,34 @@ export function Features() {
         </div>
 
         {/* Bottom CTA Section */}
-        <div className="mt-20 relative">
-          <div className="relative bg-white border border-gray-200 rounded-3xl p-12 sm:p-16 shadow-sm">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="mt-8 relative">
+          <div className="relative bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
               <div>
-                <h3 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight text-gray-900">
-                  POWERED BY
-                  <br />
-                  NEXT GEN TECH
+                <h3 className="text-lg font-bold mb-2 tracking-tight text-gray-900">
+                  Powered by next gen tech
                 </h3>
-                <p className="text-lg text-gray-600 leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Real-time data pipeline. Machine learning models. NFL-grade analytics.
                   All working together to give you the edge.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                  <div className="text-3xl font-black text-gray-900 mb-1">&lt; 50ms</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-xl font-bold text-gray-900 mb-0.5">&lt; 50ms</div>
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Response Time</div>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                  <div className="text-3xl font-black text-gray-900 mb-1">1M+</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-xl font-bold text-gray-900 mb-0.5">1M+</div>
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Predictions</div>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                  <div className="text-3xl font-black text-gray-900 mb-1">24/7</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-xl font-bold text-gray-900 mb-0.5">24/7</div>
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Live Updates</div>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                  <div className="text-3xl font-black text-gray-900 mb-1">99.9%</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-xl font-bold text-gray-900 mb-0.5">99.9%</div>
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Uptime</div>
                 </div>
               </div>

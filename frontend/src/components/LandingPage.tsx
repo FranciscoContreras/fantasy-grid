@@ -21,26 +21,26 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
       <HowItWorks />
 
       {/* Final CTA Section */}
-      <div className="relative py-24 sm:py-32 bg-white">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h3 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight text-gray-900">
-              READY TO DOMINATE YOUR LEAGUE?
+      <div className="relative py-12 bg-white">
+        <div className="relative max-w-7xl mx-auto px-4 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h3 className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight text-gray-900">
+              Ready to dominate your league?
             </h3>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+            <p className="text-base text-gray-600 mb-6 leading-relaxed">
               Join thousands of fantasy managers making smarter lineup decisions every week.
               Get started today - it's completely free.
             </p>
             <button
               onClick={onGetStarted}
-              className="bg-gray-900 text-white hover:bg-gray-800 text-lg font-black px-12 py-4 rounded-xl hover:scale-105 transition-all shadow-sm inline-flex items-center gap-3"
+              className="bg-gray-900 text-white hover:bg-gray-800 text-sm font-semibold px-6 py-2.5 rounded-lg transition-all shadow-sm inline-flex items-center gap-2"
             >
-              START WINNING NOW
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              Start winning now
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
-            <p className="text-gray-500 text-sm mt-6 font-medium">
+            <p className="text-gray-500 text-xs mt-3 font-medium">
               Setup in under 3 minutes • No credit card required
             </p>
           </div>
@@ -48,9 +48,9 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
       </div>
 
       {/* Footer */}
-      <footer className="relative bg-white text-gray-600 py-16 border-t border-gray-200">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+      <footer className="relative bg-white text-gray-600 py-8 border-t border-gray-200">
+        <div className="relative max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             {/* Brand */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-6">

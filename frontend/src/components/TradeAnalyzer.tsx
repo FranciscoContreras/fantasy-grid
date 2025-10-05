@@ -64,7 +64,7 @@ export function TradeAnalyzer() {
         body: JSON.stringify({
           team_a_gives: teamAGives,
           team_b_gives: teamBGives,
-          season: 2024,
+          season: 2025,
         }),
       });
 

@@ -313,7 +313,7 @@ function App() {
         {/* Footer */}
         <div className="mt-16 text-center">
           <p className="text-sm text-white/50 font-medium">
-            Powered by Grid Iron Mind NFL API • Analytics Since 2024
+            Powered by Grid Iron Mind NFL API • Analytics Since 2025
           </p>
         </div>
       </div>

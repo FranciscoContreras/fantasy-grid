@@ -144,7 +144,7 @@ def get_player_nextgen_stats(player_id):
         - Route running metrics
     """
     try:
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
         week = request.args.get('week', type=int)
         stat_type = request.args.get('stat_type')
 
@@ -193,7 +193,7 @@ def get_enhanced_player_analysis(player_id):
     """
     try:
         opponent = request.args.get('opponent')
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
         week = request.args.get('week', type=int)
 
         if not opponent:
@@ -332,7 +332,7 @@ def get_defense_rankings():
     """
     try:
         category = request.args.get('category', 'overall')
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
 
         rankings = api_client.get_defense_rankings_v2(category=category, season=season)
 
@@ -569,7 +569,7 @@ def get_standings():
         Standings with playoff positioning and tiebreakers
     """
     try:
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
         division = request.args.get('division')
 
         standings = api_client.get_standings_v2(season=season, division=division)
@@ -664,7 +664,7 @@ def get_team_schedule(team_id):
         - Venue information
     """
     try:
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
 
         schedule = api_client.get_team_schedule_detailed_v2(team_id, season=season)
 
@@ -730,7 +730,7 @@ def list_games():
         List of games matching filters
     """
     try:
-        season = request.args.get('season', 2024, type=int)
+        season = request.args.get('season', 2025, type=int)
         week = request.args.get('week', type=int)
         team = request.args.get('team')
         status = request.args.get('status')

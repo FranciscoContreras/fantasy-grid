@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://fantasy-grid-8e65f9ca9754.herokuapp.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -212,6 +212,40 @@ export const getAvailableWeeks = async (season?: number, startWeek?: number) => 
 export const getPlayerDetails = async (playerId: string) => {
   const response = await api.get(`/matchups/player/${playerId}`);
   return response.data;
+};
+
+// Get featured players for landing page showcase
+export const getFeaturedPlayers = async (limit: number = 6) => {
+  const response = await api.get('/advanced/players', {
+    params: {
+      limit,
+      season: 2025,
+      week: 6
+    }
+  });
+  return response.data;
+};
+
+// Get player analysis with multiple scoring formats
+export const getPlayerAnalysisWithScoring = async (
+  playerId: string,
+  opponent?: string,
+  scoringFormats: string[] = ['PPR', 'HALF_PPR', 'STANDARD']
+) => {
+  const promises = scoringFormats.map(format =>
+    api.get(`/players/${playerId}/analysis`, {
+      params: {
+        opponent,
+        scoring_format: format
+      }
+    })
+  );
+
+  const responses = await Promise.all(promises);
+  return responses.map((response, index) => ({
+    format: scoringFormats[index],
+    data: response.data
+  }));
 };
 
 // Yahoo Fantasy API

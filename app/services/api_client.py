@@ -514,7 +514,7 @@ class FantasyAPIClient:
             logger.error(f"Failed to fetch player vs team stats: {e}")
             return None
 
-    def get_defensive_coordinator(self, team_abbr, season=2024):
+    def get_defensive_coordinator(self, team_abbr, season=2025):
         """
         Get defensive coordinator for a team.
         Attempts to fetch from API, falls back to cached data if unavailable.

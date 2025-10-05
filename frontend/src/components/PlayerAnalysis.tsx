@@ -22,7 +22,7 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
       try {
         setLoadingAdvanced(true);
         const response = await api.get(`/advanced/players/${analysis.player.id}/nextgen`, {
-          params: { season: 2024 }
+          params: { season: 2025 }
         });
         setAdvancedStats(response.data.data);
       } catch (error) {

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Player } from '@/types';
-import { getPlayerImageUrl, getTeamLogoUrl } from '@/lib/images';
+import { getPlayerImageUrl, getTeamLogoUrl, getPlayerInitials, handleImageError, teamColors } from '@/lib/images';
 
 interface ComparisonPlayer extends Player {
   matchup_score?: number;
@@ -61,15 +61,21 @@ export function PlayerComparison({ players }: PlayerComparisonProps) {
                   <tr key={player.id || idx} className="border-b last:border-0">
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-2">
-                        {/* Player Image */}
-                        <img
-                          src={getPlayerImageUrl(player.player_id || player.nfl_id)}
-                          alt={player.name}
-                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
-                          }}
-                        />
+                        {/* Player Image with Fallback */}
+                        <div className="relative">
+                          <img
+                            src={getPlayerImageUrl(player.player_id || player.nfl_id)}
+                            alt={player.name}
+                            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                            onError={(e) => handleImageError(e)}
+                          />
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs border border-gray-200 dark:border-gray-700 absolute top-0 left-0"
+                            style={{ backgroundColor: teamColors[player.team]?.primary || '#6B7280', display: 'none' }}
+                          >
+                            {getPlayerInitials(player.name)}
+                          </div>
+                        </div>
                         {/* Team Logo */}
                         {player.team && (
                           <img

@@ -21,7 +21,7 @@ export function WeeklyLineup({ rosterId }: WeeklyLineupProps) {
   const [error, setError] = useState('');
   const [lineupData, setLineupData] = useState<WeeklyLineupData | null>(null);
   const [week, setWeek] = useState(5); // Default to week 5
-  const [season] = useState(2024);
+  const [season] = useState(2025);
 
   useEffect(() => {
     loadWeeklyLineup();

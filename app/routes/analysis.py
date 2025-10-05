@@ -302,7 +302,7 @@ def get_favorable_matchups():
     try:
         position = request.args.get('position')
         week = request.args.get('week', type=int)
-        season = request.args.get('season', default=2024, type=int)
+        season = request.args.get('season', default=2025, type=int)
         min_ownership = request.args.get('min_ownership', default=0.0, type=float)
         max_ownership = request.args.get('max_ownership', default=50.0, type=float)
 
@@ -347,7 +347,7 @@ def get_schedule_lookahead(player_id):
     """
     try:
         weeks_ahead = request.args.get('weeks_ahead', default=4, type=int)
-        season = request.args.get('season', default=2024, type=int)
+        season = request.args.get('season', default=2025, type=int)
 
         result = matchup_exploiter.get_schedule_lookahead(
             player_id=player_id,
@@ -382,7 +382,7 @@ def get_defense_heatmap():
     """
     try:
         position = request.args.get('position')
-        season = request.args.get('season', default=2024, type=int)
+        season = request.args.get('season', default=2025, type=int)
 
         result = matchup_exploiter.get_defense_heatmap(
             position=position,
