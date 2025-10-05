@@ -45,6 +45,17 @@ function App() {
       }
     };
     checkAuth();
+
+    // Check for Yahoo OAuth success
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('yahoo_auth') === 'success') {
+      // Show success notification
+      alert('Yahoo Fantasy account connected successfully! You can now import your rosters.');
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Switch to roster management view
+      setCurrentView('roster-management');
+    }
   }, []);
 
   const handleAuthSuccess = (isNewUser = false) => {

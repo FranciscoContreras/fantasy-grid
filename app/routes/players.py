@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from app.services.api_client import FantasyAPIClient
 from app.services.analyzer import PlayerAnalyzer
 from app.services.ai_grader import AIGrader
+# from app.services.player_cache import search_cached_players  # Disabled - incomplete cache
 from app.database import execute_query
 from app.utils.cache import cached_route, get_cached_or_fetch
 from app.validation.decorators import validate_query_params
@@ -33,8 +34,15 @@ def search_players(data):
     position = data.get('position')
 
     try:
+        # Use API client directly - position filter ensures accurate results
         players = api_client.search_players(query, position)
-        logger.info(f"Player search: query='{query}', position={position}, results={len(players)}")
+
+        # Transform players to ensure player_id field for roster compatibility
+        for player in players:
+            if 'nfl_id' in player and not player.get('player_id'):
+                player['player_id'] = player['nfl_id']
+
+        logger.info(f"Player search (API): query='{query}', position={position}, results={len(players)}")
         return jsonify({
             'data': players,
             'meta': {
@@ -243,3 +251,19 @@ def _generate_recommendation(matchup, weather, ai_grade):
             'confidence': 'MEDIUM',
             'reason': f'Difficult matchup (score: {matchup}/100) or low projected points'
         }
+
+
+@bp.route('/cache/refresh', methods=['POST'])
+def refresh_cache():
+    """Refresh the player cache (currently disabled - using direct API calls)"""
+    # from app.services.player_cache import refresh_player_cache
+
+    try:
+        logger.info("Player cache refresh requested (feature disabled)")
+        return jsonify({
+            'message': 'Player cache feature is disabled. Search uses direct API calls with position filter.',
+            'count': 0
+        })
+    except Exception as e:
+        logger.error(f"Cache refresh failed: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500

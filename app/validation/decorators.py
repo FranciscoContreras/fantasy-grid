@@ -39,8 +39,8 @@ def validate_request(schema_class, location='json'):
             schema = schema_class()
             try:
                 validated_data = schema.load(data)
-                # Pass validated data as first argument to the route function
-                return f(validated_data, *args, **kwargs)
+                # Pass validated data as keyword argument to avoid conflicts with other decorators
+                return f(*args, data=validated_data, **kwargs)
             except ValidationError as err:
                 logger.warning(f"Validation error: {err.messages}")
                 return jsonify({

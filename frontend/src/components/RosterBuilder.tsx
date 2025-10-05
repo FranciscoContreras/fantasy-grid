@@ -59,30 +59,32 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
 
   const handleAddPlayer = async (player: Player, slot: string) => {
     try {
+      // CRITICAL DEBUG - Multiple logging methods
+      console.error('🔥 handleAddPlayer CALLED!', { player, slot });
+      window.alert?.(`handleAddPlayer called! Player: ${player.name}, Slot: ${slot}`);
+      console.log('handleAddPlayer called with:', { player, slot });
+
       // Validate player has required fields
       if (!player.name || !player.position || !player.team) {
         console.error('Player missing required fields:', player);
+        alert(`ERROR: Player missing fields - ${!player.name ? 'name ' : ''}${!player.position ? 'position ' : ''}${!player.team ? 'team' : ''}`);
         setError(`Invalid player data. Missing: ${!player.name ? 'name ' : ''}${!player.position ? 'position ' : ''}${!player.team ? 'team' : ''}`);
         return;
       }
 
-      console.log('Adding player to roster:', {
-        player_id: player.id || player.player_id,
-        player_name: player.name,
-        position: player.position,
-        team: player.team,
-        roster_slot: slot,
-      });
-
-      await addPlayerToRoster(rosterId, {
-        player_id: player.id || player.player_id,
+      const playerData = {
+        player_id: player.id || player.player_id || player.nfl_id,
         player_name: player.name,
         position: player.position,
         team: player.team,
         roster_slot: slot,
         is_starter: true,
         injury_status: 'HEALTHY',
-      });
+      };
+
+      console.log('Sending player data to API:', playerData);
+
+      await addPlayerToRoster(rosterId, playerData);
 
       await loadRoster();
       setAddingToSlot(null);
@@ -371,7 +373,11 @@ export function RosterBuilder({ rosterId, onRosterUpdate }: RosterBuilderProps) 
                 </Button>
               </div>
               <PlayerSearch
-                onSelectPlayer={(player) => handleAddPlayer(player, addingToSlot)}
+                onSelectPlayer={(player) => {
+                  console.error('🎯 Arrow function executing in RosterBuilder!', { player, addingToSlot });
+                  window.alert?.(`Arrow function called! About to call handleAddPlayer with slot: ${addingToSlot}`);
+                  handleAddPlayer(player, addingToSlot);
+                }}
               />
             </div>
           </div>

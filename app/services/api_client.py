@@ -98,7 +98,11 @@ class FantasyAPIClient:
 
         try:
             # First request to get total count
-            params = {'limit': limit, 'offset': offset}
+            # Use API's 'search' param to get candidates (even though it's fuzzy/broken)
+            # Then use our scoring algorithm to properly rank and filter results
+            params = {'limit': limit, 'offset': offset, 'status': 'active'}
+            if query:
+                params['search'] = query  # Get candidates from API
             if position:
                 params['position'] = position
 
@@ -113,8 +117,16 @@ class FantasyAPIClient:
             all_players.extend(data.get('data', []))
             total = data.get('meta', {}).get('total', 0)
 
-            # Fetch remaining pages (limit to 1000 total for performance)
-            max_fetch = min(total, 1000 if not position else total)
+            # Fetch remaining pages
+            # When using search, API returns many fuzzy matches - limit to 200 to avoid timeout
+            # Our scoring will filter these down to the best matches
+            # With position filter, can fetch more (usually <100 per position)
+            if query and not position:
+                max_fetch = min(total, 200)  # Limit fuzzy search results
+            elif position:
+                max_fetch = min(total, 500)  # Position-filtered is more targeted
+            else:
+                max_fetch = min(total, 100)  # No query or position = just first 100
             while offset + limit < max_fetch:
                 offset += limit
                 params['offset'] = offset
@@ -131,10 +143,11 @@ class FantasyAPIClient:
             all_players = [self._enrich_player_with_team(player) for player in all_players]
 
             # Advanced search with relevance scoring
-            # This will further filter and rank results from the API
+            # ALWAYS score and filter when there's a query (API search is broken)
             if query and all_players:
                 scored_players = self._score_and_filter_players(all_players, query)
-                return scored_players[:20]  # Return top 20 most relevant
+                # Return top 20 most relevant, or all if fewer results
+                return scored_players[:20] if scored_players else []
 
             return all_players[:20]
         except requests.Timeout:

@@ -19,6 +19,7 @@ import { RosterDashboard } from './RosterDashboard';
 import { MatchupAnalysis } from './MatchupAnalysis';
 import { SeasonMatchups } from './SeasonMatchups';
 import { Badge } from './ui/badge';
+import { YahooImportButton } from './YahooImportButton';
 
 export function RosterManagement() {
   const [rosters, setRosters] = useState<Roster[]>([]);

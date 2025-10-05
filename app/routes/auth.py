@@ -27,28 +27,32 @@ def require_auth(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Get token from Authorization header
-        auth_header = request.headers.get('Authorization')
+        try:
+            # Get token from Authorization header
+            auth_header = request.headers.get('Authorization')
 
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Missing or invalid authorization header'}), 401
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Missing or invalid authorization header'}), 401
 
-        token = auth_header.split(' ')[1]
+            token = auth_header.split(' ')[1]
 
-        # Verify token
-        payload = auth_service.verify_token(token)
+            # Verify token
+            payload = auth_service.verify_token(token)
 
-        if not payload:
-            return jsonify({'error': 'Invalid or expired token'}), 401
+            if not payload:
+                return jsonify({'error': 'Invalid or expired token'}), 401
 
-        # Get user from database
-        user = auth_service.get_user_by_id(payload['user_id'])
+            # Get user from database
+            user = auth_service.get_user_by_id(payload['user_id'])
 
-        if not user:
-            return jsonify({'error': 'User not found or inactive'}), 401
+            if not user:
+                return jsonify({'error': 'User not found or inactive'}), 401
 
-        # Pass user to route function
-        return f(current_user=user, *args, **kwargs)
+            # Pass user to route function
+            return f(current_user=user, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Authentication failed', 'detail': str(e)}), 500
 
     return decorated_function
 

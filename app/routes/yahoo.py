@@ -1,307 +1,379 @@
-from flask import Blueprint, request, jsonify, redirect, url_for
+"""
+Yahoo Fantasy OAuth and Roster Import Routes
+
+Handles:
+- OAuth 2.0 authentication flow
+- League fetching
+- Roster importing
+- Sync operations
+"""
+
+from flask import Blueprint, request, jsonify, redirect, session, url_for
 from app.routes.auth import require_auth
 from app.services.yahoo_oauth_service import YahooOAuthService
-from app.database import execute_query
-import os
+from app.services.yahoo_fantasy_client import YahooFantasyClient
+from app.services.yahoo_roster_import_service import YahooRosterImportService
+from app.validation.decorators import validate_json
+from marshmallow import Schema, fields, validate
 import logging
+import os
 
-bp = Blueprint('yahoo', __name__, url_prefix='/api/yahoo')
 logger = logging.getLogger(__name__)
 
-# Initialize Yahoo OAuth service
-yahoo_service = YahooOAuthService()
+bp = Blueprint('yahoo', __name__, url_prefix='/api/yahoo')
 
-@bp.route('/auth')
-def yahoo_auth():
+# Initialize services
+oauth_service = YahooOAuthService()
+import_service = YahooRosterImportService()
+
+
+# ============================================================================
+# OAuth Flow Routes
+# ============================================================================
+
+@bp.route('/auth', methods=['GET'])
+def start_oauth():
     """
     Initiate Yahoo OAuth flow
 
-    Query params:
-    - token: JWT token for authentication
+    Redirects user to Yahoo login page
+    Accepts token via query parameter or Authorization header
     """
-    token = request.args.get('token')
-    if not token:
-        return jsonify({'error': 'Authentication token required'}), 401
-
-    if not yahoo_service.is_configured():
-        return jsonify({
-            'error': 'Yahoo OAuth not configured',
-            'message': 'Yahoo OAuth credentials are missing. Please contact support.'
-        }), 503
-
     try:
-        # Verify the JWT token to get user ID
-        from app.services.auth_service import AuthService
-        auth_service = AuthService()
-        payload = auth_service.verify_token(token)
+        # Try to get token from query parameter first (for browser redirects)
+        token = request.args.get('token')
 
+        # If not in query param, try Authorization header
+        if not token:
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+
+        if not token:
+            return jsonify({'error': 'Missing or invalid authorization'}), 401
+
+        # Validate token and get user
+        from app.services.auth_service import AuthService
+        payload = AuthService.verify_token(token)
         if not payload:
-            return jsonify({'error': 'Invalid or expired token'}), 401
+            return jsonify({'error': 'Invalid token'}), 401
 
         user_id = payload['user_id']
 
-        # Generate Yahoo OAuth URL for this user
-        auth_data = yahoo_service.get_auth_url(user_id)
+        # Generate OAuth URL with state for CSRF protection
+        auth_url, state = oauth_service.get_authorization_url()
 
-        # Redirect user to Yahoo OAuth
-        return redirect(auth_data['auth_url'])
+        # Store state in session for validation
+        session['yahoo_oauth_state'] = state
+        session['yahoo_oauth_user_id'] = user_id
+
+        logger.info(f"Starting Yahoo OAuth for user {user_id}")
+
+        # Redirect to Yahoo OAuth page
+        return redirect(auth_url)
 
     except Exception as e:
-        logger.error(f"Yahoo OAuth initiation failed: {e}")
-        return jsonify({'error': 'Failed to initiate Yahoo authentication'}), 500
+        logger.error(f"Error starting Yahoo OAuth: {e}")
+        # Redirect to frontend with error
+        frontend_url = os.getenv('FRONTEND_URL', '')
+        return redirect(f"{frontend_url}/rosters?yahoo_error=auth_failed")
 
-@bp.route('/callback')
-def yahoo_callback():
+
+@bp.route('/callback', methods=['GET'])
+def oauth_callback():
     """
     Handle Yahoo OAuth callback
 
-    Query params:
-    - code: Authorization code from Yahoo
-    - state: CSRF protection state
+    Yahoo redirects here after user authorizes the app
     """
-    code = request.args.get('code')
-    state = request.args.get('state')
-    error = request.args.get('error')
-
-    if error:
-        logger.error(f"Yahoo OAuth error: {error}")
-        # Redirect to frontend with error
-        frontend_url = os.getenv('FRONTEND_URL', 'https://fantasy-grid-8e65f9ca9754.herokuapp.com')
-        return redirect(f"{frontend_url}/?yahoo_error={error}")
-
-    if not code or not state:
-        return jsonify({'error': 'Missing authorization code or state'}), 400
-
     try:
-        # Extract user_id from state (we need to store this in our OAuth state)
-        # For now, we'll need to modify the state handling to include user info
-        # This is a simplified version - in production, decrypt/decode the state properly
+        # Get authorization code and state
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
 
-        # For demonstration, let's assume we can get user_id from the state
-        # In reality, you'd store state->user_id mapping in the database
-        query = "SELECT user_id FROM yahoo_oauth_states WHERE state = %s"
-        result = execute_query(query, (state,))
+        # Check for OAuth errors
+        if error:
+            logger.error(f"Yahoo OAuth error: {error}")
+            frontend_url = os.getenv('FRONTEND_URL', '')
+            return redirect(f"{frontend_url}/rosters?yahoo_error={error}")
 
-        if not result:
-            return jsonify({'error': 'Invalid or expired state'}), 400
+        # Validate state (CSRF protection)
+        session_state = session.get('yahoo_oauth_state')
+        if not state or state != session_state:
+            logger.error("Invalid OAuth state - possible CSRF attack")
+            frontend_url = os.getenv('FRONTEND_URL', '')
+            return redirect(f"{frontend_url}/rosters?yahoo_error=invalid_state")
 
-        user_id = result[0]['user_id']
+        # Get user ID from session
+        user_id = session.get('yahoo_oauth_user_id')
+        if not user_id:
+            logger.error("No user ID in session")
+            frontend_url = os.getenv('FRONTEND_URL', '')
+            return redirect(f"{frontend_url}/rosters?yahoo_error=session_expired")
 
-        # Exchange code for tokens
-        token_data = yahoo_service.exchange_code_for_token(code, state, user_id)
+        # Exchange authorization code for access token
+        token_data = oauth_service.exchange_code_for_token(code)
+        if not token_data:
+            logger.error("Failed to exchange authorization code")
+            frontend_url = os.getenv('FRONTEND_URL', '')
+            return redirect(f"{frontend_url}/rosters?yahoo_error=token_exchange_failed")
 
-        # Redirect to frontend with success
-        frontend_url = os.getenv('FRONTEND_URL', 'https://fantasy-grid-8e65f9ca9754.herokuapp.com')
-        return redirect(f"{frontend_url}/?yahoo_success=true")
+        # Save tokens to database
+        success = oauth_service.save_tokens(user_id, token_data)
+        if not success:
+            logger.error(f"Failed to save tokens for user {user_id}")
+            frontend_url = os.getenv('FRONTEND_URL', '')
+            return redirect(f"{frontend_url}/rosters?yahoo_error=token_save_failed")
+
+        # Clear session
+        session.pop('yahoo_oauth_state', None)
+        session.pop('yahoo_oauth_user_id', None)
+
+        logger.info(f"Yahoo OAuth successful for user {user_id}")
+
+        # Redirect to frontend with success indicator
+        frontend_url = os.getenv('FRONTEND_URL', '')
+        return redirect(f"{frontend_url}/?yahoo_auth=success")
 
     except Exception as e:
-        logger.error(f"Yahoo OAuth callback failed: {e}")
-        frontend_url = os.getenv('FRONTEND_URL', 'https://fantasy-grid-8e65f9ca9754.herokuapp.com')
-        return redirect(f"{frontend_url}/?yahoo_error=callback_failed")
+        logger.error(f"Error in Yahoo OAuth callback: {e}", exc_info=True)
+        frontend_url = os.getenv('FRONTEND_URL', '')
+        return redirect(f"{frontend_url}/rosters?yahoo_error=callback_failed")
 
-@bp.route('/leagues')
+
+# ============================================================================
+# League and Roster Routes
+# ============================================================================
+
+@bp.route('/leagues', methods=['GET'])
 @require_auth
-def get_yahoo_leagues(current_user):
+def get_leagues(current_user):
     """
-    Get user's Yahoo Fantasy leagues for the authenticated user
+    Get user's Yahoo fantasy leagues
 
-    Returns list of leagues or indicates need for OAuth
+    Requires valid Yahoo OAuth token
     """
-    user_id = current_user['id']
-
-    if not yahoo_service.is_configured():
-        return jsonify({
-            'error': 'Yahoo OAuth not configured',
-            'message': 'Yahoo OAuth credentials are missing. Please contact support.'
-        }), 503
-
     try:
-        # Check if user has valid Yahoo tokens
-        leagues = yahoo_service.get_user_leagues(user_id)
+        user_id = current_user['id']
+
+        # Get valid access token (auto-refreshes if expired)
+        access_token = oauth_service.get_valid_token(user_id)
+        if not access_token:
+            return jsonify({
+                'error': 'No Yahoo authorization found. Please connect your Yahoo account first.',
+                'needs_auth': True
+            }), 401
+
+        # Create Yahoo client and fetch leagues
+        yahoo_client = YahooFantasyClient(access_token)
+        leagues = yahoo_client.get_user_leagues()
+
+        logger.info(f"Fetched {len(leagues)} Yahoo leagues for user {user_id}")
 
         return jsonify({
             'data': {
                 'leagues': leagues,
-                'message': f'Found {len(leagues)} leagues for user'
-            },
-            'success': True
+                'count': len(leagues)
+            }
         })
 
     except Exception as e:
-        error_str = str(e).lower()
-        logger.error(f"Failed to get user leagues: {e}")
-        logger.debug(f"Error string for token check: '{error_str}'")
+        logger.error(f"Error fetching Yahoo leagues: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to fetch Yahoo leagues'}), 500
 
-        # If it's a token issue, indicate user needs to authenticate
-        token_keywords = ['token', 'access', 'auth', 'valid']
-        is_auth_error = any(keyword in error_str for keyword in token_keywords)
 
-        logger.debug(f"Is auth error? {is_auth_error} (checking keywords: {token_keywords})")
+class ImportRosterSchema(Schema):
+    """Schema for roster import request"""
+    team_key = fields.Str(required=True, validate=validate.Length(min=1))
+    roster_name = fields.Str(required=False, validate=validate.Length(min=1, max=100))
 
-        if is_auth_error:
-            logger.info("Returning needs_auth=True for authentication error")
-            return jsonify({
-                'data': {
-                    'leagues': [],
-                    'message': 'Yahoo authentication required'
-                },
-                'needs_auth': True
-            })
-
-        return jsonify({
-            'error': 'Failed to fetch Yahoo leagues',
-            'message': str(e)
-        }), 500
 
 @bp.route('/import', methods=['POST'])
 @require_auth
-def import_yahoo_roster(current_user):
+@validate_json(ImportRosterSchema)
+def import_roster(current_user, validated_data):
     """
-    Import roster from Yahoo Fantasy for the authenticated user
+    Import a Yahoo fantasy roster
 
-    Body:
-    - team_key: Yahoo team key
-    - roster_name: Optional custom name for roster
+    Request body:
+    {
+        "team_key": "nfl.l.12345.t.1",
+        "roster_name": "My Yahoo Team" (optional)
+    }
     """
-    data = request.get_json()
-
-    if not data or 'team_key' not in data:
-        return jsonify({'error': 'team_key is required'}), 400
-
-    user_id = current_user['id']
-    team_key = data['team_key']
-    roster_name = data.get('roster_name', f'Yahoo Team {team_key.split(".")[-1]}')
-
-    if not yahoo_service.is_configured():
-        return jsonify({
-            'error': 'Yahoo OAuth not configured',
-            'message': 'Yahoo OAuth credentials are missing. Please contact support.'
-        }), 503
-
     try:
-        # Get roster from Yahoo
-        yahoo_roster = yahoo_service.get_team_roster(user_id, team_key)
+        user_id = current_user['id']
+        team_key = validated_data['team_key']
+        roster_name = validated_data.get('roster_name')
 
-        # Create new roster in our database
-        roster_query = """
-            INSERT INTO rosters (user_id, name, league_name, scoring_type, created_at)
-            VALUES (%s, %s, %s, %s, NOW())
-            RETURNING id
-        """
+        # Get valid access token
+        access_token = oauth_service.get_valid_token(user_id)
+        if not access_token:
+            return jsonify({
+                'error': 'No Yahoo authorization found. Please connect your Yahoo account first.',
+                'needs_auth': True
+            }), 401
 
-        roster_result = execute_query(roster_query, (
-            user_id,
-            roster_name,
-            'Yahoo Fantasy',
-            'PPR'  # Default to PPR, could be extracted from Yahoo data
-        ))
+        # Create Yahoo client
+        yahoo_client = YahooFantasyClient(access_token)
 
-        if not roster_result:
-            return jsonify({'error': 'Failed to create roster'}), 500
+        # Import roster
+        result = import_service.import_roster(
+            user_id=user_id,
+            yahoo_client=yahoo_client,
+            team_key=team_key,
+            roster_name=roster_name
+        )
 
-        roster_id = roster_result[0]['id']
-        matched_players = 0
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Import failed')}), 500
 
-        # Import players from Yahoo roster
-        for yahoo_player in yahoo_roster:
-            try:
-                # Insert player into our roster
-                player_query = """
-                    INSERT INTO roster_players (
-                        roster_id, player_id, player_name, position, team,
-                        roster_slot, is_starter, injury_status, created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                """
-
-                execute_query(player_query, (
-                    roster_id,
-                    yahoo_player.get('player_id'),
-                    yahoo_player.get('name'),
-                    yahoo_player.get('position'),
-                    yahoo_player.get('team'),
-                    yahoo_player.get('roster_position', 'BENCH'),
-                    yahoo_player.get('roster_position') != 'BN',  # Not bench = starter
-                    'HEALTHY'  # Default injury status
-                ))
-
-                matched_players += 1
-
-            except Exception as e:
-                logger.warning(f"Failed to import player {yahoo_player.get('name')}: {e}")
-                continue
-
-        logger.info(f"Imported {matched_players} players for user {user_id} from Yahoo team {team_key}")
+        logger.info(
+            f"Imported Yahoo roster for user {user_id}: "
+            f"{result['matched_players']}/{result['total_players']} players matched"
+        )
 
         return jsonify({
-            'data': {
-                'matched_players': matched_players,
-                'roster_id': roster_id,
-                'roster_name': roster_name,
-                'message': f'Successfully imported {matched_players} players from Yahoo'
-            },
-            'success': True
+            'data': result,
+            'message': f"Successfully imported {result['matched_players']} players"
         })
 
     except Exception as e:
-        logger.error(f"Yahoo roster import failed: {e}")
-        return jsonify({
-            'error': 'Failed to import Yahoo roster',
-            'message': str(e)
-        }), 500
+        logger.error(f"Error importing Yahoo roster: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to import roster'}), 500
 
-@bp.route('/status')
+
+@bp.route('/roster/preview/<team_key>', methods=['GET'])
 @require_auth
-def yahoo_status(current_user):
+def preview_roster(current_user, team_key):
     """
-    Get Yahoo integration status for current user
-    """
-    user_id = current_user['id']
+    Preview a Yahoo roster before importing
 
-    if not yahoo_service.is_configured():
+    URL parameter: team_key (e.g., nfl.l.12345.t.1)
+    """
+    try:
+        user_id = current_user['id']
+
+        # Get valid access token
+        access_token = oauth_service.get_valid_token(user_id)
+        if not access_token:
+            return jsonify({
+                'error': 'No Yahoo authorization found',
+                'needs_auth': True
+            }), 401
+
+        # Create Yahoo client and fetch roster
+        yahoo_client = YahooFantasyClient(access_token)
+        roster = yahoo_client.get_team_roster(team_key)
+
+        if not roster:
+            return jsonify({'error': 'Failed to fetch roster from Yahoo'}), 500
+
+        return jsonify({'data': roster})
+
+    except Exception as e:
+        logger.error(f"Error previewing Yahoo roster: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to preview roster'}), 500
+
+
+# ============================================================================
+# Sync and Management Routes
+# ============================================================================
+
+@bp.route('/sync/<int:roster_id>', methods=['POST'])
+@require_auth
+def sync_roster(current_user, roster_id):
+    """
+    Sync an imported Yahoo roster with latest data
+
+    Updates roster to match current Yahoo roster (adds/removes players)
+    """
+    try:
+        user_id = current_user['id']
+
+        # Verify roster belongs to user
+        from app.routes.rosters import verify_roster_ownership
+        is_owner, error_response = verify_roster_ownership(roster_id, user_id)
+        if not is_owner:
+            return error_response
+
+        # Get valid access token
+        access_token = oauth_service.get_valid_token(user_id)
+        if not access_token:
+            return jsonify({
+                'error': 'No Yahoo authorization found',
+                'needs_auth': True
+            }), 401
+
+        # Create Yahoo client
+        yahoo_client = YahooFantasyClient(access_token)
+
+        # Sync roster
+        result = import_service.sync_roster(roster_id, yahoo_client)
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Sync failed')}), 500
+
+        logger.info(f"Synced Yahoo roster {roster_id}: +{result['added']} -{result['removed']}")
+
         return jsonify({
-            'data': {
-                'is_authenticated': False,
-                'has_leagues': False,
-                'configured': False,
-                'message': 'Yahoo OAuth not configured'
-            }
+            'data': result,
+            'message': f"Roster synced: {result['added']} added, {result['removed']} removed"
         })
 
+    except Exception as e:
+        logger.error(f"Error syncing Yahoo roster: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to sync roster'}), 500
+
+
+@bp.route('/disconnect', methods=['POST'])
+@require_auth
+def disconnect_yahoo(current_user):
+    """
+    Disconnect Yahoo account (revoke OAuth tokens)
+
+    This does NOT delete imported rosters, just removes the OAuth connection
+    """
     try:
-        # Check if user has stored tokens
-        query = """
-            SELECT access_token, expires_at, refresh_token
-            FROM yahoo_tokens
-            WHERE user_id = %s
-        """
-        result = execute_query(query, (user_id,))
+        user_id = current_user['id']
 
-        has_tokens = bool(result)
-        is_authenticated = False
+        success = oauth_service.revoke_token(user_id)
 
-        if has_tokens:
-            token_data = result[0]
-            # Check if token is still valid (not expired)
-            from datetime import datetime
-            expires_at = token_data['expires_at']
-            is_authenticated = expires_at and datetime.utcnow() < expires_at
+        if not success:
+            return jsonify({'error': 'Failed to disconnect Yahoo account'}), 500
+
+        logger.info(f"Disconnected Yahoo account for user {user_id}")
+
+        return jsonify({
+            'message': 'Yahoo account disconnected successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error disconnecting Yahoo: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to disconnect Yahoo account'}), 500
+
+
+@bp.route('/status', methods=['GET'])
+@require_auth
+def check_status(current_user):
+    """
+    Check Yahoo OAuth connection status
+
+    Returns whether user has a valid Yahoo token
+    """
+    try:
+        user_id = current_user['id']
+
+        has_token = oauth_service.has_valid_token(user_id)
 
         return jsonify({
             'data': {
-                'is_authenticated': is_authenticated,
-                'has_tokens': has_tokens,
-                'configured': True,
-                'message': 'Yahoo OAuth ready' if is_authenticated else 'Authentication required'
+                'connected': has_token,
+                'provider': 'yahoo'
             }
         })
 
     except Exception as e:
-        logger.error(f"Yahoo status check failed: {e}")
-        return jsonify({
-            'data': {
-                'is_authenticated': False,
-                'has_leagues': False,
-                'configured': True,
-                'error': str(e)
-            }
-        })
+        logger.error(f"Error checking Yahoo status: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to check Yahoo status'}), 500
