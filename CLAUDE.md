@@ -814,6 +814,35 @@ Track these metrics in production:
 
 ## 💡 Development Best Practices
 
+### Git Workflow
+
+**Commit Frequently** - After each logical unit of work:
+- Bug fixes, feature implementations, refactoring
+- Configuration changes, dependency updates
+- Before major architectural changes
+
+**Standard Process:**
+```bash
+git status                    # Review changes
+git add .                     # Stage files
+git commit -m "Clear description of what and why"  # NO co-author tags
+git push origin main          # Push regularly
+```
+
+**Commit Message Guidelines:**
+- Use imperative mood: "Add validation" not "Added validation"
+- Be specific: "Fix authentication timeout" vs "Fix bug"
+- Keep first line under 50 characters
+- Reference issues: "Fix #123: Handle empty responses"
+
+**Heroku Deployment:**
+```bash
+git push heroku main          # Deploy current branch
+heroku releases               # Check deployment status
+heroku logs --tail            # Monitor for issues
+heroku ps                     # Check dyno status
+```
+
 ### Before Making Changes
 
 **ALWAYS**:
@@ -872,10 +901,18 @@ cd frontend
 npm run build                     # Build for production
 cp -r dist/* ../app/static/      # Copy to Flask
 
-# Heroku
+# Git workflow - commit frequently!
+git status                       # Check current changes
+git add .                        # Stage changes
+git commit -m "Brief description of changes"  # NO Claude co-author
+git push origin main             # Push to remote
+
+# Heroku deployment
 heroku logs --tail               # View logs
 heroku run python -c "..."       # Run Python commands
 heroku ps                        # Check dyno status
+heroku releases                  # View release history
+git push heroku main             # Deploy to Heroku
 ```
 
 ---
