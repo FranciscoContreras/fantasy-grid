@@ -8,12 +8,12 @@ interface HeroProps {
 
 export function Hero({ onGetStarted, onSignIn }: HeroProps) {
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden font-system">
-      {/* Subtle Background Elements */}
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden font-system">
+      {/* Monochromatic Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-teal-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/20 rounded-full"></div>
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-white/5 to-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-white/3 to-white/8 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/30 rounded-full"></div>
       </div>
 
       {/* Glass Navigation */}
@@ -41,9 +41,9 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
           <div className="lg:col-span-3 space-y-6">
             {/* Badge */}
             <div className="glass-card inline-flex items-center gap-3 px-4 py-2 text-xs font-medium text-white/80">
-              <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-white/60 rounded-full"></div>
               <span>EST. 2024 • NFL ANALYTICS</span>
-              <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-white/60 rounded-full"></div>
             </div>
 
             {/* Main Headline */}
@@ -91,11 +91,11 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               <div className="text-xs text-white/60 font-medium">Users</div>
             </div>
             <div className="glass-card compact-padding text-center">
-              <div className="text-3xl font-bold text-amber-400 mb-1">73%</div>
+              <div className="text-3xl font-bold text-white mb-1">73%</div>
               <div className="text-xs text-white/60 font-medium">Win Rate</div>
             </div>
             <div className="glass-card compact-padding text-center">
-              <div className="text-3xl font-bold text-emerald-400 mb-1">4.9★</div>
+              <div className="text-3xl font-bold text-white mb-1">4.9★</div>
               <div className="text-xs text-white/60 font-medium">Rating</div>
             </div>
             <div className="glass-card compact-padding text-center">
@@ -117,51 +117,51 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
           {/* START Card */}
           <div className="glass-card p-6 hover:scale-105 transition-all group">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A+</span>
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <span className="text-gray-900 font-bold text-sm">A+</span>
               </div>
-              <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">
+              <div className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
                 START
               </div>
             </div>
             <div className="space-y-2">
               <h4 className="text-lg font-semibold text-white">P. Mahomes</h4>
               <p className="text-sm text-white/60">QB • Kansas City</p>
-              <div className="text-2xl font-bold text-emerald-400">24.8 pts</div>
+              <div className="text-2xl font-bold text-white">24.8 pts</div>
             </div>
           </div>
 
           {/* CONSIDER Card */}
           <div className="glass-card p-6 hover:scale-105 transition-all group">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B+</span>
+              <div className="w-10 h-10 bg-white/80 rounded-full flex items-center justify-center">
+                <span className="text-gray-900 font-bold text-sm">B+</span>
               </div>
-              <div className="px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">
+              <div className="px-3 py-1 bg-white/15 text-white/90 text-xs font-medium rounded-full">
                 CONSIDER
               </div>
             </div>
             <div className="space-y-2">
               <h4 className="text-lg font-semibold text-white">S. Barkley</h4>
               <p className="text-sm text-white/60">RB • New York</p>
-              <div className="text-2xl font-bold text-amber-400">18.3 pts</div>
+              <div className="text-2xl font-bold text-white/90">18.3 pts</div>
             </div>
           </div>
 
           {/* BENCH Card */}
-          <div className="glass-card p-6 hover:scale-105 transition-all group opacity-80">
+          <div className="glass-card p-6 hover:scale-105 transition-all group opacity-60">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">C</span>
+              <div className="w-10 h-10 bg-white/40 rounded-full flex items-center justify-center">
+                <span className="text-gray-700 font-bold text-sm">C</span>
               </div>
-              <div className="px-3 py-1 bg-gray-500/20 text-gray-400 text-xs font-medium rounded-full">
+              <div className="px-3 py-1 bg-white/10 text-white/70 text-xs font-medium rounded-full">
                 BENCH
               </div>
             </div>
             <div className="space-y-2">
-              <h4 className="text-lg font-semibold text-white">D. Hopkins</h4>
-              <p className="text-sm text-white/60">WR • Tennessee</p>
-              <div className="text-2xl font-bold text-gray-400">12.1 pts</div>
+              <h4 className="text-lg font-semibold text-white/80">D. Hopkins</h4>
+              <p className="text-sm text-white/50">WR • Tennessee</p>
+              <div className="text-2xl font-bold text-white/70">12.1 pts</div>
             </div>
           </div>
         </div>

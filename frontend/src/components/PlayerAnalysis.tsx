@@ -39,28 +39,28 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
   const getRecommendationStyle = (status: string) => {
     switch (status) {
       case 'START':
-        return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        return 'bg-white/20 text-white border border-white/30';
       case 'CONSIDER':
-        return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        return 'bg-white/15 text-white/90 border border-white/25';
       case 'BENCH':
-        return 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
+        return 'bg-white/10 text-white/70 border border-white/20';
       default:
-        return 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
+        return 'bg-white/10 text-white/70 border border-white/20';
     }
   };
 
   const getGradeColor = (grade: string) => {
-    if (grade.startsWith('A')) return 'text-emerald-400';
-    if (grade.startsWith('B')) return 'text-amber-400';
-    if (grade.startsWith('C')) return 'text-orange-400';
-    return 'text-red-400';
+    if (grade.startsWith('A')) return 'text-white';
+    if (grade.startsWith('B')) return 'text-white/90';
+    if (grade.startsWith('C')) return 'text-white/80';
+    return 'text-white/70';
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-emerald-400';
-    if (score >= 50) return 'text-amber-400';
-    if (score >= 30) return 'text-orange-400';
-    return 'text-red-400';
+    if (score >= 70) return 'text-white';
+    if (score >= 50) return 'text-white/90';
+    if (score >= 30) return 'text-white/80';
+    return 'text-white/70';
   };
 
   return (
@@ -87,7 +87,7 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
             </p>
             <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all rounded-full ${analysis.matchup_score >= 70 ? 'bg-emerald-400' : analysis.matchup_score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                className="h-full transition-all rounded-full bg-white"
                 style={{ width: `${analysis.matchup_score}%` }}
               />
             </div>
@@ -99,7 +99,7 @@ export function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
             </p>
             <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all rounded-full ${analysis.weather_impact >= 70 ? 'bg-emerald-400' : analysis.weather_impact >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                className="h-full transition-all rounded-full bg-white"
                 style={{ width: `${analysis.weather_impact}%` }}
               />
             </div>

@@ -15,7 +15,7 @@ const OnboardingWizard = lazy(() => import('./components/OnboardingWizard').then
 
 // Loading fallback component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white font-system">
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white font-system">
     <div className="glass-card compact-padding text-center">
       <div className="animate-spin h-12 w-12 border-2 border-white/20 border-t-white mx-auto mb-4"></div>
       <p className="text-white/80 font-medium">Loading...</p>
@@ -96,7 +96,7 @@ function App() {
   if (!authenticated && showAuth) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col font-system">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col font-system">
           {/* Back button */}
           <div className="p-6">
             <Button variant="outline" onClick={handleBackToLanding} className="glass border-white/20 text-white hover:bg-white/10 gap-2">
@@ -147,11 +147,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white safe-top safe-bottom font-system">
-      {/* Background Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white safe-top safe-bottom font-system">
+      {/* Monochromatic Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-amber-500/10 to-orange-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-teal-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-white/5 to-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-white/3 to-white/8 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative container mx-auto py-6 px-6 max-w-7xl">
