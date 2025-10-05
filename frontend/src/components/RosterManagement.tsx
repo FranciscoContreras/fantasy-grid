@@ -172,6 +172,15 @@ export function RosterManagement() {
     setShowYahooLeagues(true);
     try {
       const response = await getYahooLeagues();
+
+      // Check if authentication is needed (can be in success response)
+      if (response.data?.needs_auth) {
+        // Need to authorize first
+        const token = localStorage.getItem('auth_token');
+        window.location.href = `/api/yahoo/auth?token=${token}`;
+        return;
+      }
+
       setYahooLeagues(response.data?.leagues || []);
     } catch (err: any) {
       if (err.response?.data?.needs_auth) {
