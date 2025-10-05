@@ -147,6 +147,9 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
         setError('Unable to load current week data. Showing sample players.');
 
         // Fallback demo data - current week's projected top performers
+        const fallbackWeek = 5; // Force current week to 5
+        setCurrentWeek(fallbackWeek);
+
         const demoPlayers: PlayerData[] = [
             {
               id: '3918298', // Josh Allen
@@ -162,7 +165,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 92,
               trend: '+3.8',
               weather: 'Clear, 62°F',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { passYds: 280, passTds: 3, rushYds: 35, cmp: 78.5 }
             },
             {
@@ -179,7 +182,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 88,
               trend: '+5.2',
               weather: 'Indoor (FedExField)',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { passYds: 245, passTds: 2, rushYds: 52, rushTds: 1 }
             },
             {
@@ -196,7 +199,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 85,
               trend: '+2.9',
               weather: 'Sunny, 81°F',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { recYds: 118, recTds: 1, rec: 8, targets: 12 }
             },
             {
@@ -213,7 +216,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 82,
               trend: '+1.7',
               weather: 'Partly Cloudy, 58°F',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { recYds: 109, recTds: 1, rec: 7, targets: 11 }
             },
             {
@@ -230,7 +233,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 79,
               trend: '+2.3',
               weather: 'Clear, 65°F',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { rushYds: 96, rushTds: 1, rec: 2, recYds: 18 }
             },
             {
@@ -247,7 +250,7 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               confidence: 76,
               trend: '+1.4',
               weather: 'Clear, 72°F',
-              gameTime: `Week ${currentWeek}`,
+              gameTime: `Week ${fallbackWeek}`,
               stats: { recYds: 88, recTds: 1, rec: 6, targets: 9 }
             }
         ];
