@@ -153,7 +153,7 @@ function App() {
         <div className="mb-4 md:mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-2">Fantasy Grid</h1>
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">Pilon</h1>
               <p className="text-xs md:text-base text-muted-foreground">
                 AI-powered fantasy football player analysis and recommendations
               </p>

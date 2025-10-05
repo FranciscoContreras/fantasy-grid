@@ -49,7 +49,7 @@ def create_app():
         handler.setFormatter(formatter)
         app.logger.addHandler(handler)
         app.logger.setLevel(log_level)
-        app.logger.info('Fantasy Grid startup')
+        app.logger.info('Pilon startup')
     else:
         # Development logging to console
         console_handler = logging.StreamHandler()
@@ -77,7 +77,7 @@ def create_app():
         start_time = time.time()
         health_status = {
             'status': 'healthy',
-            'service': 'Fantasy Grid API',
+            'service': 'Pilon API',
             'version': '1.0.0',
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'checks': {}

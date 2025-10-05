@@ -56,7 +56,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Fantasy Grid
+            Pilon
           </h1>
           <p className="text-gray-600">
             {isLogin ? 'Sign in to your account' : 'Create a new account'}

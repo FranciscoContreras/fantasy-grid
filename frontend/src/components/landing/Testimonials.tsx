@@ -1,6 +1,6 @@
 const testimonials = [
   {
-    quote: "Fantasy Grid completely changed my game. 8-2 this season. The AI grading is scary accurate.",
+    quote: "Pilon completely changed my game. 8-2 this season. The AI grading is scary accurate.",
     author: 'MIKE R.',
     role: '3X League Champion',
   },
@@ -48,7 +48,7 @@ export function Testimonials() {
             RESULTS
           </h2>
           <p className="text-xl sm:text-2xl text-gray-400 font-light">
-            See what champions are saying about Fantasy Grid.
+            See what champions are saying about Pilon.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export function Testimonials() {
                 BEST IN THE GAME
               </h3>
               <p className="text-lg text-gray-400 mb-8">
-                Thousands of fantasy champions rely on Fantasy Grid every week to make winning decisions.
+                Thousands of fantasy champions rely on Pilon every week to make winning decisions.
                 Join the community dominating leagues nationwide.
               </p>
               <div className="flex flex-wrap justify-center gap-8 text-sm">

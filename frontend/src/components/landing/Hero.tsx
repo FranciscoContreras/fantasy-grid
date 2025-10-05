@@ -1,4 +1,5 @@
 import { Button } from '../ui/button';
+import PilonLogo from '../../assets/logo.svg';
 
 interface HeroProps {
   onGetStarted: () => void;
@@ -12,8 +13,8 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
       <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-sm"></div>
-            <span className="text-2xl font-black tracking-tight">FANTASY GRID</span>
+            <img src={PilonLogo} alt="Pilon" className="w-12 h-8 object-contain" />
+            <span className="text-2xl font-black tracking-tight">PILON</span>
           </div>
           <Button
             variant="ghost"

@@ -3,6 +3,7 @@ import { Features } from './landing/Features';
 import { HowItWorks } from './landing/HowItWorks';
 import { Testimonials } from './landing/Testimonials';
 import { Pricing } from './landing/Pricing';
+import PilonLogo from '../assets/logo.svg';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -34,8 +35,8 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
             {/* Brand */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-white rounded-lg"></div>
-                <h3 className="text-2xl font-black text-white tracking-tight">FANTASY GRID</h3>
+                <img src={PilonLogo} alt="Pilon" className="w-12 h-8 object-contain invert" />
+                <h3 className="text-2xl font-black text-white tracking-tight">PILON</h3>
               </div>
               <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
                 AI-powered fantasy football analysis. Make smarter lineup decisions every week.

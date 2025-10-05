@@ -1,6 +1,6 @@
 {
-  "name": "Fantasy Grid - Player Analysis",
-  "short_name": "Fantasy Grid",
+  "name": "Pilon - Fantasy Football Analysis",
+  "short_name": "Pilon",
   "description": "AI-powered fantasy football player analysis and lineup optimizer",
   "start_url": "/",
   "display": "standalone",
