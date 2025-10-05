@@ -437,7 +437,7 @@ def get_weekly_lineup(current_user, roster_id):
     try:
         # Import here to avoid circular imports
         from app.routes.matchups import get_current_week_and_season
-        from app.services.analyzer import AnalyzerService
+        from app.services.analyzer import PlayerAnalyzer
 
         # Get current week/season if not provided
         if not week or not season:
@@ -467,7 +467,7 @@ def get_weekly_lineup(current_user, roster_id):
             })
 
         # Initialize analyzer
-        analyzer = AnalyzerService()
+        analyzer = PlayerAnalyzer()
 
         # Analyze each player
         analyzed_players = []
