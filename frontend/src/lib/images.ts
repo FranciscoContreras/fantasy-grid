@@ -48,7 +48,9 @@ export function getPlayerImageUrl(espnPlayerId: string | number | null | undefin
     return 'https://a.espncdn.com/combiner/i?img=/i/headshots/nophoto.png&w=200&h=146';
   }
 
-  return `${ESPN_CDN_BASE}/headshots/nfl/players/full/${espnPlayerId}.png`;
+  // Add cache busting parameter to force fresh image loads
+  const timestamp = Math.floor(Date.now() / (1000 * 60 * 60)); // Changes every hour
+  return `${ESPN_CDN_BASE}/headshots/nfl/players/full/${espnPlayerId}.png?v=${timestamp}`;
 }
 
 /**

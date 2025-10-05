@@ -453,7 +453,12 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
                   <img
-                    src={getPlayerImageUrl(VERIFIED_ESPN_PLAYER_IDS[player.name] || player.id)}
+                    src={(() => {
+                      const verifiedId = VERIFIED_ESPN_PLAYER_IDS[player.name];
+                      const finalId = verifiedId || player.id;
+                      console.log(`Player: ${player.name}, Verified ID: ${verifiedId}, Final ID: ${finalId}`);
+                      return getPlayerImageUrl(finalId);
+                    })()}
                     alt={player.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
                     onError={(e) => handleImageError(e)}
