@@ -1,8 +1,6 @@
 import { Hero } from './landing/Hero';
 import { Features } from './landing/Features';
 import { HowItWorks } from './landing/HowItWorks';
-import { Testimonials } from './landing/Testimonials';
-import { Pricing } from './landing/Pricing';
 import PilonLogo from '../assets/logo.svg';
 
 interface LandingPageProps {
@@ -22,11 +20,32 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
       {/* How It Works Section */}
       <HowItWorks />
 
-      {/* Testimonials Section */}
-      <Testimonials />
-
-      {/* Pricing Section */}
-      <Pricing onGetStarted={onGetStarted} />
+      {/* Final CTA Section */}
+      <div className="relative py-24 sm:py-32 bg-white">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h3 className="text-4xl sm:text-5xl font-black mb-6 tracking-tight text-gray-900">
+              READY TO DOMINATE YOUR LEAGUE?
+            </h3>
+            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+              Join thousands of fantasy managers making smarter lineup decisions every week.
+              Get started today - it's completely free.
+            </p>
+            <button
+              onClick={onGetStarted}
+              className="bg-gray-900 text-white hover:bg-gray-800 text-lg font-black px-12 py-4 rounded-xl hover:scale-105 transition-all shadow-sm inline-flex items-center gap-3"
+            >
+              START WINNING NOW
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+            <p className="text-gray-500 text-sm mt-6 font-medium">
+              Setup in under 3 minutes • No credit card required
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="relative bg-white text-gray-600 py-16 border-t border-gray-200">

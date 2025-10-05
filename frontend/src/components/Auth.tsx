@@ -61,7 +61,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
 
       <div className="relative w-full max-w-md bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-logo text-gray-900 mb-3">
+          <h1 className="text-3xl font-black text-gray-900 mb-3">
             Pilon
           </h1>
           <p className="text-gray-600 font-medium text-sm">

@@ -47,9 +47,12 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
 
             {/* Main Headline */}
             <div className="space-y-6">
-              <h1 className="font-logo text-6xl sm:text-7xl md:text-8xl leading-none text-gray-900">
-                Pilon
-              </h1>
+              <div className="flex items-center">
+                <img src={PilonLogo} alt="Pilon" className="w-24 h-18 object-contain mr-4" />
+                <h1 className="font-system text-6xl sm:text-7xl md:text-8xl leading-none text-gray-900 font-black">
+                  Pilon
+                </h1>
+              </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-700 leading-tight">
                 Intelligent Fantasy Football
                 <br />
