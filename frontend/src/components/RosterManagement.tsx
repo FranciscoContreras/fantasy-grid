@@ -174,7 +174,7 @@ export function RosterManagement() {
       const response = await getYahooLeagues();
 
       // Check if authentication is needed (can be in success response)
-      if (response.data?.needs_auth) {
+      if (response.needs_auth || response.data?.needs_auth) {
         // Need to authorize first
         const token = localStorage.getItem('auth_token');
         window.location.href = `/api/yahoo/auth?token=${token}`;
@@ -183,7 +183,7 @@ export function RosterManagement() {
 
       setYahooLeagues(response.data?.leagues || []);
     } catch (err: any) {
-      if (err.response?.data?.needs_auth) {
+      if (err.response?.needs_auth || err.response?.data?.needs_auth) {
         // Need to authorize first
         const token = localStorage.getItem('auth_token');
         window.location.href = `/api/yahoo/auth?token=${token}`;
