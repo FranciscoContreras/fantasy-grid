@@ -34,9 +34,8 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <img src={PilonLogo} alt="Pilon" className="w-12 h-8 object-contain invert" />
-                <h3 className="text-2xl font-black text-white tracking-tight">PILON</h3>
+              <div className="flex items-center mb-6">
+                <img src={PilonLogo} alt="Pilon" className="w-16 h-12 object-contain invert" />
               </div>
               <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
                 AI-powered fantasy football analysis. Make smarter lineup decisions every week.

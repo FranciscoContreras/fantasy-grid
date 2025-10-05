@@ -8,18 +8,24 @@ interface HeroProps {
 
 export function Hero({ onGetStarted, onSignIn }: HeroProps) {
   return (
-    <div className="relative min-h-screen bg-white text-black overflow-hidden">
+    <div className="relative min-h-screen bg-black text-white overflow-hidden font-body">
+      {/* Geometric Background Pattern */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-gray-900 to-transparent opacity-50"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 border-l-4 border-b-4 border-white opacity-10"></div>
+        <div className="absolute top-20 right-20 w-32 h-32 border-2 border-white opacity-5 rotate-45"></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={PilonLogo} alt="Pilon" className="w-12 h-8 object-contain" />
-            <span className="text-2xl font-black tracking-tight">PILON</span>
+          <div className="flex items-center">
+            <img src={PilonLogo} alt="Pilon" className="w-20 h-14 object-contain invert" />
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={onSignIn}
-            className="text-black hover:bg-gray-100 font-semibold"
+            className="border-white text-white hover:bg-white hover:text-black font-semibold tracking-wider uppercase text-sm px-8 py-3"
           >
             Sign In
           </Button>
@@ -27,37 +33,45 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
       </nav>
 
       {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
-        <div className="max-w-4xl">
-          {/* Label */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full mb-8">
-            <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-              Powered by Next Gen Stats + AI
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+        <div className="max-w-5xl">
+          {/* Vintage Athletic Badge */}
+          <div className="inline-flex items-center gap-2 px-6 py-3 border-2 border-white bg-transparent mb-12">
+            <div className="w-3 h-3 bg-white"></div>
+            <span className="text-sm font-bold text-white uppercase tracking-[0.2em] font-display">
+              Est. 2024 • NFL Analytics
             </span>
+            <div className="w-3 h-3 bg-white"></div>
           </div>
 
-          {/* Main headline */}
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter mb-8 leading-none">
-            DOMINATE
-            <br />
-            YOUR LEAGUE
+          {/* Main Script Headline */}
+          <h1 className="font-script text-7xl sm:text-8xl md:text-9xl lg:text-[12rem] leading-none mb-6 text-white">
+            Dominate
           </h1>
 
+          {/* Secondary Bold Text */}
+          <div className="mb-12">
+            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-tighter text-white mb-4">
+              YOUR LEAGUE
+            </h2>
+            <div className="w-32 h-1 bg-white mb-8"></div>
+          </div>
+
           {/* Subheadline */}
-          <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 font-light mb-12 max-w-2xl leading-relaxed">
+          <p className="text-xl sm:text-2xl md:text-3xl text-gray-300 font-light mb-16 max-w-3xl leading-relaxed">
             AI-powered start/sit decisions.
             <br />
             Real-time analytics.
             <br />
-            <span className="text-black font-medium">Zero guesswork.</span>
+            <span className="text-white font-semibold">Zero guesswork.</span>
           </p>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-16">
+          {/* Neo-Vintage CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 mb-20">
             <Button
               size="lg"
               onClick={onGetStarted}
-              className="px-10 py-8 bg-black text-white hover:bg-gray-900 text-lg font-bold rounded-full"
+              className="px-12 py-6 bg-white text-black hover:bg-gray-100 text-lg font-display uppercase tracking-wider border-4 border-white transition-all hover:scale-105"
             >
               START WINNING
             </Button>
@@ -65,78 +79,79 @@ export function Hero({ onGetStarted, onSignIn }: HeroProps) {
               size="lg"
               variant="outline"
               onClick={onSignIn}
-              className="px-10 py-8 border-2 border-black text-black hover:bg-gray-100 text-lg font-bold rounded-full"
+              className="px-12 py-6 border-4 border-white text-white hover:bg-white hover:text-black text-lg font-display uppercase tracking-wider transition-all hover:scale-105"
             >
               WATCH DEMO
             </Button>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-12 text-sm border-t border-gray-200 pt-8">
-            <div>
-              <div className="text-4xl font-black text-black mb-1">10K+</div>
-              <div className="text-gray-500 uppercase tracking-wider font-semibold text-xs">Active Users</div>
+          {/* Vintage Athletic Stats */}
+          <div className="flex flex-wrap gap-16 text-sm border-t-4 border-white pt-12">
+            <div className="text-center">
+              <div className="text-5xl font-display text-white mb-2">10K+</div>
+              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Champions</div>
             </div>
-            <div>
-              <div className="text-4xl font-black text-black mb-1">73%</div>
-              <div className="text-gray-500 uppercase tracking-wider font-semibold text-xs">Win Rate</div>
+            <div className="text-center">
+              <div className="text-5xl font-display text-white mb-2">73%</div>
+              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Win Rate</div>
             </div>
-            <div>
-              <div className="text-4xl font-black text-black mb-1">4.9★</div>
-              <div className="text-gray-500 uppercase tracking-wider font-semibold text-xs">Rating</div>
+            <div className="text-center">
+              <div className="text-5xl font-display text-white mb-2">4.9★</div>
+              <div className="text-gray-300 uppercase tracking-[0.2em] font-bold text-sm">Rating</div>
             </div>
           </div>
         </div>
 
-        {/* Preview Cards - Monochromatic */}
-        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
-          {/* START Card */}
-          <div className="group relative bg-black text-white rounded-2xl p-8 hover:scale-105 transition-transform">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-16 h-16 bg-white rounded-xl"></div>
-              <div className="text-5xl font-black">A+</div>
+        {/* Neo-Vintage Preview Cards */}
+        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl">
+          {/* START Card - Championship Gold */}
+          <div className="group relative bg-white text-black border-4 border-black p-8 hover:scale-105 transition-all hover:shadow-2xl">
+            <div className="absolute top-4 right-4 w-12 h-12 bg-black text-white flex items-center justify-center font-display text-xl font-bold">
+              A+
             </div>
-            <div className="text-2xl font-bold mb-1">P. MAHOMES</div>
-            <div className="text-sm text-gray-400 mb-6 uppercase tracking-wider">QB · Kansas City</div>
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-white text-black rounded-full font-bold text-sm uppercase tracking-wider">
+            <div className="w-20 h-20 bg-black mb-6"></div>
+            <div className="text-3xl font-display mb-2 uppercase tracking-tight">P. MAHOMES</div>
+            <div className="text-sm text-gray-600 mb-6 uppercase tracking-[0.3em] font-bold">QB · KANSAS CITY</div>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-black">
               START
             </div>
           </div>
 
-          {/* CONSIDER Card */}
-          <div className="group relative bg-gray-200 text-black rounded-2xl p-8 hover:scale-105 transition-transform">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-16 h-16 bg-gray-400 rounded-xl"></div>
-              <div className="text-5xl font-black text-gray-600">B+</div>
+          {/* CONSIDER Card - Silver */}
+          <div className="group relative bg-gray-800 text-white border-4 border-gray-600 p-8 hover:scale-105 transition-all hover:shadow-2xl">
+            <div className="absolute top-4 right-4 w-12 h-12 bg-gray-600 text-white flex items-center justify-center font-display text-xl font-bold">
+              B+
             </div>
-            <div className="text-2xl font-bold mb-1">S. BARKLEY</div>
-            <div className="text-sm text-gray-600 mb-6 uppercase tracking-wider">RB · New York</div>
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-gray-400 text-white rounded-full font-bold text-sm uppercase tracking-wider">
+            <div className="w-20 h-20 bg-gray-600 mb-6"></div>
+            <div className="text-3xl font-display mb-2 uppercase tracking-tight">S. BARKLEY</div>
+            <div className="text-sm text-gray-400 mb-6 uppercase tracking-[0.3em] font-bold">RB · NEW YORK</div>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-gray-600">
               CONSIDER
             </div>
           </div>
 
-          {/* BENCH Card */}
-          <div className="group relative bg-gray-100 text-gray-400 rounded-2xl p-8 hover:scale-105 transition-transform opacity-60">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-16 h-16 bg-gray-300 rounded-xl"></div>
-              <div className="text-5xl font-black">C</div>
+          {/* BENCH Card - Bronze */}
+          <div className="group relative bg-gray-200 text-gray-700 border-4 border-gray-400 p-8 hover:scale-105 transition-all hover:shadow-2xl opacity-80">
+            <div className="absolute top-4 right-4 w-12 h-12 bg-gray-400 text-white flex items-center justify-center font-display text-xl font-bold">
+              C
             </div>
-            <div className="text-2xl font-bold mb-1">D. HOPKINS</div>
-            <div className="text-sm text-gray-500 mb-6 uppercase tracking-wider">WR · Tennessee</div>
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-600 rounded-full font-bold text-sm uppercase tracking-wider">
+            <div className="w-20 h-20 bg-gray-400 mb-6"></div>
+            <div className="text-3xl font-display mb-2 uppercase tracking-tight">D. HOPKINS</div>
+            <div className="text-sm text-gray-500 mb-6 uppercase tracking-[0.3em] font-bold">WR · TENNESSEE</div>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-400 text-white font-display uppercase tracking-[0.2em] text-sm font-bold border-2 border-gray-400">
               BENCH
             </div>
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-        <div className="flex flex-col items-center gap-2 text-gray-400">
-          <span className="text-xs uppercase tracking-wider font-semibold">Scroll</span>
-          <svg className="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      {/* Neo-Vintage Scroll Indicator */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10">
+        <div className="flex flex-col items-center gap-4 text-white">
+          <div className="w-px h-16 bg-white opacity-50"></div>
+          <span className="text-sm uppercase tracking-[0.3em] font-bold font-display">EXPLORE</span>
+          <svg className="w-8 h-8 animate-bounce" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L12 20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           </svg>
         </div>
       </div>

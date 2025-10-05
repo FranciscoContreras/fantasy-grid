@@ -147,44 +147,57 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background safe-top safe-bottom">
-      <div className="container mx-auto py-4 md:py-8 px-4 md:px-6">
-        {/* Header */}
-        <div className="mb-4 md:mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div className="min-h-screen bg-black text-white safe-top safe-bottom font-body">
+      <div className="container mx-auto py-6 md:py-12 px-4 md:px-6">
+        {/* Neo-Vintage Header */}
+        <div className="mb-8 md:mb-12 border-b-4 border-white pb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-2">Pilon</h1>
-              <p className="text-xs md:text-base text-muted-foreground">
-                AI-powered fantasy football player analysis and recommendations
+              <h1 className="text-4xl md:text-6xl font-script mb-4 text-white">Pilon</h1>
+              <p className="text-sm md:text-lg text-gray-300 font-body max-w-2xl uppercase tracking-[0.2em]">
+                AI-Powered Fantasy Football Analytics • Championship Performance
               </p>
             </div>
-            <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
               {user && (
                 <div className="text-left sm:text-right flex-1 sm:flex-none">
-                  <p className="text-sm font-medium truncate max-w-[150px]">{user.username}</p>
-                  <p className="text-xs text-muted-foreground truncate max-w-[150px] hidden sm:block">{user.email}</p>
+                  <p className="text-lg font-display uppercase tracking-wider text-white truncate max-w-[150px]">{user.username}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-[0.2em] truncate max-w-[150px] hidden sm:block">{user.email}</p>
                 </div>
               )}
-              <Button variant="outline" size="sm" onClick={handleLogout} className="shrink-0">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLogout}
+                className="shrink-0 border-2 border-white text-white hover:bg-white hover:text-black font-display uppercase tracking-wider px-6 py-3"
+              >
                 Logout
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto mobile-scroll pb-2">
+        {/* Neo-Vintage Navigation */}
+        <div className="mb-8 md:mb-12 flex gap-4 overflow-x-auto mobile-scroll pb-4">
           <Button
             variant={currentView === 'player-analysis' ? 'default' : 'outline'}
             onClick={() => setCurrentView('player-analysis')}
-            className="whitespace-nowrap flex-1 sm:flex-none"
+            className={`whitespace-nowrap flex-1 sm:flex-none font-display uppercase tracking-[0.2em] text-lg px-8 py-4 border-2 ${
+              currentView === 'player-analysis'
+                ? 'bg-white text-black border-white'
+                : 'border-white text-white hover:bg-white hover:text-black'
+            } transition-all`}
           >
             Player Analysis
           </Button>
           <Button
             variant={currentView === 'roster-management' ? 'default' : 'outline'}
             onClick={() => setCurrentView('roster-management')}
-            className="whitespace-nowrap flex-1 sm:flex-none"
+            className={`whitespace-nowrap flex-1 sm:flex-none font-display uppercase tracking-[0.2em] text-lg px-8 py-4 border-2 ${
+              currentView === 'roster-management'
+                ? 'bg-white text-black border-white'
+                : 'border-white text-white hover:bg-white hover:text-black'
+            } transition-all`}
           >
             Roster & Matchups
           </Button>
@@ -195,70 +208,70 @@ function App() {
             <RosterManagement />
           </Suspense>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
             {/* Left Column - Search & Input */}
-            <div className="space-y-6">
-            {/* Player Search */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Search Player</CardTitle>
+            <div className="space-y-8">
+            {/* Neo-Vintage Player Search */}
+            <Card className="bg-white text-black border-4 border-white">
+              <CardHeader className="border-b-2 border-black pb-4">
+                <CardTitle className="font-display text-2xl uppercase tracking-[0.1em] text-black">Search Player</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Suspense fallback={<div className="text-center py-4 text-muted-foreground">Loading search...</div>}>
+              <CardContent className="pt-6">
+                <Suspense fallback={<div className="text-center py-6 text-gray-600 font-display uppercase tracking-wider">Loading search...</div>}>
                   <PlayerSearch onSelectPlayer={handleSelectPlayer} />
                 </Suspense>
               </CardContent>
             </Card>
 
-            {/* Analysis Inputs */}
+            {/* Neo-Vintage Analysis Inputs */}
             {selectedPlayer && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analyze Matchup</CardTitle>
+              <Card className="bg-gray-900 text-white border-4 border-gray-700">
+                <CardHeader className="border-b-2 border-gray-600 pb-4">
+                  <CardTitle className="font-display text-2xl uppercase tracking-[0.1em] text-white">Analyze Matchup</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6 pt-6">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Selected Player</p>
-                    <div className="p-3 bg-accent rounded-md">
-                      <p className="font-semibold">{selectedPlayer.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedPlayer.position} - {selectedPlayer.team}
+                    <p className="text-sm text-gray-400 mb-3 font-display uppercase tracking-[0.2em]">Selected Player</p>
+                    <div className="p-4 bg-black border-2 border-gray-600">
+                      <p className="font-display text-xl uppercase tracking-wider text-white">{selectedPlayer.name}</p>
+                      <p className="text-sm text-gray-400 uppercase tracking-[0.3em] mt-1">
+                        {selectedPlayer.position} · {selectedPlayer.team}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm text-muted-foreground">
-                      Opponent Team ID <span className="text-red-500">*</span>
+                    <label className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-2 block">
+                      Opponent Team ID <span className="text-red-400">*</span>
                     </label>
                     <Input
                       placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
                       value={opponent}
                       onChange={(e) => setOpponent(e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-gray-500 mt-2 uppercase tracking-wider">
                       Enter the opponent team's UUID
                     </p>
                   </div>
 
                   <div>
-                    <label className="text-sm text-muted-foreground">
+                    <label className="text-sm text-gray-400 font-display uppercase tracking-[0.2em] mb-2 block">
                       Game Location (Optional)
                     </label>
                     <Input
                       placeholder="e.g., Buffalo,NY"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-black border-2 border-gray-600 text-white font-body p-3 focus:border-white"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-gray-500 mt-2 uppercase tracking-wider">
                       Add location for weather impact analysis
                     </p>
                   </div>
 
                   {error && (
-                    <div className="text-sm text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-950 rounded-md">
+                    <div className="text-sm text-red-400 p-4 bg-red-900 border-2 border-red-700 font-display uppercase tracking-wider">
                       {error}
                     </div>
                   )}
@@ -266,27 +279,30 @@ function App() {
                   <Button
                     onClick={handleAnalyze}
                     disabled={loading || !opponent}
-                    className="w-full"
+                    className="w-full bg-white text-black hover:bg-gray-100 font-display uppercase tracking-[0.2em] text-lg py-6 border-2 border-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {loading ? 'Analyzing...' : 'Analyze Matchup'}
+                    {loading ? 'ANALYZING...' : 'ANALYZE MATCHUP'}
                   </Button>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Right Column - Analysis Results */}
+          {/* Right Column - Neo-Vintage Analysis Results */}
           <div>
             {analysis ? (
-              <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Loading analysis...</div>}>
+              <Suspense fallback={<div className="text-center py-12 text-gray-400 font-display uppercase tracking-[0.2em]">Loading analysis...</div>}>
                 <PlayerAnalysis analysis={analysis} />
               </Suspense>
             ) : (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center text-muted-foreground">
-                    <p className="text-lg mb-2">No analysis yet</p>
-                    <p className="text-sm">
+              <Card className="bg-gray-800 text-white border-4 border-gray-600">
+                <CardContent className="py-16">
+                  <div className="text-center">
+                    <div className="w-24 h-24 mx-auto mb-8 border-4 border-gray-600 flex items-center justify-center">
+                      <div className="w-12 h-12 bg-gray-600"></div>
+                    </div>
+                    <p className="text-2xl mb-4 font-display uppercase tracking-[0.1em] text-white">No Analysis Yet</p>
+                    <p className="text-sm text-gray-400 uppercase tracking-[0.2em] font-body max-w-md mx-auto">
                       Search for a player and enter opponent details to get started
                     </p>
                   </div>
@@ -297,10 +313,10 @@ function App() {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-12 text-center text-sm text-muted-foreground border-t pt-6">
-          <p>
-            Powered by Grid Iron Mind NFL API • AI-driven insights for smarter fantasy decisions
+        {/* Neo-Vintage Footer */}
+        <div className="mt-20 text-center border-t-4 border-white pt-12">
+          <p className="text-sm text-gray-400 uppercase tracking-[0.3em] font-display">
+            Powered by Grid Iron Mind NFL API • Championship Analytics Since 2024
           </p>
         </div>
       </div>
